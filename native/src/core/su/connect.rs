@@ -123,11 +123,7 @@ impl MagiskD {
     }
 
     fn app_notify(&self, cred: &UCred, info: &SuInfo, request: &SuRequest) {
-        let command = if request.command.is_empty() {
-            &request.shell
-        } else {
-            &request.command
-        };
+        let command = &request.command.join(" ");
         let extras = [
             Extra {
                 key: "from.uid",
