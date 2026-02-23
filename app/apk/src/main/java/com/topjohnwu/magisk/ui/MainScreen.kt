@@ -21,7 +21,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.topjohnwu.magisk.core.Info
 import com.topjohnwu.magisk.core.R as CoreR
+import com.topjohnwu.magisk.core.model.module.LocalModule
 import com.topjohnwu.magisk.ui.home.HomeScreen
 import com.topjohnwu.magisk.ui.home.HomeViewModel
 import com.topjohnwu.magisk.ui.log.LogScreen
@@ -193,6 +195,8 @@ private fun getBottomNavItems(): List<BottomNavItem> {
  * 使用 Miuix NavigationBar 组件实现，固定显示四个导航项
  *
  * @param navController 导航控制器
+ * @param hazeState Haze 状态
+ * @param hazeStyle Haze 样式
  */
 @Composable
 private fun MainBottomBar(
@@ -205,6 +209,9 @@ private fun MainBottomBar(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val bottomNavItems = getBottomNavItems()
+
+    val isSuperuserEnabled = Info.showSuperUser
+    val isModuleEnabled = Info.env.isActive && LocalModule.loaded()
 
     Column(
         modifier = Modifier
@@ -224,10 +231,15 @@ private fun MainBottomBar(
             showDivider = false
         ) {
             bottomNavItems.forEach { item ->
+                val isEnabled = when (item.screen) {
+                    Screen.Superuser -> isSuperuserEnabled
+                    Screen.Module -> isModuleEnabled
+                    else -> true
+                }
                 NavigationBarItem(
                     selected = currentRoute == item.screen.route,
                     onClick = {
-                        if (currentRoute != item.screen.route) {
+                        if (isEnabled && currentRoute != item.screen.route) {
                             navController.navigate(item.screen.route) {
                                 popUpTo(Screen.Home.route) {
                                     saveState = true
@@ -238,7 +250,8 @@ private fun MainBottomBar(
                         }
                     },
                     icon = item.icon,
-                    label = context.getString(item.labelResId)
+                    label = context.getString(item.labelResId),
+                    enabled = isEnabled
                 )
             }
         }
