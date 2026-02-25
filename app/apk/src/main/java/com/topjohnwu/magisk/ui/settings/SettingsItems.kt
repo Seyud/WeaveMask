@@ -14,7 +14,6 @@ import com.topjohnwu.magisk.core.Const
 import com.topjohnwu.magisk.core.Info
 import com.topjohnwu.magisk.core.ktx.activity
 import com.topjohnwu.magisk.core.tasks.AppMigration
-import com.topjohnwu.magisk.core.utils.LocaleSetting
 import com.topjohnwu.magisk.core.utils.MediaStoreUtils
 import com.topjohnwu.magisk.databinding.DialogSettingsAppNameBinding
 import com.topjohnwu.magisk.databinding.DialogSettingsDownloadPathBinding
@@ -40,31 +39,6 @@ object Logs : BaseSettingsItem.Blank() {
 
 object Customization : BaseSettingsItem.Section() {
     override val title = CoreR.string.settings_customization.asText()
-}
-
-object Language : BaseSettingsItem.Selector() {
-    private val names: Array<String> get() = LocaleSetting.available.names
-    private val tags: Array<String> get() = LocaleSetting.available.tags
-
-    override var value
-        get() = tags.indexOf(Config.locale)
-        set(value) {
-            Config.locale = tags[value]
-        }
-
-    override val title = CoreR.string.language.asText()
-
-    override fun entries(res: Resources) = names
-    override fun descriptions(res: Resources) = names
-}
-
-object LanguageSystem : BaseSettingsItem.Blank() {
-    override val title = CoreR.string.language.asText()
-    override val description: TextHolder
-        get() {
-            val locale = LocaleSetting.instance.appLocale
-            return locale?.getDisplayName(locale)?.asText() ?: CoreR.string.system_default.asText()
-        }
 }
 
 // --- App

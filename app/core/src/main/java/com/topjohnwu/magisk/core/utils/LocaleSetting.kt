@@ -15,7 +15,6 @@ import com.topjohnwu.magisk.core.AppApkPath
 import com.topjohnwu.magisk.core.AppContext
 import com.topjohnwu.magisk.core.Config
 import com.topjohnwu.magisk.core.R
-import com.topjohnwu.magisk.core.base.relaunch
 import com.topjohnwu.magisk.core.isRunningAsStub
 import org.xmlpull.v1.XmlPullParser
 import java.util.Locale
@@ -49,7 +48,7 @@ interface LocaleSetting {
             appLocale = locale
             Locale.setDefault(currentLocale)
             updateResource(AppContext.resources)
-            AppContext.foregroundActivity?.relaunch()
+            AppContext.foregroundActivity?.recreate()
         }
 
         @Suppress("DEPRECATION")
@@ -82,7 +81,7 @@ interface LocaleSetting {
             appLocale = localeList?.get(0)
             LocaleList.setDefault(currentLocaleList)
             updateResource(AppContext.resources)
-            AppContext.foregroundActivity?.relaunch()
+            AppContext.foregroundActivity?.recreate()
         }
 
         @Suppress("DEPRECATION")
@@ -104,8 +103,14 @@ interface LocaleSetting {
         override val currentLocale: Locale
             get() = appLocale ?: lm.systemLocales[0]
 
-        // These following methods should not be used
-        override fun setLocale(tag: String) {}
+        override fun setLocale(tag: String) {
+            lm.applicationLocales = if (tag.isBlank()) {
+                LocaleList.getEmptyLocaleList()
+            } else {
+                LocaleList.forLanguageTags(tag)
+            }
+        }
+
         override fun updateResource(res: Resources) {}
     }
 

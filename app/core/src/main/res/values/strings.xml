@@ -158,6 +158,9 @@
     <string name="settings_restore_app_title">Restore the Magisk app</string>
     <string name="settings_restore_app_summary">Unhide the app and restore the original APK</string>
     <string name="language">Language</string>
+    <string name="app_language">App language</string>
+    <string name="settings_language_suggested">Suggested language</string>
+    <string name="settings_language_all">All languages</string>
     <string name="system_default">(System default)</string>
     <string name="settings_check_update_title">Check for updates</string>
     <string name="settings_check_update_summary">Periodically check for updates in the background</string>

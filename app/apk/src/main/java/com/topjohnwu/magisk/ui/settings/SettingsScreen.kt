@@ -100,6 +100,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     bottomPadding: Dp,
     onNavigateToLog: () -> Unit,
+    onNavigateToAppLanguage: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -127,8 +128,6 @@ fun SettingsScreen(
     val showTapjack = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
     val showReauthenticate = Build.VERSION.SDK_INT < Build.VERSION_CODES.O
     val showRestrict = Const.Version.atLeast_30_1()
-    val useLocaleManager = LocaleSetting.useLocaleManager
-
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -283,32 +282,19 @@ fun SettingsScreen(
                     }
 
                     // 语言
-                    if (useLocaleManager) {
-                        SuperArrow(
-                            title = stringResource(CoreR.string.language),
-                            summary = LanguageSystem.description.getText(res).toString()
-                                .takeIf { it.isNotEmpty() },
-                            startAction = {
-                                Icon(
-                                    Icons.Rounded.Language,
-                                    modifier = Modifier.padding(end = 6.dp),
-                                    contentDescription = null,
-                                    tint = colorScheme.onBackground
-                                )
-                            },
-                            onClick = {
-                                viewModel.onItemPressed(dummyView, LanguageSystem) {
-                                    viewModel.onItemAction(dummyView, LanguageSystem)
-                                }
-                            }
-                        )
-                    } else {
-                        LanguageSelectorItem(
-                            res = res,
-                            dummyView = dummyView,
-                            viewModel = viewModel
-                        )
-                    }
+                    SuperArrow(
+                        title = stringResource(CoreR.string.language),
+                        summary = appLanguageSummary(res),
+                        startAction = {
+                            Icon(
+                                Icons.Rounded.Language,
+                                modifier = Modifier.padding(end = 6.dp),
+                                contentDescription = null,
+                                tint = colorScheme.onBackground
+                            )
+                        },
+                        onClick = onNavigateToAppLanguage
+                    )
 
                     // 添加桌面快捷方式
                     if (showAddShortcut) {
@@ -724,36 +710,12 @@ private fun createDummyView(context: Context): View {
 
 // ==================== Selector 类型组件（使用 SuperDropdown 行内选择） ====================
 
-/**
- * 语言选择器
- */
-@Composable
-private fun LanguageSelectorItem(
-    res: Resources,
-    dummyView: View,
-    viewModel: SettingsViewModel
-) {
-    val entries = Language.entries(res)
-    var selected by remember { mutableIntStateOf(Language.value) }
-
-    SuperDropdown(
-        title = stringResource(CoreR.string.language),
-        items = entries.toList(),
-        selectedIndex = selected.coerceIn(0, entries.size - 1),
-        onSelectedIndexChange = { index ->
-            Language.selectValue(index, dummyView, viewModel)
-            selected = index
-        },
-        startAction = {
-            Icon(
-                Icons.Rounded.Language,
-                modifier = Modifier.padding(end = 6.dp),
-                contentDescription = null,
-                tint = colorScheme.onBackground
-            )
-        },
-        enabled = Language.isEnabled
-    )
+private fun appLanguageSummary(res: Resources): String {
+    val locale = LocaleSetting.instance.appLocale
+    if (locale != null) {
+        return locale.getDisplayName(locale)
+    }
+    return res.getString(CoreR.string.system_default)
 }
 
 /**

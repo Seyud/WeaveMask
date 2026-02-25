@@ -71,6 +71,10 @@ class MainViewModel : BaseViewModel()
  */
 class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, ViewModelHolder {
 
+    companion object {
+        const val EXTRA_START_MAIN_TAB = "start_main_tab"
+    }
+
     /** Activity 扩展，用于处理权限请求等通用功能 */
     override val extension = ActivityExtension(this)
 
@@ -129,6 +133,9 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
      */
     @SuppressLint("InlinedApi")
     override fun onCreateUi(savedInstanceState: Bundle?) {
+        val initialMainTab = intent.getIntExtra(EXTRA_START_MAIN_TAB, 0)
+        intent.removeExtra(EXTRA_START_MAIN_TAB)
+
         // 设置 Compose 内容
         setContent {
             var colorMode by remember { mutableIntStateOf(Config.colorMode) }
@@ -168,6 +175,7 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
                 logViewModel = logViewModel,
                 installViewModel = installViewModel,
                 settingsViewModel = settingsViewModel,
+                initialMainTab = initialMainTab,
                 colorMode = colorMode,
                 keyColor = keyColor,
                 modifier = Modifier.fillMaxSize()

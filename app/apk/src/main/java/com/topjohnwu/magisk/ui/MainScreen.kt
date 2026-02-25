@@ -57,6 +57,7 @@ import com.topjohnwu.magisk.ui.log.LogScreen
 import com.topjohnwu.magisk.ui.log.LogViewModel
 import com.topjohnwu.magisk.ui.module.ModuleScreen
 import com.topjohnwu.magisk.ui.module.ModuleViewModel
+import com.topjohnwu.magisk.ui.settings.AppLanguageScreen
 import com.topjohnwu.magisk.ui.settings.SettingsScreen
 import com.topjohnwu.magisk.ui.settings.SettingsViewModel
 import com.topjohnwu.magisk.ui.superuser.SuperuserScreen
@@ -95,6 +96,8 @@ sealed class Screen(val route: String) {
     object Settings : Screen("settings")
     /** 日志 - 作为设置页的二级页面 */
     object Log : Screen("log")
+    /** 应用语言 - 作为设置页的二级页面 */
+    object AppLanguage : Screen("app_language")
     /** 安装 */
     object Install : Screen("install")
     /** 主题 */
@@ -209,11 +212,15 @@ fun MainScreen(
     logViewModel: LogViewModel,
     installViewModel: InstallViewModel,
     settingsViewModel: SettingsViewModel,
+    initialMainTab: Int = 0,
     colorMode: Int = 0,
     keyColor: Color? = null,
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
+    var rememberedMainTab by rememberSaveable {
+        mutableIntStateOf(initialMainTab.coerceIn(0, 3))
+    }
 
     WeaveMagiskTheme(colorMode = colorMode, keyColor = keyColor) {
         NavHost(
@@ -239,7 +246,9 @@ fun MainScreen(
                     moduleViewModel = moduleViewModel,
                     superuserViewModel = superuserViewModel,
                     settingsViewModel = settingsViewModel,
-                    logViewModel = logViewModel
+                    logViewModel = logViewModel,
+                    initialMainTab = rememberedMainTab,
+                    onCurrentTabChanged = { rememberedMainTab = it }
                 )
             }
 
@@ -266,6 +275,18 @@ fun MainScreen(
             ) {
                 LogScreen(
                     viewModel = logViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(
+                Screen.AppLanguage.route,
+                enterTransition = { slideInHorizontally(initialOffsetX = { it }, animationSpec = navTween()) },
+                exitTransition = { slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = navTween()) },
+                popEnterTransition = { slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = navTween()) },
+                popExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = navTween()) }
+            ) {
+                AppLanguageScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
@@ -311,6 +332,8 @@ private fun MainTabScreen(
     superuserViewModel: SuperuserViewModel,
     settingsViewModel: SettingsViewModel,
     logViewModel: LogViewModel,
+    initialMainTab: Int,
+    onCurrentTabChanged: (Int) -> Unit,
 ) {
     val context = LocalContext.current
     val hazeState = remember { HazeState() }
@@ -319,12 +342,16 @@ private fun MainTabScreen(
         tint = HazeTint(MiuixTheme.colorScheme.surface.copy(0.8f))
     )
 
-    val pagerState = rememberPagerState(initialPage = 0, pageCount = { 4 })
+    val pagerState = rememberPagerState(
+        initialPage = initialMainTab.coerceIn(0, 3),
+        pageCount = { 4 }
+    )
     val mainPagerState = rememberMainPagerState(pagerState)
 
     // 手势滑动 Pager 后同步选中态到底部栏
     LaunchedEffect(mainPagerState.pagerState.currentPage) {
         mainPagerState.syncPage()
+        onCurrentTabChanged(mainPagerState.pagerState.currentPage)
     }
 
     val bottomNavItems = getBottomNavItems()
@@ -410,6 +437,10 @@ private fun MainTabScreen(
                     bottomPadding = bottomPadding,
                     onNavigateToLog = {
                         navController.navigate(Screen.Log.route)
+                    },
+                    onNavigateToAppLanguage = {
+                        onCurrentTabChanged(3)
+                        navController.navigate(Screen.AppLanguage.route)
                     }
                 )
             }

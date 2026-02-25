@@ -21,7 +21,6 @@ import com.topjohnwu.magisk.core.isRunningAsStub
 import com.topjohnwu.magisk.core.ktx.activity
 import com.topjohnwu.magisk.core.ktx.toast
 import com.topjohnwu.magisk.core.tasks.AppMigration
-import com.topjohnwu.magisk.core.utils.LocaleSetting
 import com.topjohnwu.magisk.core.utils.RootUtils
 import com.topjohnwu.magisk.databinding.bindExtra
 import com.topjohnwu.magisk.events.AddHomeIconEvent
@@ -47,10 +46,7 @@ class SettingsViewModel : BaseViewModel(), BaseSettingsItem.Handler {
         val list = mutableListOf<BaseSettingsItem>(Logs)
 
         // Customization
-        list.addAll(listOf(
-            Customization,
-            if (LocaleSetting.useLocaleManager) LanguageSystem else Language
-        ))
+        list.add(Customization)
         if (isRunningAsStub && ShortcutManagerCompat.isRequestPinShortcutSupported(context))
             list.add(AddShortcut)
 
@@ -110,7 +106,6 @@ class SettingsViewModel : BaseViewModel(), BaseSettingsItem.Handler {
     override fun onItemAction(view: View, item: BaseSettingsItem) {
         when (item) {
             Logs -> onNavigateToLog?.invoke()
-            LanguageSystem -> view.activity.startActivity(LocaleSetting.localeSettingsIntent)
             AddShortcut -> AddHomeIconEvent().publish()
             SystemlessHosts -> createHosts()
             DenyListConfig -> SettingsFragmentDirections.actionSettingsFragmentToDenyFragment().navigate()

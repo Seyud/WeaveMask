@@ -160,6 +160,9 @@
     <string name="settings_restore_app_title">还原 Magisk 应用</string>
     <string name="settings_restore_app_summary">取消隐藏，恢复到原始应用</string>
     <string name="language">语言</string>
+    <string name="app_language">应用语言</string>
+    <string name="settings_language_suggested">建议的语言</string>
+    <string name="settings_language_all">所有语言</string>
     <string name="system_default">系统默认</string>
     <string name="settings_check_update_title">检查更新</string>
     <string name="settings_check_update_summary">定期在后台检查更新</string>
