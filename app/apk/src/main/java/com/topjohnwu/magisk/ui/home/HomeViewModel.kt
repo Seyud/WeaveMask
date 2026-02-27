@@ -64,6 +64,12 @@ class HomeViewModel(
     var envFixDialogState by mutableStateOf(EnvFixDialog.DialogState())
         private set
 
+    /**
+     * 卸载对话框状态
+     */
+    var uninstallDialogState by mutableStateOf(UninstallDialog.DialogState())
+        private set
+
     val magiskState
         get() = when {
             Info.isRooted && Info.env.isUnsupported -> State.OUTDATED
@@ -153,7 +159,28 @@ class HomeViewModel(
         }
     }.publish()
 
-    fun onDeletePressed() = UninstallDialog().show()
+    /**
+     * 显示卸载对话框
+     */
+    fun showUninstallDialog() {
+        uninstallDialogState = UninstallDialog.DialogState(visible = true)
+    }
+
+    /**
+     * 关闭卸载对话框
+     */
+    fun dismissUninstallDialog() {
+        uninstallDialogState = UninstallDialog.DialogState()
+    }
+
+    /**
+     * 开始恢复镜像
+     */
+    fun startRestoreImg() {
+        uninstallDialogState = uninstallDialogState.copy(isRestoring = true)
+    }
+
+    fun onDeletePressed() = showUninstallDialog()
 
     fun onManagerPressed() = when (appState) {
         State.LOADING -> SnackbarEvent(CoreR.string.loading).publish()

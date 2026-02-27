@@ -50,7 +50,12 @@ import top.yukonga.miuix.kmp.basic.Surface
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import android.widget.Toast
+import com.topjohnwu.magisk.core.ktx.toast
 import com.topjohnwu.magisk.dialog.EnvFixDialog
+import com.topjohnwu.magisk.dialog.UninstallDialog
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import top.yukonga.miuix.kmp.icon.extended.Backup
 import top.yukonga.miuix.kmp.icon.extended.Delete
 import top.yukonga.miuix.kmp.icon.extended.Download
@@ -83,6 +88,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var hasStartedLoading by rememberSaveable { mutableStateOf(false) }
     val scrollBehavior = MiuixScrollBehavior()
     val hazeState = remember { HazeState() }
@@ -105,6 +111,30 @@ fun HomeScreen(
         context = context,
         onDismiss = { viewModel.dismissEnvFixDialog() },
         onNavigateToInstall = { viewModel.navigateToInstall() }
+    )
+
+    // UninstallDialog
+    UninstallDialog(
+        state = viewModel.uninstallDialogState,
+        context = context,
+        onDismiss = { viewModel.dismissUninstallDialog() },
+        onRestoreImg = {
+            viewModel.startRestoreImg()
+            // 启动协程执行恢复镜像操作
+            coroutineScope.launch {
+                com.topjohnwu.magisk.core.tasks.MagiskInstaller.Restore().exec { success ->
+                    viewModel.dismissUninstallDialog()
+                    context.toast(
+                        if (success) CoreR.string.restore_done else CoreR.string.restore_fail,
+                        if (success) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
+                    )
+                }
+            }
+        },
+        onCompleteUninstall = {
+            viewModel.dismissUninstallDialog()
+            onNavigateToUninstall()
+        }
     )
 
     Scaffold(
@@ -163,7 +193,7 @@ fun HomeScreen(
             if (Info.env.isActive) {
                 item {
                     UninstallButton(
-                        onPressed = onNavigateToUninstall
+                        onPressed = { viewModel.onDeletePressed() }
                     )
                 }
             }
