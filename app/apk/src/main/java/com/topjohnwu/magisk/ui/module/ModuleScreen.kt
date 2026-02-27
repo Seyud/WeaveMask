@@ -66,6 +66,7 @@ import top.yukonga.miuix.kmp.icon.extended.MoreCircle
 import top.yukonga.miuix.kmp.icon.extended.UploadCloud
 import top.yukonga.miuix.kmp.icon.extended.Delete
 import top.yukonga.miuix.kmp.icon.extended.Undo
+import top.yukonga.miuix.kmp.icon.extended.Play
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -537,12 +538,36 @@ private fun ModuleItem(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // 操作按钮 - 图标+文字样式
             if (module.showAction && module.enabled && !module.removed) {
-                TextButton(
-                    text = context.getString(CoreR.string.module_action),
+                val secondaryContainer = MiuixTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f)
+                val actionIconTint = MiuixTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                IconButton(
+                    minHeight = 32.dp,
+                    minWidth = 32.dp,
                     onClick = { viewModel.runAction(module.id, module.name) },
-                    enabled = module.enabled
-                )
+                    enabled = module.enabled,
+                    backgroundColor = secondaryContainer,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(18.dp),
+                            imageVector = MiuixIcons.Play,
+                            tint = actionIconTint,
+                            contentDescription = context.getString(CoreR.string.module_action)
+                        )
+                        Text(
+                            text = context.getString(CoreR.string.module_action),
+                            color = actionIconTint,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.weight(1f))
