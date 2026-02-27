@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.foundation.layout.Box
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
@@ -53,10 +54,10 @@ import top.yukonga.miuix.kmp.basic.ListPopupDefaults
 import top.yukonga.miuix.kmp.basic.PopupPositionProvider
 import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.basic.Scaffold
-import top.yukonga.miuix.kmp.basic.SearchBar
 import top.yukonga.miuix.kmp.basic.Switch
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TopAppBar
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
 import top.yukonga.miuix.kmp.extra.SuperListPopup
 import top.yukonga.miuix.kmp.icon.MiuixIcons
@@ -91,7 +92,6 @@ fun ModuleScreen(
     val scope = rememberCoroutineScope()
     val uiState = viewModel.uiState
     var hasStartedLoading by rememberSaveable { mutableStateOf(false) }
-    var searchExpanded by rememberSaveable { mutableStateOf(false) }
     val showTopPopup = remember { mutableStateOf(false) }
     val pullToRefreshState = rememberPullToRefreshState()
     val localModulePicker = rememberLauncherForActivityResult(
@@ -144,6 +144,7 @@ fun ModuleScreen(
         backgroundColor = MiuixTheme.colorScheme.surface,
         tint = HazeTint(MiuixTheme.colorScheme.surface.copy(0.8f))
     )
+    val scrollBehavior = MiuixScrollBehavior()
 
     LaunchedEffect(hasStartedLoading) {
         if (!hasStartedLoading) {
@@ -156,71 +157,84 @@ fun ModuleScreen(
         Scaffold(
             modifier = modifier,
             topBar = {
-                TopAppBar(
-                    modifier = Modifier.hazeEffect(hazeState) {
-                        style = hazeStyle
-                        blurRadius = 30.dp
-                        noiseFactor = 0f
-                    },
-                    color = Color.Transparent,
-                    title = context.getString(CoreR.string.modules),
-                    actions = {
-                        SuperListPopup(
-                            show = showTopPopup,
-                            popupPositionProvider = ListPopupDefaults.ContextMenuPositionProvider,
-                            alignment = PopupPositionProvider.Align.TopEnd,
-                            onDismissRequest = {
-                                showTopPopup.value = false
+                // 使用 Box 包裹 TopAppBar 来实现 haze 模糊效果
+                Box {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .hazeEffect(hazeState) {
+                                style = hazeStyle
+                                blurRadius = 30.dp
+                                noiseFactor = 0f
                             }
-                        ) {
-                            ListPopupColumn {
-                                DropdownImpl(
-                                    text = "按名称排序",
-                                    isSelected = uiState.sortMode == ModuleSortMode.NAME,
-                                    optionSize = 3,
-                                    onSelectedIndexChange = {
-                                        viewModel.setSortMode(ModuleSortMode.NAME)
-                                        showTopPopup.value = false
-                                    },
-                                    index = 0
-                                )
-                                DropdownImpl(
-                                    text = "已启用优先",
-                                    isSelected = uiState.sortMode == ModuleSortMode.ENABLED_FIRST,
-                                    optionSize = 3,
-                                    onSelectedIndexChange = {
-                                        viewModel.setSortMode(ModuleSortMode.ENABLED_FIRST)
-                                        showTopPopup.value = false
-                                    },
-                                    index = 1
-                                )
-                                DropdownImpl(
-                                    text = "可更新优先",
-                                    isSelected = uiState.sortMode == ModuleSortMode.UPDATE_FIRST,
-                                    optionSize = 3,
-                                    onSelectedIndexChange = {
-                                        viewModel.setSortMode(ModuleSortMode.UPDATE_FIRST)
-                                        showTopPopup.value = false
-                                    },
-                                    index = 2
-                                )
+                    )
+                    TopAppBar(
+                        color = Color.Transparent,
+                        title = context.getString(CoreR.string.modules),
+                        scrollBehavior = scrollBehavior,
+                        actions = {
+                            SuperListPopup(
+                                show = showTopPopup,
+                                popupPositionProvider = ListPopupDefaults.ContextMenuPositionProvider,
+                                alignment = PopupPositionProvider.Align.TopEnd,
+                                onDismissRequest = {
+                                    showTopPopup.value = false
+                                }
+                            ) {
+                                ListPopupColumn {
+                                    DropdownImpl(
+                                        text = "按名称排序",
+                                        isSelected = uiState.sortMode == ModuleSortMode.NAME,
+                                        optionSize = 3,
+                                        onSelectedIndexChange = {
+                                            viewModel.setSortMode(ModuleSortMode.NAME)
+                                            showTopPopup.value = false
+                                        },
+                                        index = 0
+                                    )
+                                    DropdownImpl(
+                                        text = "已启用优先",
+                                        isSelected = uiState.sortMode == ModuleSortMode.ENABLED_FIRST,
+                                        optionSize = 3,
+                                        onSelectedIndexChange = {
+                                            viewModel.setSortMode(ModuleSortMode.ENABLED_FIRST)
+                                            showTopPopup.value = false
+                                        },
+                                        index = 1
+                                    )
+                                    DropdownImpl(
+                                        text = "可更新优先",
+                                        isSelected = uiState.sortMode == ModuleSortMode.UPDATE_FIRST,
+                                        optionSize = 3,
+                                        onSelectedIndexChange = {
+                                            viewModel.setSortMode(ModuleSortMode.UPDATE_FIRST)
+                                            showTopPopup.value = false
+                                        },
+                                        index = 2
+                                    )
+                                }
                             }
-                        }
 
-                        IconButton(
-                            modifier = Modifier.padding(end = 16.dp),
-                            onClick = {
-                                showTopPopup.value = true
-                            },
-                            holdDownState = showTopPopup.value
-                        ) {
-                            Icon(
-                                imageVector = MiuixIcons.MoreCircle,
-                                contentDescription = null
+                            IconButton(
+                                modifier = Modifier.padding(end = 8.dp),
+                                onClick = {
+                                    showTopPopup.value = true
+                                },
+                                holdDownState = showTopPopup.value
+                            ) {
+                                Icon(
+                                    imageVector = MiuixIcons.MoreCircle,
+                                    contentDescription = null
+                                )
+                            }
+
+                            RebootListPopup(
+                                modifier = Modifier.padding(end = 16.dp),
+                                alignment = PopupPositionProvider.Align.TopEnd,
                             )
                         }
-                    }
-                )
+                    )
+                }
             },
             content = { paddingValues ->
                 Column(
@@ -229,25 +243,17 @@ fun ModuleScreen(
                         .hazeSource(state = hazeState)
                         .padding(paddingValues)
                 ) {
-                    SearchBar(
-                        inputField = {
-                            InputField(
-                                query = uiState.query,
-                                onQueryChange = viewModel::setQuery,
-                                onSearch = { },
-                                expanded = searchExpanded,
-                                onExpandedChange = { searchExpanded = it },
-                                label = "搜索模块"
-                            )
-                        },
-                        onExpandedChange = { searchExpanded = it },
-                        expanded = searchExpanded
-                    ) {
-                    }
-
-                    HorizontalDivider(
-                        color = MiuixTheme.colorScheme.surfaceContainerHigh,
-                        thickness = 1.dp
+                    // 搜索框放在内容区域，带有水平间距
+                    InputField(
+                        query = uiState.query,
+                        onQueryChange = viewModel::setQuery,
+                        onSearch = { },
+                        expanded = false,
+                        onExpandedChange = { },
+                        label = "搜索模块",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 12.dp)
                     )
 
                     when {
@@ -287,7 +293,8 @@ fun ModuleScreen(
                                                 arrayOf("application/zip", "application/octet-stream")
                                             )
                                         },
-                                        bottomPadding = bottomPadding
+                                        bottomPadding = bottomPadding,
+                                        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
                                     )
                                 }
                             }
@@ -355,16 +362,18 @@ private fun EmptyContent(
  * @param viewModel 模块 ViewModel
  * @param modules 模块列表
  * @param bottomPadding 底部内边距
+ * @param modifier Modifier
  */
 @Composable
 private fun ModuleList(
     viewModel: ModuleViewModel,
     modules: List<ModuleInfo>,
     onInstallPressed: () -> Unit,
-    bottomPadding: Dp
+    bottomPadding: Dp,
+    modifier: Modifier = Modifier
 ) {
     LazyColumn(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
