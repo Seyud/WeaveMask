@@ -100,11 +100,8 @@ import dev.chrisbanes.haze.hazeSource
 import top.yukonga.miuix.kmp.basic.HorizontalDivider
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.Download
-import top.yukonga.miuix.kmp.icon.extended.Folder
-import top.yukonga.miuix.kmp.icon.extended.Lock
-import top.yukonga.miuix.kmp.icon.extended.Settings
+import androidx.compose.ui.res.painterResource
+import com.topjohnwu.magisk.R
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import com.topjohnwu.magisk.ui.theme.WeaveMagiskTheme
 
@@ -166,7 +163,7 @@ sealed class Screen(val route: String) {
  */
 data class BottomNavItem(
     val labelResId: Int,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector
+    val iconResId: Int
 )
 
 /**
@@ -443,19 +440,19 @@ private fun getBottomNavItems(): List<BottomNavItem> {
     return listOf(
         BottomNavItem(
             labelResId = CoreR.string.section_home,
-            icon = MiuixIcons.Download
+            iconResId = R.drawable.ic_home_filled_md2
         ),
         BottomNavItem(
             labelResId = CoreR.string.superuser,
-            icon = MiuixIcons.Lock
+            iconResId = R.drawable.ic_superuser_filled_md2
         ),
         BottomNavItem(
             labelResId = CoreR.string.modules,
-            icon = MiuixIcons.Folder
+            iconResId = R.drawable.ic_module_filled_md2
         ),
         BottomNavItem(
             labelResId = CoreR.string.settings,
-            icon = MiuixIcons.Settings
+            iconResId = R.drawable.ic_settings_filled_md2
         )
     )
 }
@@ -523,7 +520,7 @@ private fun MainTabScreen(
                     items = bottomNavItems.map { item ->
                         BottomNavItem(
                             labelResId = item.labelResId,
-                            icon = item.icon
+                            iconResId = item.iconResId
                         )
                     },
                     selected = mainPagerState.selectedPage,
@@ -682,7 +679,7 @@ private fun MainBottomBar(
                         modifier = Modifier
                             .padding(top = 8.dp)
                             .size(26.dp),
-                        imageVector = item.icon,
+                        painter = painterResource(id = item.iconResId),
                         contentDescription = context.getString(item.labelResId),
                         colorFilter = ColorFilter.tint(tint),
                     )
