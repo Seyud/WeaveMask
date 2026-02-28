@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.topjohnwu.magisk.MainDirections
 import com.topjohnwu.magisk.arch.AsyncLoadViewModel
 import com.topjohnwu.magisk.core.Info
 import com.topjohnwu.magisk.core.base.ContentResultCallback
@@ -244,8 +243,21 @@ class ModuleViewModel : AsyncLoadViewModel() {
         }
     }
 
+    /**
+     * 运行模块操作的回调
+     * 由 UI 层设置，用于处理导航到操作页面
+     */
+    var onRunAction: ((String, String) -> Unit)? = null
+
+    /**
+     * 运行模块操作
+     * 通过回调通知 UI 层进行导航
+     *
+     * @param id 模块 ID
+     * @param name 模块名称
+     */
     fun runAction(id: String, name: String) {
-        MainDirections.actionActionFragment(id, name).navigate()
+        onRunAction?.invoke(id, name)
     }
 
     companion object {

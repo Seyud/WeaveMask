@@ -83,6 +83,7 @@ import com.topjohnwu.magisk.ui.install.InstallScreen
 import com.topjohnwu.magisk.ui.install.InstallViewModel
 import com.topjohnwu.magisk.ui.log.LogScreen
 import com.topjohnwu.magisk.ui.log.LogViewModel
+import com.topjohnwu.magisk.ui.module.ActionScreen
 import com.topjohnwu.magisk.ui.module.ModuleScreen
 import com.topjohnwu.magisk.ui.module.ModuleViewModel
 import com.topjohnwu.magisk.ui.settings.AppLanguageScreen
@@ -141,8 +142,17 @@ sealed class Screen(val route: String) {
             return "flash/$encodedAction?uri=$encodedUri"
         }
     }
-    /** 操作 */
-    object Action : Screen("action")
+    /** 模块操作 */
+    object Action : Screen("action/{id}?name={name}") {
+        const val ID_ARG = "id"
+        const val NAME_ARG = "name"
+
+        fun createRoute(id: String, name: String): String {
+            val encodedId = Uri.encode(id)
+            val encodedName = Uri.encode(name)
+            return "action/$encodedId?name=$encodedName"
+        }
+    }
     /** 拒绝列表 */
     object Deny : Screen("deny")
 }
@@ -398,6 +408,30 @@ fun MainScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
+
+            composable(
+                route = Screen.Action.route,
+                arguments = listOf(
+                    navArgument(Screen.Action.ID_ARG) { type = NavType.StringType },
+                    navArgument(Screen.Action.NAME_ARG) {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    }
+                ),
+                enterTransition = { slideInHorizontally(initialOffsetX = { it }, animationSpec = navTween()) },
+                exitTransition = { slideOutHorizontally(targetOffsetX = { -it / 4 }, animationSpec = navTween()) },
+                popEnterTransition = { slideInHorizontally(initialOffsetX = { -it / 4 }, animationSpec = navTween()) },
+                popExitTransition = { slideOutHorizontally(targetOffsetX = { it }, animationSpec = navTween()) }
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getString(Screen.Action.ID_ARG) ?: ""
+                val name = backStackEntry.arguments?.getString(Screen.Action.NAME_ARG) ?: ""
+
+                ActionScreen(
+                    moduleId = id,
+                    moduleName = name,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }
@@ -548,6 +582,9 @@ private fun MainTabScreen(
                         navController.navigate(
                             Screen.Flash.createRoute(Const.Value.FLASH_ZIP, uri)
                         )
+                    },
+                    onRunAction = { id, name ->
+                        navController.navigate(Screen.Action.createRoute(id, name))
                     }
                 )
                 3 -> SettingsScreen(

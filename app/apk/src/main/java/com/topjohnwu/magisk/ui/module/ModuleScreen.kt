@@ -16,6 +16,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -80,6 +81,8 @@ import java.io.IOException
  *
  * @param viewModel 模块 ViewModel
  * @param bottomPadding 底部内边距，用于避免内容被底部导航栏遮挡
+ * @param onInstallModuleFromLocal 本地安装模块回调
+ * @param onRunAction 运行模块操作回调
  * @param modifier Modifier
  */
 @Composable
@@ -87,6 +90,7 @@ fun ModuleScreen(
     viewModel: ModuleViewModel,
     bottomPadding: Dp,
     onInstallModuleFromLocal: (Uri) -> Unit,
+    onRunAction: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -146,6 +150,14 @@ fun ModuleScreen(
         tint = HazeTint(MiuixTheme.colorScheme.surface.copy(0.8f))
     )
     val scrollBehavior = MiuixScrollBehavior()
+
+    // 设置运行模块操作的回调
+    DisposableEffect(onRunAction) {
+        viewModel.onRunAction = onRunAction
+        onDispose {
+            viewModel.onRunAction = null
+        }
+    }
 
     LaunchedEffect(hasStartedLoading) {
         if (!hasStartedLoading) {
