@@ -22,7 +22,9 @@ import androidx.compose.material.icons.rounded.AddToHomeScreen
 import androidx.compose.material.icons.rounded.AdminPanelSettings
 import androidx.compose.material.icons.rounded.AppBlocking
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.BlurOn
 import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.CallToAction
 import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.FolderOpen
@@ -44,6 +46,7 @@ import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Update
 import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -77,6 +80,7 @@ import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
+import com.topjohnwu.magisk.ui.theme.LocalEnableBlur
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
@@ -116,11 +120,16 @@ fun SettingsScreen(
     val activity = context as Activity
     val res = context.resources
     val scrollBehavior = MiuixScrollBehavior()
+    val enableBlur = LocalEnableBlur.current
     val hazeState = remember { HazeState() }
-    val hazeStyle = HazeStyle(
-        backgroundColor = colorScheme.surface,
-        tint = HazeTint(colorScheme.surface.copy(0.8f))
-    )
+    val hazeStyle = if (enableBlur) {
+        HazeStyle(
+            backgroundColor = colorScheme.surface,
+            tint = HazeTint(colorScheme.surface.copy(0.8f))
+        )
+    } else {
+        HazeStyle.Unspecified
+    }
 
     LaunchedEffect(onNavigateToLog, onNavigateToDenyListConfig) {
         viewModel.onNavigateToLog = onNavigateToLog
@@ -143,12 +152,14 @@ fun SettingsScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                modifier = Modifier.hazeEffect(hazeState) {
-                    style = hazeStyle
-                    blurRadius = 30.dp
-                    noiseFactor = 0f
-                },
-                color = Color.Transparent,
+                modifier = if (enableBlur) {
+                    Modifier.hazeEffect(hazeState) {
+                        style = hazeStyle
+                        blurRadius = 30.dp
+                        noiseFactor = 0f
+                    }
+                } else Modifier,
+                color = if (enableBlur) Color.Transparent else colorScheme.surface,
                 title = stringResource(CoreR.string.settings),
                 scrollBehavior = scrollBehavior
             )
@@ -162,7 +173,7 @@ fun SettingsScreen(
                 .scrollEndHaptic()
                 .overScrollVertical()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
-                .hazeSource(state = hazeState)
+                .then(if (enableBlur) Modifier.hazeSource(state = hazeState) else Modifier)
                 .padding(horizontal = 12.dp),
             contentPadding = innerPadding,
             overscrollEffect = null
@@ -283,6 +294,72 @@ fun SettingsScreen(
                             onSelectedIndexChange = { index ->
                                 Config.keyColor = colorValues[index]
                                 keyColorIndex = index
+                            }
+                        )
+                    }
+
+                    // 模糊
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        var enableBlur by rememberSaveable { mutableStateOf(Config.enableBlur) }
+                        SuperSwitch(
+                            title = stringResource(CoreR.string.settings_enable_blur),
+                            summary = stringResource(CoreR.string.settings_enable_blur_summary),
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.WaterDrop,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(CoreR.string.settings_enable_blur),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            checked = enableBlur,
+                            onCheckedChange = {
+                                Config.enableBlur = it
+                                enableBlur = it
+                            }
+                        )
+                    }
+
+                    // 悬浮底栏
+                    var enableFloatingBottomBar by rememberSaveable { mutableStateOf(Config.enableFloatingBottomBar) }
+                    SuperSwitch(
+                        title = stringResource(CoreR.string.settings_floating_bottom_bar),
+                        summary = stringResource(CoreR.string.settings_floating_bottom_bar_summary),
+                        startAction = {
+                            Icon(
+                                Icons.Rounded.CallToAction,
+                                modifier = Modifier.padding(end = 6.dp),
+                                contentDescription = stringResource(CoreR.string.settings_floating_bottom_bar),
+                                tint = colorScheme.onBackground
+                            )
+                        },
+                        checked = enableFloatingBottomBar,
+                        onCheckedChange = {
+                            Config.enableFloatingBottomBar = it
+                            enableFloatingBottomBar = it
+                        }
+                    )
+
+                    // 液态玻璃
+                    AnimatedVisibility(
+                        visible = enableFloatingBottomBar && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                    ) {
+                        var enableFloatingBottomBarBlur by rememberSaveable { mutableStateOf(Config.enableFloatingBottomBarBlur) }
+                        SuperSwitch(
+                            title = stringResource(CoreR.string.settings_enable_glass),
+                            summary = stringResource(CoreR.string.settings_enable_glass_summary),
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.BlurOn,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(CoreR.string.settings_enable_glass),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            checked = enableFloatingBottomBarBlur,
+                            onCheckedChange = {
+                                Config.enableFloatingBottomBarBlur = it
+                                enableFloatingBottomBarBlur = it
                             }
                         )
                     }

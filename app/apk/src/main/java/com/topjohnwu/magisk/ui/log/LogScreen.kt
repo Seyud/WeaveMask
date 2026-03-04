@@ -25,6 +25,7 @@ import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
+import com.topjohnwu.magisk.ui.theme.LocalEnableBlur
 import com.topjohnwu.magisk.core.R as CoreR
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CircularProgressIndicator
@@ -54,11 +55,16 @@ fun LogScreen(
     val context = LocalContext.current
     var showSuperuserLog by remember { mutableStateOf(false) }
     var hasStartedLoading by rememberSaveable { mutableStateOf(false) }
+    val enableBlur = LocalEnableBlur.current
     val hazeState = remember { HazeState() }
-    val hazeStyle = HazeStyle(
-        backgroundColor = MiuixTheme.colorScheme.surface,
-        tint = HazeTint(MiuixTheme.colorScheme.surface.copy(0.8f))
-    )
+    val hazeStyle = if (enableBlur) {
+        HazeStyle(
+            backgroundColor = MiuixTheme.colorScheme.surface,
+            tint = HazeTint(MiuixTheme.colorScheme.surface.copy(0.8f))
+        )
+    } else {
+        HazeStyle.Unspecified
+    }
 
     LaunchedEffect(hasStartedLoading) {
         if (!hasStartedLoading) {
@@ -76,12 +82,14 @@ fun LogScreen(
             modifier = modifier,
             topBar = {
                 TopAppBar(
-                    modifier = Modifier.hazeEffect(hazeState) {
-                        style = hazeStyle
-                        blurRadius = 30.dp
-                        noiseFactor = 0f
-                    },
-                    color = Color.Transparent,
+                    modifier = if (enableBlur) {
+                        Modifier.hazeEffect(hazeState) {
+                            style = hazeStyle
+                            blurRadius = 30.dp
+                            noiseFactor = 0f
+                        }
+                    } else Modifier,
+                    color = if (enableBlur) Color.Transparent else MiuixTheme.colorScheme.surface,
                     title = if (showSuperuserLog) {
                         context.getString(CoreR.string.superuser)
                     } else {
@@ -149,7 +157,7 @@ fun LogScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .hazeSource(state = hazeState)
+                        .then(if (enableBlur) Modifier.hazeSource(state = hazeState) else Modifier)
                         .padding(paddingValues)
                 ) {
                     when {

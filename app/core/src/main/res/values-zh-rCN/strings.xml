@@ -286,4 +286,12 @@
     <string name="refreshing">刷新中…</string>
     <string name="refreshed_successfully">刷新成功</string>
 
+    <!-- Blur & Floating Bottom Bar -->
+    <string name="settings_enable_blur">模糊</string>
+    <string name="settings_enable_blur_summary">启用顶栏和底栏的模糊效果</string>
+    <string name="settings_floating_bottom_bar">悬浮底栏</string>
+    <string name="settings_floating_bottom_bar_summary">使用 Apple 风格的悬浮底栏</string>
+    <string name="settings_enable_glass">液态玻璃</string>
+    <string name="settings_enable_glass_summary">启用悬浮底栏的液态玻璃效果</string>
+
 </resources>

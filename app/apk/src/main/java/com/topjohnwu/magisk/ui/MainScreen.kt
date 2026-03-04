@@ -4,34 +4,30 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.Easing
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.captionBar
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Settings
+import com.topjohnwu.magisk.ui.icon.SuperuserIcon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
@@ -41,20 +37,28 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.topjohnwu.magisk.core.Info
+import com.topjohnwu.magisk.core.Const
+import com.topjohnwu.magisk.core.R as CoreR
+import com.topjohnwu.magisk.core.model.module.LocalModule
+import com.topjohnwu.magisk.ui.component.FloatingBottomBar
+import com.topjohnwu.magisk.ui.component.FloatingBottomBarItem
+import com.topjohnwu.magisk.ui.theme.LocalEnableBlur
+import com.topjohnwu.magisk.ui.theme.LocalEnableFloatingBottomBar
+import com.topjohnwu.magisk.ui.theme.LocalEnableFloatingBottomBarBlur
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.job
@@ -71,10 +75,6 @@ import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.sin
 import kotlin.math.sqrt
-import com.topjohnwu.magisk.core.Info
-import com.topjohnwu.magisk.core.Const
-import com.topjohnwu.magisk.core.R as CoreR
-import com.topjohnwu.magisk.core.model.module.LocalModule
 import com.topjohnwu.magisk.ui.flash.FlashScreen
 import com.topjohnwu.magisk.ui.flash.FlashViewModel
 import com.topjohnwu.magisk.ui.home.HomeScreen
@@ -97,11 +97,12 @@ import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
-import top.yukonga.miuix.kmp.basic.HorizontalDivider
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.NavigationBar
+import top.yukonga.miuix.kmp.basic.NavigationBarItem
+import top.yukonga.miuix.kmp.basic.NavigationItem
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.Text
-import androidx.compose.ui.res.painterResource
-import com.topjohnwu.magisk.R
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import com.topjohnwu.magisk.ui.theme.WeaveMagiskTheme
 
@@ -155,16 +156,18 @@ sealed class Screen(val route: String) {
 }
 
 /**
- * 底部导航项定义
+ * 底部导航目的地枚举
  * 固定四个导航项：主页、超级用户、模块、设置
- *
- * @param labelResId 标签字符串资源 ID
- * @param icon 图标（使用 MiuixIcons）
  */
-data class BottomNavItem(
+enum class BottomBarDestination(
     val labelResId: Int,
-    val iconResId: Int
-)
+    val icon: ImageVector,
+) {
+    Home(CoreR.string.section_home, Icons.Rounded.Home),
+    SuperUser(CoreR.string.superuser, SuperuserIcon),
+    Module(CoreR.string.modules, Icons.Rounded.Extension),
+    Setting(CoreR.string.settings, Icons.Rounded.Settings)
+}
 
 /**
  * Pager 状态管理，与 KernelSU 相同的即时选中 + 异步动画模式
@@ -434,30 +437,6 @@ fun MainScreen(
 }
 
 /**
- * 获取固定的底部导航项列表
- */
-private fun getBottomNavItems(): List<BottomNavItem> {
-    return listOf(
-        BottomNavItem(
-            labelResId = CoreR.string.section_home,
-            iconResId = R.drawable.ic_home_filled_md2
-        ),
-        BottomNavItem(
-            labelResId = CoreR.string.superuser,
-            iconResId = R.drawable.ic_superuser_filled_md2
-        ),
-        BottomNavItem(
-            labelResId = CoreR.string.modules,
-            iconResId = R.drawable.ic_module_filled_md2
-        ),
-        BottomNavItem(
-            labelResId = CoreR.string.settings,
-            iconResId = R.drawable.ic_settings_filled_md2
-        )
-    )
-}
-
-/**
  * 主 Tab 页面
  * 使用 HorizontalPager 实现 Tab 切换，所有页面预渲染 (beyondViewportPageCount=3)
  * 点击底部导航栏时图标立即高亮（selectedPage 即时更新），Pager 异步滑动动画
@@ -474,12 +453,25 @@ private fun MainTabScreen(
     initialMainTab: Int,
     onCurrentTabChanged: (Int) -> Unit,
 ) {
-    val context = LocalContext.current
+    val enableBlur = LocalEnableBlur.current
+    val enableFloatingBottomBar = LocalEnableFloatingBottomBar.current
+    val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
+
     val hazeState = remember { HazeState() }
-    val hazeStyle = HazeStyle(
-        backgroundColor = MiuixTheme.colorScheme.surface,
-        tint = HazeTint(MiuixTheme.colorScheme.surface.copy(0.8f))
-    )
+    val hazeStyle = if (enableBlur) {
+        HazeStyle(
+            backgroundColor = MiuixTheme.colorScheme.surface,
+            tint = HazeTint(MiuixTheme.colorScheme.surface.copy(0.8f))
+        )
+    } else {
+        HazeStyle.Unspecified
+    }
+
+    val surfaceColor = MiuixTheme.colorScheme.surface
+    val backdrop = rememberLayerBackdrop {
+        drawRect(surfaceColor)
+        drawContent()
+    }
 
     val pagerState = rememberPagerState(
         initialPage = initialMainTab.coerceIn(0, 3),
@@ -496,43 +488,98 @@ private fun MainTabScreen(
         onCurrentTabChanged(mainPagerState.pagerState.currentPage)
     }
 
-    val bottomNavItems = getBottomNavItems()
+    val destinations = BottomBarDestination.entries
     val isSuperuserEnabled = Info.showSuperUser
     val isModuleEnabled = Info.env.isActive && LocalModule.loaded()
 
     Scaffold(
         bottomBar = {
-            Column(
-                modifier = Modifier
-                    .hazeEffect(hazeState) {
-                        style = hazeStyle
-                        blurRadius = 30.dp
-                        noiseFactor = 0f
-                    }
-                    .background(Color.Transparent)
-            ) {
-                HorizontalDivider(
-                    thickness = 0.6.dp,
-                    color = MiuixTheme.colorScheme.dividerLine.copy(0.8f)
-                )
-                MainBottomBar(
-                    color = Color.Transparent,
-                    items = bottomNavItems.map { item ->
-                        BottomNavItem(
-                            labelResId = item.labelResId,
-                            iconResId = item.iconResId
-                        )
-                    },
-                    selected = mainPagerState.selectedPage,
-                    isEnabled = { index ->
-                        when (index) {
+            if (enableFloatingBottomBar) {
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    FloatingBottomBar(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = {},
+                            )
+                            .padding(
+                                bottom = 12.dp + WindowInsets.navigationBars
+                                    .asPaddingValues().calculateBottomPadding()
+                            ),
+                    selectedIndex = { mainPagerState.selectedPage },
+                    onSelected = { index ->
+                        val enabled = when (index) {
                             1 -> isSuperuserEnabled
                             2 -> isModuleEnabled
                             else -> true
                         }
+                        if (enabled) mainPagerState.animateToPage(index)
                     },
-                    onClick = { index ->
-                        mainPagerState.animateToPage(index)
+                    backdrop = backdrop,
+                    tabsCount = destinations.size,
+                    isBlurEnabled = enableFloatingBottomBarBlur,
+                ) {
+                    destinations.forEachIndexed { index, destination ->
+                        FloatingBottomBarItem(
+                            onClick = {
+                                val enabled = when (index) {
+                                    1 -> isSuperuserEnabled
+                                    2 -> isModuleEnabled
+                                    else -> true
+                                }
+                                if (enabled) mainPagerState.animateToPage(index)
+                            },
+                            modifier = Modifier.defaultMinSize(minWidth = 76.dp)
+                        ) {
+                            Icon(
+                                imageVector = destination.icon,
+                                contentDescription = stringResource(destination.labelResId),
+                                tint = MiuixTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = stringResource(destination.labelResId),
+                                fontSize = 11.sp,
+                                lineHeight = 14.sp,
+                                color = MiuixTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Visible
+                            )
+                        }
+                    }
+                }
+                }
+            } else {
+                NavigationBar(
+                    modifier = if (enableBlur) {
+                        Modifier.hazeEffect(hazeState) {
+                            style = hazeStyle
+                            blurRadius = 30.dp
+                            noiseFactor = 0f
+                        }
+                    } else Modifier,
+                    color = if (enableBlur) Color.Transparent else MiuixTheme.colorScheme.surface,
+                    content = {
+                        destinations.forEachIndexed { index, destination ->
+                            val enabled = when (index) {
+                                1 -> isSuperuserEnabled
+                                2 -> isModuleEnabled
+                                else -> true
+                            }
+                            NavigationBarItem(
+                                icon = destination.icon,
+                                label = stringResource(destination.labelResId),
+                                selected = mainPagerState.selectedPage == index,
+                                enabled = enabled,
+                                onClick = {
+                                    mainPagerState.animateToPage(index)
+                                }
+                            )
+                        }
                     }
                 )
             }
@@ -553,7 +600,12 @@ private fun MainTabScreen(
                     top = paddingValues.calculateTopPadding(),
                     end = paddingValues.calculateEndPadding(layoutDirection)
                 )
-                .hazeSource(state = hazeState)
+                .then(if (enableBlur) Modifier.hazeSource(state = hazeState) else Modifier)
+                .then(
+                    if (enableFloatingBottomBar && enableFloatingBottomBarBlur)
+                        Modifier.layerBackdrop(backdrop)
+                    else Modifier
+                )
         ) { page ->
             when (page) {
                 0 -> HomeScreen(
@@ -600,107 +652,6 @@ private fun MainTabScreen(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun MainBottomBar(
-    items: List<BottomNavItem>,
-    selected: Int,
-    isEnabled: (Int) -> Boolean,
-    onClick: (Int) -> Unit,
-    color: Color = MiuixTheme.colorScheme.surface,
-) {
-    require(items.size in 2..5) { "BottomBar must have between 2 and 5 items" }
-    val currentOnClick by rememberUpdatedState(onClick)
-    val context = LocalContext.current
-
-    val captionBarPaddings = WindowInsets.captionBar.only(WindowInsetsSides.Bottom).asPaddingValues()
-    val captionBarBottomPaddingValue = captionBarPaddings.calculateBottomPadding()
-    val animatedCaptionBarHeight by animateDpAsState(
-        targetValue = if (captionBarBottomPaddingValue > 0.dp) captionBarBottomPaddingValue else 0.dp,
-        animationSpec = tween(durationMillis = 300),
-        label = "captionBarHeight"
-    )
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(color)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val itemHeight = 64.dp
-            val itemWeight = 1f / items.size
-
-            items.forEachIndexed { index, item ->
-                val enabled = isEnabled(index)
-                val isSelected = selected == index
-                var isPressed by remember { mutableStateOf(false) }
-                val onSurfaceContainerColor = MiuixTheme.colorScheme.onSurfaceContainer
-                val onSurfaceContainerVariantColor = MiuixTheme.colorScheme.onSurfaceContainerVariant
-
-                val activeColor = if (enabled) onSurfaceContainerColor else onSurfaceContainerColor.copy(alpha = 0.32f)
-                val inactiveColor = if (enabled) onSurfaceContainerVariantColor else onSurfaceContainerVariantColor.copy(alpha = 0.32f)
-                val tint = when {
-                    isPressed -> if (isSelected) activeColor.copy(alpha = 0.5f) else inactiveColor.copy(alpha = 0.5f)
-                    isSelected -> activeColor
-                    else -> inactiveColor
-                }
-                val fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-
-                val pressModifier = if (enabled) {
-                    Modifier.pointerInput(index) {
-                        detectTapGestures(
-                            onPress = {
-                                isPressed = true
-                                tryAwaitRelease()
-                                isPressed = false
-                            },
-                            onTap = { currentOnClick(index) },
-                        )
-                    }
-                } else {
-                    Modifier
-                }
-
-                Column(
-                    modifier = Modifier
-                        .height(itemHeight)
-                        .weight(itemWeight)
-                        .then(pressModifier),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Top,
-                ) {
-                    Image(
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .size(26.dp),
-                        painter = painterResource(id = item.iconResId),
-                        contentDescription = context.getString(item.labelResId),
-                        colorFilter = ColorFilter.tint(tint),
-                    )
-                    Text(
-                        modifier = Modifier.padding(top = 1.dp, bottom = 8.dp),
-                        text = context.getString(item.labelResId),
-                        color = tint,
-                        textAlign = TextAlign.Center,
-                        fontSize = 12.sp,
-                        fontWeight = fontWeight,
-                    )
-                }
-            }
-        }
-        val navigationBarsPadding = WindowInsets.navigationBars.asPaddingValues()
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(navigationBarsPadding.calculateBottomPadding() + animatedCaptionBarHeight)
-                .pointerInput(Unit) { detectTapGestures { } }
-        )
     }
 }
 

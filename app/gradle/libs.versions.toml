@@ -8,7 +8,9 @@ libsu = "6.0.0"
 okhttp = "5.3.2"
 retrofit = "3.0.0"
 room = "2.8.4"
-haze = "1.7.1"
+haze = "1.7.2"
+backdrop = "1.0.6"
+capsule = "2.1.3"
 
 [libraries]
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version = "1.83" }
@@ -55,6 +57,10 @@ libsu-nio = { module = "com.github.topjohnwu.libsu:nio", version.ref = "libsu" }
 
 # Haze
 haze = { module = "dev.chrisbanes.haze:haze-android", version.ref = "haze" }
+
+# Backdrop (Liquid Glass)
+backdrop = { module = "io.github.kyant0:backdrop", version.ref = "backdrop" }
+capsule = { module = "io.github.kyant0:capsule", version.ref = "capsule" }
 
 # Rikka
 rikka-recyclerview = { module = "dev.rikka.rikkax.recyclerview:recyclerview-ktx", version = "1.3.2" }

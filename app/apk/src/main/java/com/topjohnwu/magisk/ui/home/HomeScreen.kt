@@ -37,6 +37,7 @@ import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
+import com.topjohnwu.magisk.ui.theme.LocalEnableBlur
 import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
@@ -93,11 +94,16 @@ fun HomeScreen(
     val coroutineScope = rememberCoroutineScope()
     var hasStartedLoading by rememberSaveable { mutableStateOf(false) }
     val scrollBehavior = MiuixScrollBehavior()
+    val enableBlur = LocalEnableBlur.current
     val hazeState = remember { HazeState() }
-    val hazeStyle = HazeStyle(
-        backgroundColor = MiuixTheme.colorScheme.surface,
-        tint = HazeTint(MiuixTheme.colorScheme.surface.copy(0.8f))
-    )
+    val hazeStyle = if (enableBlur) {
+        HazeStyle(
+            backgroundColor = MiuixTheme.colorScheme.surface,
+            tint = HazeTint(MiuixTheme.colorScheme.surface.copy(0.8f))
+        )
+    } else {
+        HazeStyle.Unspecified
+    }
 
     // 仅首次进入时触发加载，避免每次返回主页都触发重任务导致转场掉帧
     LaunchedEffect(hasStartedLoading) {
@@ -143,12 +149,14 @@ fun HomeScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                modifier = Modifier.hazeEffect(hazeState) {
-                    style = hazeStyle
-                    blurRadius = 30.dp
-                    noiseFactor = 0f
-                },
-                color = Color.Transparent,
+                modifier = if (enableBlur) {
+                    Modifier.hazeEffect(hazeState) {
+                        style = hazeStyle
+                        blurRadius = 30.dp
+                        noiseFactor = 0f
+                    }
+                } else Modifier,
+                color = if (enableBlur) Color.Transparent else MiuixTheme.colorScheme.surface,
                 title = context.getString(CoreR.string.section_home),
                 scrollBehavior = scrollBehavior,
                 actions = {
@@ -168,7 +176,7 @@ fun HomeScreen(
                 .scrollEndHaptic()
                 .overScrollVertical()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
-                .hazeSource(state = hazeState)
+                .then(if (enableBlur) Modifier.hazeSource(state = hazeState) else Modifier)
                 .padding(horizontal = 12.dp),
             contentPadding = innerPadding,
             overscrollEffect = null

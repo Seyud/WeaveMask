@@ -51,6 +51,7 @@ import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
+import com.topjohnwu.magisk.ui.theme.LocalEnableBlur
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Checkbox
 import top.yukonga.miuix.kmp.basic.Icon
@@ -87,11 +88,16 @@ fun DenyListScreen(
     var showSystem by rememberSaveable { mutableStateOf(false) }
     var showOS by rememberSaveable { mutableStateOf(false) }
     var expandedItems by rememberSaveable { mutableStateOf(emptySet<String>()) }
+    val enableBlur = LocalEnableBlur.current
     val hazeState = remember { HazeState() }
-    val hazeStyle = HazeStyle(
-        backgroundColor = MiuixTheme.colorScheme.surface,
-        tint = HazeTint(MiuixTheme.colorScheme.surface.copy(0.8f))
-    )
+    val hazeStyle = if (enableBlur) {
+        HazeStyle(
+            backgroundColor = MiuixTheme.colorScheme.surface,
+            tint = HazeTint(MiuixTheme.colorScheme.surface.copy(0.8f))
+        )
+    } else {
+        HazeStyle.Unspecified
+    }
 
     var hasStartedLoading by remember { mutableStateOf(false) }
 
@@ -114,12 +120,14 @@ fun DenyListScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                modifier = Modifier.hazeEffect(hazeState) {
-                    style = hazeStyle
-                    blurRadius = 30.dp
-                    noiseFactor = 0f
-                },
-                color = Color.Transparent,
+                modifier = if (enableBlur) {
+                    Modifier.hazeEffect(hazeState) {
+                        style = hazeStyle
+                        blurRadius = 30.dp
+                        noiseFactor = 0f
+                    }
+                } else Modifier,
+                color = if (enableBlur) Color.Transparent else MiuixTheme.colorScheme.surface,
                 title = context.getString(CoreR.string.denylist),
                 navigationIcon = {
                     IconButton(
@@ -152,7 +160,7 @@ fun DenyListScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .hazeSource(state = hazeState)
+                    .then(if (enableBlur) Modifier.hazeSource(state = hazeState) else Modifier)
                     .padding(paddingValues)
             ) {
                 SearchBar(

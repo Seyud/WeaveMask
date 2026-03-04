@@ -18,9 +18,11 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -53,6 +55,9 @@ import com.topjohnwu.magisk.ui.log.LogViewModel
 import com.topjohnwu.magisk.ui.module.ModuleViewModel
 import com.topjohnwu.magisk.ui.settings.SettingsViewModel
 import com.topjohnwu.magisk.ui.superuser.SuperuserViewModel
+import com.topjohnwu.magisk.ui.theme.LocalEnableBlur
+import com.topjohnwu.magisk.ui.theme.LocalEnableFloatingBottomBar
+import com.topjohnwu.magisk.ui.theme.LocalEnableFloatingBottomBarBlur
 import com.topjohnwu.magisk.ui.theme.Theme
 import com.topjohnwu.magisk.view.MagiskDialog
 import com.topjohnwu.magisk.view.Shortcuts
@@ -149,6 +154,9 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
             val keyColor = remember(keyColorInt) {
                 if (keyColorInt == 0) null else Color(keyColorInt)
             }
+            var enableBlur by remember { mutableStateOf(Config.enableBlur) }
+            var enableFloatingBottomBar by remember { mutableStateOf(Config.enableFloatingBottomBar) }
+            var enableFloatingBottomBarBlur by remember { mutableStateOf(Config.enableFloatingBottomBarBlur) }
 
             val darkMode = when (colorMode) {
                 2, 5 -> true
@@ -166,6 +174,9 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
                     when (key) {
                         Config.Key.COLOR_MODE -> colorMode = Config.colorMode
                         Config.Key.KEY_COLOR -> keyColorInt = Config.keyColor
+                        Config.Key.ENABLE_BLUR -> enableBlur = Config.enableBlur
+                        Config.Key.ENABLE_FLOATING_BOTTOM_BAR -> enableFloatingBottomBar = Config.enableFloatingBottomBar
+                        Config.Key.ENABLE_FLOATING_BOTTOM_BAR_BLUR -> enableFloatingBottomBarBlur = Config.enableFloatingBottomBarBlur
                     }
                 }
                 Config.prefs.registerOnSharedPreferenceChangeListener(listener)
@@ -174,19 +185,25 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
                 }
             }
 
-            MainScreen(
-                homeViewModel = homeViewModel,
-                flashViewModel = flashViewModel,
-                moduleViewModel = moduleViewModel,
-                superuserViewModel = superuserViewModel,
-                logViewModel = logViewModel,
-                installViewModel = installViewModel,
-                settingsViewModel = settingsViewModel,
-                initialMainTab = initialMainTab,
-                colorMode = colorMode,
-                keyColor = keyColor,
-                modifier = Modifier.fillMaxSize()
-            )
+            CompositionLocalProvider(
+                LocalEnableBlur provides enableBlur,
+                LocalEnableFloatingBottomBar provides enableFloatingBottomBar,
+                LocalEnableFloatingBottomBarBlur provides enableFloatingBottomBarBlur,
+            ) {
+                MainScreen(
+                    homeViewModel = homeViewModel,
+                    flashViewModel = flashViewModel,
+                    moduleViewModel = moduleViewModel,
+                    superuserViewModel = superuserViewModel,
+                    logViewModel = logViewModel,
+                    installViewModel = installViewModel,
+                    settingsViewModel = settingsViewModel,
+                    initialMainTab = initialMainTab,
+                    colorMode = colorMode,
+                    keyColor = keyColor,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
         installSplashUiReadyObserver()
 

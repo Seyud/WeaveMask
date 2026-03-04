@@ -76,14 +76,18 @@ dependencies {
     // Navigation 3 + Miuix NavDisplay
     implementation("androidx.navigation3:navigation3-runtime:1.1.0-alpha03")
     implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:2.10.0")
-    implementation("top.yukonga.miuix.kmp:miuix-navigation3-ui:0.8.3")
+    implementation("top.yukonga.miuix.kmp:miuix-navigation3-ui:0.8.5")
 
     // Miuix
-    implementation("top.yukonga.miuix.kmp:miuix:0.8.3")
-    implementation("top.yukonga.miuix.kmp:miuix-icons:0.8.3")
+    implementation("top.yukonga.miuix.kmp:miuix:0.8.5")
+    implementation("top.yukonga.miuix.kmp:miuix-icons:0.8.5")
 
     // Haze (Gaussian blur)
     implementation(libs.haze)
+
+    // Backdrop (Liquid Glass)
+    implementation(libs.backdrop)
+    implementation(libs.capsule)
 
     // Make sure kapt runs with a proper kotlin-stdlib
     kapt(kotlin("stdlib"))

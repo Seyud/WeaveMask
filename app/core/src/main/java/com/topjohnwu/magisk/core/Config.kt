@@ -6,14 +6,18 @@ import com.topjohnwu.magisk.core.di.ServiceLocator
 import com.topjohnwu.magisk.core.repository.DBConfig
 import com.topjohnwu.magisk.core.repository.PreferenceConfig
 import com.topjohnwu.magisk.core.utils.LocaleSetting
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 object Config : PreferenceConfig, DBConfig {
+
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val stringDB get() = ServiceLocator.stringDB
     override val settingsDB get() = ServiceLocator.settingsDB
     override val context get() = ServiceLocator.deContext
-    override val coroutineScope get() = GlobalScope
+    override val coroutineScope get() = appScope
 
     object Key {
         // db configs
@@ -46,6 +50,9 @@ object Config : PreferenceConfig, DBConfig {
         const val ASKED_HOME = "asked_home"
         const val DOH = "doh"
         const val RAND_NAME = "rand_name"
+        const val ENABLE_BLUR = "enable_blur"
+        const val ENABLE_FLOATING_BOTTOM_BAR = "enable_floating_bottom_bar"
+        const val ENABLE_FLOATING_BOTTOM_BAR_BLUR = "enable_floating_bottom_bar_blur"
 
         val NO_MIGRATION = setOf(ASKED_HOME, SU_REQUEST_TIMEOUT,
             SU_AUTO_RESPONSE, SU_REAUTH, SU_TAPJACK)
@@ -111,6 +118,9 @@ object Config : PreferenceConfig, DBConfig {
     var themeOrdinal by preference(Key.THEME_ORDINAL, 0)
     var colorMode by preference(Key.COLOR_MODE, 0)
     var keyColor by preference(Key.KEY_COLOR, 0)
+    var enableBlur by preference(Key.ENABLE_BLUR, true)
+    var enableFloatingBottomBar by preference(Key.ENABLE_FLOATING_BOTTOM_BAR, false)
+    var enableFloatingBottomBarBlur by preference(Key.ENABLE_FLOATING_BOTTOM_BAR_BLUR, false)
 
     private var checkUpdatePrefs by preference(Key.CHECK_UPDATES, true)
     private var localePrefs by preference(Key.LOCALE, "")

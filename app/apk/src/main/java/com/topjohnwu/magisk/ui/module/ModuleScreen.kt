@@ -42,6 +42,7 @@ import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
+import com.topjohnwu.magisk.ui.theme.LocalEnableBlur
 import com.topjohnwu.magisk.core.R as CoreR
 import com.topjohnwu.magisk.arch.UIActivity
 import com.topjohnwu.magisk.core.download.DownloadEngine
@@ -149,11 +150,16 @@ fun ModuleScreen(
             }
         }
     }
+    val enableBlur = LocalEnableBlur.current
     val hazeState = remember { HazeState() }
-    val hazeStyle = HazeStyle(
-        backgroundColor = MiuixTheme.colorScheme.surface,
-        tint = HazeTint(MiuixTheme.colorScheme.surface.copy(0.8f))
-    )
+    val hazeStyle = if (enableBlur) {
+        HazeStyle(
+            backgroundColor = MiuixTheme.colorScheme.surface,
+            tint = HazeTint(MiuixTheme.colorScheme.surface.copy(0.8f))
+        )
+    } else {
+        HazeStyle.Unspecified
+    }
     val scrollBehavior = MiuixScrollBehavior()
 
     // 设置运行模块操作的回调
@@ -206,17 +212,19 @@ fun ModuleScreen(
             topBar = {
                 // 使用 Box 包裹 TopAppBar 来实现 haze 模糊效果
                 Box {
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .hazeEffect(hazeState) {
-                                style = hazeStyle
-                                blurRadius = 30.dp
-                                noiseFactor = 0f
-                            }
-                    )
+                    if (enableBlur) {
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .hazeEffect(hazeState) {
+                                    style = hazeStyle
+                                    blurRadius = 30.dp
+                                    noiseFactor = 0f
+                                }
+                        )
+                    }
                     TopAppBar(
-                        color = Color.Transparent,
+                        color = if (enableBlur) Color.Transparent else MiuixTheme.colorScheme.surface,
                         title = context.getString(CoreR.string.modules),
                         scrollBehavior = scrollBehavior,
                         actions = {
@@ -287,7 +295,7 @@ fun ModuleScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .hazeSource(state = hazeState)
+                        .then(if (enableBlur) Modifier.hazeSource(state = hazeState) else Modifier)
                         .padding(paddingValues)
                 ) {
                     // 搜索框放在内容区域，带有水平间距

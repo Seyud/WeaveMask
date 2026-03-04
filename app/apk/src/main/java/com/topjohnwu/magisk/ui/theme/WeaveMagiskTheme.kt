@@ -2,10 +2,15 @@ package com.topjohnwu.magisk.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.ThemeController
+
+val LocalEnableBlur = staticCompositionLocalOf { true }
+val LocalEnableFloatingBottomBar = staticCompositionLocalOf { false }
+val LocalEnableFloatingBottomBarBlur = staticCompositionLocalOf { true }
 
 /**
  * WeaveMagisk 主题包装函数
