@@ -123,9 +123,9 @@
     <string name="settings_dark_mode_dark">深色模式</string>
     <string name="settings_download_path_title">下載路徑</string>
     <string name="settings_download_path_message">檔案將被儲存在：%1$s</string>
-    <string name="settings_hide_app_title">隱藏 Magisk</string>
+    <string name="settings_hide_app_title">隱藏 WeaveMask</string>
     <string name="settings_hide_app_summary">安裝一個隨機套件名稱和客製化應用程式名稱的代理應用程式</string>
-    <string name="settings_restore_app_title">還原 Magisk</string>
+    <string name="settings_restore_app_title">還原 WeaveMask</string>
     <string name="settings_restore_app_summary">取消隱藏並還原為原始套件</string>
     <string name="language">語言</string>
     <string name="app_language">應用語言</string>
@@ -209,7 +209,7 @@
     <string name="flashing">正在刷入……</string>
     <string name="done">完成！</string>
     <string name="failure">失敗！</string>
-    <string name="hide_app_title">正在隱藏 Magisk……</string>
+    <string name="hide_app_title">正在隱藏 WeaveMask……</string>
     <string name="open_link_failed_toast">沒有可以開啟此連結的應用程式</string>
     <string name="complete_uninstall">完全解除安裝</string>
     <string name="restore_img">還原原始映像檔</string>
@@ -227,7 +227,7 @@
     <string name="unsupport_system_app_msg">本應用程式不支援以系統應用程式的方式執行。請恢復為使用者應用程式。</string>
     <string name="unsupport_other_su_msg">偵測到一個不是來自 Magisk 的「su」二進位檔案。請移除其他 Root 方案。</string>
     <string name="unsupport_external_storage_msg">應用程式已被安裝到外部儲存空間。請移動應用程式至內部儲存空間。</string>
-    <string name="unsupport_nonroot_stub_msg">應用程式無法在 Root 權限遺失的情況下以隱藏模式執行。請還原為原始套件。</string>
+    <string name="unsupport_nonroot_stub_msg">應用程式無法在 Root 權限遺失的情況下以隱藏模式執行。請還原為原始 WeaveMask 應用程式。</string>
     <string name="unsupport_nonroot_stub_title">@string/settings_restore_app_title</string>
     <string name="external_rw_permission_denied">授予儲存空間存取權以啟用此功能</string>
     <string name="install_unknown_denied">允許「安裝未知應用程式」以啟用此功能</string>

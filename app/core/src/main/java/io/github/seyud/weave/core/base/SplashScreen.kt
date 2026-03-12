@@ -99,7 +99,7 @@ class SplashController<T>(private val activity: T)
     }
 
     private fun T.initializeApp() {
-        val prevPkg = launchPackage
+        val prevPkg = intent.getStringExtra(Const.Key.PREV_PKG) ?: launchPackage
         val prevConfig = intent.getBundleExtra(Const.Key.PREV_CONFIG)
         val isPackageMigration = prevPkg != null && prevConfig != null
 

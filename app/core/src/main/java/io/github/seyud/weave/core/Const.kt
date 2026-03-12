@@ -51,6 +51,7 @@ object Const {
         // intents
         const val OPEN_SECTION = "section"
         const val PREV_CONFIG = "prev_config"
+        const val PREV_PKG = "prev_pkg"
     }
 
     object Value {

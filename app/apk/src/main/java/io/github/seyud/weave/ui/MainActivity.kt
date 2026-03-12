@@ -57,6 +57,7 @@ import io.github.seyud.weave.ui.home.HomeViewModel
 import io.github.seyud.weave.ui.install.InstallViewModel
 import io.github.seyud.weave.ui.log.LogViewModel
 import io.github.seyud.weave.ui.module.ModuleViewModel
+import io.github.seyud.weave.ui.component.MiuixConfirmDialog
 import io.github.seyud.weave.ui.settings.SettingsViewModel
 import io.github.seyud.weave.ui.superuser.SuperuserViewModel
 import io.github.seyud.weave.ui.theme.LocalEnableBlur
@@ -118,6 +119,8 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
 
     /** 设置 ViewModel */
     private val settingsViewModel: SettingsViewModel by viewModels { VMFactory }
+
+    private var showAddShortcutDialog by mutableStateOf(false)
 
     /**
      * Activity 创建时的生命周期回调
@@ -224,6 +227,19 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
                     colorMode = colorMode,
                     keyColor = keyColor,
                     modifier = Modifier.fillMaxSize()
+                )
+
+                MiuixConfirmDialog(
+                    show = showAddShortcutDialog,
+                    title = getString(CoreR.string.add_shortcut_title),
+                    summary = getString(CoreR.string.add_shortcut_msg),
+                    confirmText = getString(android.R.string.ok),
+                    dismissText = getString(android.R.string.cancel),
+                    onDismissRequest = { showAddShortcutDialog = false },
+                    onConfirm = {
+                        showAddShortcutDialog = false
+                        Shortcuts.addHomeIcon(this@MainActivity)
+                    },
                 )
             }
         }
@@ -376,7 +392,9 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
                             showInvalidStateMessage()
                         } else {
                             lifecycleScope.launch {
-                                AppMigration.restore(this@MainActivity)
+                                if (!AppMigration.restoreApp(this@MainActivity)) {
+                                    toast(CoreR.string.failure, Toast.LENGTH_LONG)
+                                }
                             }
                         }
                     }
@@ -445,20 +463,7 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
             ShortcutManagerCompat.isRequestPinShortcutSupported(this)) {
             // 标记已询问过
             Config.askedHome = true
-            MagiskDialog(this).apply {
-                setTitle(CoreR.string.add_shortcut_title)
-                setMessage(CoreR.string.add_shortcut_msg)
-                setButton(MagiskDialog.ButtonType.NEGATIVE) {
-                    text = android.R.string.cancel
-                }
-                setButton(MagiskDialog.ButtonType.POSITIVE) {
-                    text = android.R.string.ok
-                    onClick {
-                        Shortcuts.addHomeIcon(this@MainActivity)
-                    }
-                }
-                setCancelable(true)
-            }.show()
+            showAddShortcutDialog = true
         }
     }
 }

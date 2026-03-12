@@ -55,6 +55,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -63,6 +64,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -72,10 +74,8 @@ import io.github.seyud.weave.core.Const
 import io.github.seyud.weave.core.Info
 import io.github.seyud.weave.core.isRunningAsStub
 import io.github.seyud.weave.core.ktx.toast
-import io.github.seyud.weave.core.tasks.AppMigration
 import io.github.seyud.weave.core.utils.LocaleSetting
 import io.github.seyud.weave.core.utils.MediaStoreUtils
-import io.github.seyud.weave.view.MagiskDialog
 import com.topjohnwu.superuser.Shell
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
@@ -99,6 +99,7 @@ import top.yukonga.miuix.kmp.extra.SuperSwitch
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import kotlinx.coroutines.launch
 import io.github.seyud.weave.core.App as CoreApp
 import io.github.seyud.weave.core.R as CoreR
 
@@ -125,6 +126,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val activity = context as Activity
     val res = context.resources
+    val coroutineScope = rememberCoroutineScope()
     val scrollBehavior = MiuixScrollBehavior()
     val enableBlur = LocalEnableBlur.current
     val hazeState = remember { HazeState() }
@@ -153,6 +155,21 @@ fun SettingsScreen(
     val showTapjack = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
     val showReauthenticate = Build.VERSION.SDK_INT < Build.VERSION_CODES.O
     val showRestrict = Const.Version.atLeast_30_1()
+    var updateChannelIndex by rememberSaveable { mutableIntStateOf(Config.updateChannel) }
+    var showCustomChannelDialog by rememberSaveable { mutableStateOf(false) }
+    var customChannelUrl by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(Config.customChannelUrl))
+    }
+    var showDownloadPathDialog by rememberSaveable { mutableStateOf(false) }
+    var downloadPathInput by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(Config.downloadDir))
+    }
+    var showHideDialog by rememberSaveable { mutableStateOf(false) }
+    var hideAppName by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(HideAppDefaultName))
+    }
+    var isHideInProgress by rememberSaveable { mutableStateOf(false) }
+    var isRestoreInProgress by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier,
@@ -486,14 +503,18 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     // 更新通道
-                    UpdateChannelSelectorItem(res = res)
+                    UpdateChannelSelectorItem(
+                        res = res,
+                        selectedIndex = updateChannelIndex,
+                        onSelectedIndexChange = { index ->
+                            Config.updateChannel = index
+                            Info.resetUpdate()
+                            updateChannelIndex = index
+                        },
+                    )
 
                     // 自定义更新通道 URL
-                    val showCustomChannel = remember { mutableStateOf(UpdateChannelUrl.isEnabled()) }
-                    LaunchedEffect(Unit) {
-                        showCustomChannel.value = UpdateChannelUrl.isEnabled()
-                    }
-                    if (showCustomChannel.value) {
+                    if (updateChannelIndex == Config.Value.CUSTOM_CHANNEL) {
                         SuperArrow(
                             title = stringResource(CoreR.string.settings_update_custom),
                             summary = UpdateChannelUrl.getDescription(res),
@@ -505,7 +526,10 @@ fun SettingsScreen(
                                     tint = colorScheme.onBackground
                                 )
                             },
-                            onClick = { UpdateChannelUrl.showDialog(activity, viewModel) }
+                            onClick = {
+                                customChannelUrl = TextFieldValue(Config.customChannelUrl)
+                                showCustomChannelDialog = true
+                            }
                         )
                     }
 
@@ -561,7 +585,10 @@ fun SettingsScreen(
                                 tint = colorScheme.onBackground
                             )
                         },
-                        onClick = { DownloadPath.showDialog(activity, viewModel) }
+                        onClick = {
+                            downloadPathInput = TextFieldValue(Config.downloadDir)
+                            showDownloadPathDialog = true
+                        }
                     )
 
                     // 随机文件名
@@ -598,7 +625,18 @@ fun SettingsScreen(
                                         tint = colorScheme.onBackground
                                     )
                                 },
-                                onClick = { viewModel.restoreApp() }
+                                onClick = {
+                                    if (!isRestoreInProgress) {
+                                        coroutineScope.launch {
+                                            isRestoreInProgress = true
+                                            val success = viewModel.restoreApp(context)
+                                            isRestoreInProgress = false
+                                            if (!success) {
+                                                context.toast(CoreR.string.failure, Toast.LENGTH_LONG)
+                                            }
+                                        }
+                                    }
+                                }
                             )
                         } else {
                             SuperArrow(
@@ -612,7 +650,10 @@ fun SettingsScreen(
                                         tint = colorScheme.onBackground
                                     )
                                 },
-                                onClick = { Hide.showDialog(activity, viewModel) }
+                                onClick = {
+                                    hideAppName = TextFieldValue(HideAppDefaultName)
+                                    showHideDialog = true
+                                }
                             )
                         }
                     }
@@ -838,6 +879,77 @@ fun SettingsScreen(
             }
         }
     }
+
+    HideAppDialog(
+        show = showHideDialog,
+        appName = hideAppName,
+        onAppNameChange = { hideAppName = it },
+        onDismissRequest = {
+            if (!isHideInProgress) {
+                showHideDialog = false
+            }
+        },
+        onConfirm = {
+            val newName = hideAppName.text.ifBlank { HideAppDefaultName }
+            coroutineScope.launch {
+                isHideInProgress = true
+                val success = viewModel.hideApp(context, newName)
+                isHideInProgress = false
+                if (success) {
+                    showHideDialog = false
+                } else {
+                    context.toast(CoreR.string.failure, Toast.LENGTH_LONG)
+                }
+            }
+        },
+    )
+
+    HideAppLoadingDialog(
+        show = isHideInProgress,
+        title = stringResource(CoreR.string.hide_app_title),
+    )
+
+    HideAppLoadingDialog(
+        show = isRestoreInProgress,
+        title = stringResource(CoreR.string.restore_img_msg),
+    )
+
+    io.github.seyud.weave.ui.component.MiuixTextInputDialog(
+        show = showCustomChannelDialog,
+        title = stringResource(CoreR.string.settings_update_custom),
+        value = customChannelUrl,
+        onValueChange = { customChannelUrl = it },
+        label = stringResource(CoreR.string.settings_update_custom_msg),
+        confirmText = stringResource(android.R.string.ok),
+        dismissText = stringResource(android.R.string.cancel),
+        onDismissRequest = { showCustomChannelDialog = false },
+        onConfirm = {
+            Config.customChannelUrl = customChannelUrl.text
+            Info.resetUpdate()
+            showCustomChannelDialog = false
+        },
+        confirmEnabled = true,
+    )
+
+    io.github.seyud.weave.ui.component.MiuixTextInputDialog(
+        show = showDownloadPathDialog,
+        title = stringResource(CoreR.string.settings_download_path_title),
+        value = downloadPathInput,
+        onValueChange = { downloadPathInput = it },
+        label = stringResource(CoreR.string.settings_download_path_title),
+        helperText = context.getString(
+            CoreR.string.settings_download_path_message,
+            MediaStoreUtils.fullPath(Config.downloadDir),
+        ),
+        confirmText = stringResource(android.R.string.ok),
+        dismissText = stringResource(android.R.string.cancel),
+        onDismissRequest = { showDownloadPathDialog = false },
+        onConfirm = {
+            Config.downloadDir = downloadPathInput.text
+            showDownloadPathDialog = false
+        },
+        confirmEnabled = true,
+    )
 }
 
 /**
@@ -856,19 +968,18 @@ private fun appLanguageSummary(res: Resources): String {
  * 更新通道选择器
  */
 @Composable
-private fun UpdateChannelSelectorItem(res: Resources) {
+private fun UpdateChannelSelectorItem(
+    res: Resources,
+    selectedIndex: Int,
+    onSelectedIndexChange: (Int) -> Unit,
+) {
     val entries = res.getStringArray(CoreR.array.update_channel)
-    var selected by rememberSaveable { mutableIntStateOf(Config.updateChannel) }
 
     SuperDropdown(
         title = stringResource(CoreR.string.settings_update_channel_title),
         items = entries.toList(),
-        selectedIndex = selected.coerceIn(0, entries.size - 1),
-        onSelectedIndexChange = { index ->
-            Config.updateChannel = index
-            Info.resetUpdate()
-            selected = index
-        },
+        selectedIndex = selectedIndex.coerceIn(0, entries.size - 1),
+        onSelectedIndexChange = onSelectedIndexChange,
         startAction = {
             Icon(
                 Icons.Rounded.Update,

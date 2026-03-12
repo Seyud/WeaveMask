@@ -1,8 +1,7 @@
 package io.github.seyud.weave.ui.settings
 
-import android.app.Activity
+import android.content.Context
 import android.widget.Toast
-import androidx.lifecycle.viewModelScope
 import io.github.seyud.weave.arch.BaseViewModel
 import io.github.seyud.weave.core.AppContext
 import io.github.seyud.weave.core.ktx.toast
@@ -10,6 +9,7 @@ import io.github.seyud.weave.core.tasks.AppMigration
 import io.github.seyud.weave.core.utils.RootUtils
 import io.github.seyud.weave.events.AddHomeIconEvent
 import io.github.seyud.weave.events.AuthEvent
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import io.github.seyud.weave.core.R as CoreR
 
@@ -52,26 +52,16 @@ class SettingsViewModel : BaseViewModel() {
     /**
      * 恢复应用
      */
-    fun restoreApp() {
-        viewModelScope.launch {
-            val activity = getActivity()
-            if (activity != null) {
-                AppMigration.restore(activity)
-            }
-        }
+    suspend fun restoreApp(context: Context): Boolean {
+        return AppMigration.restoreApp(context)
     }
 
     /**
      * 隐藏应用
      * @param newName 新的应用名称
      */
-    fun hideApp(newName: String) {
-        viewModelScope.launch {
-            val activity = getActivity()
-            if (activity != null) {
-                AppMigration.hide(activity, newName)
-            }
-        }
+    suspend fun hideApp(context: Context, newName: String): Boolean {
+        return AppMigration.hideApp(context, newName)
     }
 
     /**
@@ -91,11 +81,4 @@ class SettingsViewModel : BaseViewModel() {
         AuthEvent { callback(true) }.publish()
     }
 
-    /**
-     * 获取当前 Activity
-     */
-    private fun getActivity(): Activity? {
-        // 通过事件系统获取当前 Activity
-        return null
-    }
 }

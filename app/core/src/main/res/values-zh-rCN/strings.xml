@@ -155,9 +155,9 @@
     <string name="color_sakura">樱花色</string>
     <string name="settings_download_path_title">下载路径</string>
     <string name="settings_download_path_message">文件将保存到 %1$s</string>
-    <string name="settings_hide_app_title">隐藏 Magisk 应用</string>
+    <string name="settings_hide_app_title">隐藏 WeaveMask 应用</string>
     <string name="settings_hide_app_summary">安装具有随机包名和自定义应用名称的代理应用</string>
-    <string name="settings_restore_app_title">还原 Magisk 应用</string>
+    <string name="settings_restore_app_title">还原 WeaveMask 应用</string>
     <string name="settings_restore_app_summary">取消隐藏，恢复到原始应用</string>
     <string name="language">语言</string>
     <string name="app_language">应用语言</string>
@@ -251,7 +251,7 @@
     <string name="done">完成！</string>
     <string name="done_action">%1$s 操作运行完成</string>
     <string name="failure">失败</string>
-    <string name="hide_app_title">正在隐藏 Magisk 应用</string>
+    <string name="hide_app_title">正在隐藏 WeaveMask 应用</string>
     <string name="open_link_failed_toast">找不到能打开此链接的应用</string>
     <string name="complete_uninstall">完全卸载</string>
     <string name="restore_img">还原原厂映像</string>
@@ -269,7 +269,7 @@
     <string name="unsupport_system_app_msg">Magisk 不支持安装为系统应用，请还原为用户应用。</string>
     <string name="unsupport_other_su_msg">检测到不属于 Magisk 的 su 文件，请删除其他超级用户程序。</string>
     <string name="unsupport_external_storage_msg">不支持将 Magisk 安装到外置存储卡，请将应用移动回内部存储空间。</string>
-    <string name="unsupport_nonroot_stub_msg">超级用户权限丢失，应用无法在隐藏状态下继续工作，请恢复到原始 Magisk 应用。</string>
+    <string name="unsupport_nonroot_stub_msg">超级用户权限丢失，应用无法在隐藏状态下继续工作，请恢复到原始 WeaveMask 应用。</string>
     <string name="unsupport_nonroot_stub_title">@string/settings_restore_app_title</string>
     <string name="external_rw_permission_denied">允许访问存储空间以使用此功能</string>
     <string name="post_notifications_denied">允许发送通知以使用此功能</string>

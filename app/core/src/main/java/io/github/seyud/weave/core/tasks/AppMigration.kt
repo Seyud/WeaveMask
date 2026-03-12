@@ -6,15 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.widget.Toast
 import io.github.seyud.weave.StubApk
 import io.github.seyud.weave.core.AppApkPath
 import io.github.seyud.weave.core.BuildConfig.APP_PACKAGE_NAME
 import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.Const
-import io.github.seyud.weave.core.R
 import io.github.seyud.weave.core.ktx.await
-import io.github.seyud.weave.core.ktx.toast
 import io.github.seyud.weave.core.ktx.writeTo
 import io.github.seyud.weave.core.signing.JarMap
 import io.github.seyud.weave.core.signing.SignApk
@@ -183,6 +180,9 @@ object AppMigration {
     private fun launchApp(context: Context, pkg: String) {
         val intent = context.packageManager.getLaunchIntentForPackage(pkg) ?: return
         intent.putExtra(Const.Key.PREV_CONFIG, Config.toBundle())
+        if (context.packageName != pkg) {
+            intent.putExtra(Const.Key.PREV_PKG, context.packageName)
+        }
         val options = ActivityOptions.makeBasic()
         if (Build.VERSION.SDK_INT >= 34) {
             options.setShareIdentityEnabled(true)
@@ -237,47 +237,27 @@ object AppMigration {
         }
     }
 
-    @Suppress("DEPRECATION")
-    suspend fun hide(activity: Activity, label: String) {
-        val dialog = android.app.ProgressDialog(activity).apply {
-            setTitle(activity.getString(R.string.hide_app_title))
-            isIndeterminate = true
-            setCancelable(false)
-            show()
-        }
-        val success = withContext(Dispatchers.IO) {
-            patchAndHide(activity, label)
-        }
-        if (!success) {
-            dialog.dismiss()
-            activity.toast(R.string.failure, Toast.LENGTH_LONG)
+    suspend fun hideApp(context: Context, label: String): Boolean {
+        return withContext(Dispatchers.IO) {
+            patchAndHide(context, label)
         }
     }
 
     suspend fun restoreApp(context: Context): Boolean {
         val apk = StubApk.current(context)
+        val previousPkg = context.packageName.takeIf { it != APP_PACKAGE_NAME }
         val cmd = "adb_pm_install $apk $APP_PACKAGE_NAME"
         if (Shell.cmd(cmd).await().isSuccess) {
             Config.suManager = ""
             Shell.cmd("touch $AppApkPath").exec()
+            if (previousPkg != null) {
+                // Do not rely solely on the relaunched app process to clean up the proxy package.
+                Shell.cmd("(sleep 2; pm uninstall $previousPkg)& >/dev/null 2>&1").exec()
+            }
             launchApp(context, APP_PACKAGE_NAME)
             return true
         }
         return false
-    }
-
-    @Suppress("DEPRECATION")
-    suspend fun restore(activity: Activity) {
-        val dialog = android.app.ProgressDialog(activity).apply {
-            setTitle(activity.getString(R.string.restore_img_msg))
-            isIndeterminate = true
-            setCancelable(false)
-            show()
-        }
-        if (!restoreApp(activity)) {
-            activity.toast(R.string.failure, Toast.LENGTH_LONG)
-        }
-        dialog.dismiss()
     }
 
     suspend fun upgradeStub(context: Context, apk: File): Intent? {
