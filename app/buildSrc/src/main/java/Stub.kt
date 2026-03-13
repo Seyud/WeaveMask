@@ -154,6 +154,14 @@ private abstract class ManifestUpdater: DefaultTask() {
         )
 
         cmpList.add("""
+            |<activity
+            |    android:name="x.COMPONENT_PLACEHOLDER_6"
+            |    android:exported="false"
+            |    android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+            |    android:configChanges="density|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|locale|layoutDirection|fontScale|keyboard|keyboardHidden" />""".ind(2)
+        )
+
+        cmpList.add("""
             |<service
             |    android:name="x.COMPONENT_PLACEHOLDER_4"
             |    android:exported="false"

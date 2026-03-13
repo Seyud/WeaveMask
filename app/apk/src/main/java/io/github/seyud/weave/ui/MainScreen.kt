@@ -1,6 +1,5 @@
 package io.github.seyud.weave.ui
 
-import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.EaseInOut
@@ -52,6 +51,7 @@ import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import io.github.seyud.weave.core.Info
 import io.github.seyud.weave.core.Const
+import io.github.seyud.weave.core.intent
 import io.github.seyud.weave.core.R as CoreR
 import io.github.seyud.weave.core.model.module.LocalModule
 import io.github.seyud.weave.ui.component.FloatingBottomBar
@@ -645,7 +645,7 @@ private fun MainTabScreen(
                     },
                     onOpenWebUi = { id, name ->
                         context.startActivity(
-                            Intent(context, io.github.seyud.weave.ui.webui.WebUIActivity::class.java)
+                            context.intent<io.github.seyud.weave.ui.webui.WebUIActivity>()
                                 .putExtra("id", id)
                                 .putExtra("name", name)
                         )

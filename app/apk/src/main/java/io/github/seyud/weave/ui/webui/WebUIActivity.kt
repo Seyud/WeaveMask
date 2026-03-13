@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import io.github.seyud.weave.core.Config
+import io.github.seyud.weave.core.isRunningAsStub
 import io.github.seyud.weave.ui.theme.WeaveMagiskTheme
 import top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator
 
@@ -60,6 +61,13 @@ class WebUIActivity : ComponentActivity() {
 private fun MainContent(activity: ComponentActivity, onFinish: () -> Unit) {
     val moduleId = remember { activity.intent.getStringExtra("id") }
     val webUIState = remember { WebUIState() }
+
+    LaunchedEffect(Unit) {
+        if (isRunningAsStub && !webUIState.isInsetsEnabled) {
+            webUIState.isInsetsEnabled = true
+            (activity as? WebUIActivity)?.enableEdgeToEdge(true)
+        }
+    }
 
     LaunchedEffect(moduleId) {
         if (moduleId == null) {

@@ -64,6 +64,7 @@ import io.github.seyud.weave.ui.theme.LocalEnableBlur
 import io.github.seyud.weave.ui.theme.LocalEnableFloatingBottomBar
 import io.github.seyud.weave.ui.theme.LocalEnableFloatingBottomBarBlur
 import io.github.seyud.weave.ui.theme.Theme
+import io.github.seyud.weave.ui.theme.WeaveMagiskTheme
 import io.github.seyud.weave.view.MagiskDialog
 import io.github.seyud.weave.view.Shortcuts
 import kotlinx.coroutines.launch
@@ -229,18 +230,20 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
                     modifier = Modifier.fillMaxSize()
                 )
 
-                MiuixConfirmDialog(
-                    show = showAddShortcutDialog,
-                    title = getString(CoreR.string.add_shortcut_title),
-                    summary = getString(CoreR.string.add_shortcut_msg),
-                    confirmText = getString(android.R.string.ok),
-                    dismissText = getString(android.R.string.cancel),
-                    onDismissRequest = { showAddShortcutDialog = false },
-                    onConfirm = {
-                        showAddShortcutDialog = false
-                        Shortcuts.addHomeIcon(this@MainActivity)
-                    },
-                )
+                WeaveMagiskTheme(colorMode = colorMode, keyColor = keyColor) {
+                    MiuixConfirmDialog(
+                        show = showAddShortcutDialog,
+                        title = getString(CoreR.string.add_shortcut_title),
+                        summary = getString(CoreR.string.add_shortcut_msg),
+                        confirmText = getString(android.R.string.ok),
+                        dismissText = getString(android.R.string.cancel),
+                        onDismissRequest = { showAddShortcutDialog = false },
+                        onConfirm = {
+                            showAddShortcutDialog = false
+                            Shortcuts.addHomeIcon(this@MainActivity)
+                        },
+                    )
+                }
             }
         }
         installSplashUiReadyObserver()

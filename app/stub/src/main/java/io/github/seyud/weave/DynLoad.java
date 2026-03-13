@@ -23,7 +23,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -204,29 +208,44 @@ public class DynLoad {
     private static Map<String, String> generateMapping(PackageInfo stub, PackageInfo app) {
         var mapping = new HashMap<String, String>();
         {
-            var src = stub.activities;
-            var dest = app.activities;
+            var stubList = new ArrayList<>(Arrays.asList(stub.activities));
+            var appList = new ArrayList<>(Arrays.asList(app.activities));
 
-            final ActivityInfo sa;
-            final ActivityInfo da;
-            final ActivityInfo sb;
-            final ActivityInfo db;
-            if (src[0].exported) {
-                sa = src[0];
-                sb = src[1];
-            } else {
-                sa = src[1];
-                sb = src[0];
+            var stubGroups = groupActivities(stubList);
+            var appGroups = groupActivities(appList);
+
+            for (var entry : appGroups.entrySet()) {
+                var key = entry.getKey();
+                var appGroup = entry.getValue();
+                var stubGroup = stubGroups.get(key);
+                if (stubGroup == null || stubGroup.isEmpty())
+                    continue;
+                appGroup.sort(Comparator.comparing(a -> a.name));
+                stubGroup.sort(Comparator.comparing(a -> a.name));
+                int n = Math.min(stubGroup.size(), appGroup.size());
+                for (int i = 0; i < n; i++) {
+                    mapping.put(stubGroup.get(i).name, appGroup.get(i).name);
+                }
+                if (n > 0) {
+                    stubGroup.subList(0, n).clear();
+                    appGroup.subList(0, n).clear();
+                }
             }
-            if (dest[0].exported) {
-                da = dest[0];
-                db = dest[1];
-            } else {
-                da = dest[1];
-                db = dest[0];
+
+            var stubRemaining = new ArrayList<ActivityInfo>();
+            for (var list : stubGroups.values()) {
+                stubRemaining.addAll(list);
             }
-            mapping.put(sa.name, da.name);
-            mapping.put(sb.name, db.name);
+            var appRemaining = new ArrayList<ActivityInfo>();
+            for (var list : appGroups.values()) {
+                appRemaining.addAll(list);
+            }
+            stubRemaining.sort(Comparator.comparing(a -> a.name));
+            appRemaining.sort(Comparator.comparing(a -> a.name));
+            int n = Math.min(stubRemaining.size(), appRemaining.size());
+            for (int i = 0; i < n; i++) {
+                mapping.put(stubRemaining.get(i).name, appRemaining.get(i).name);
+            }
         }
 
         {
@@ -267,5 +286,18 @@ public class DynLoad {
             mapping.put(src[0].name, dest[0].name);
         }
         return mapping;
+    }
+
+    private static Map<String, List<ActivityInfo>> groupActivities(List<ActivityInfo> activities) {
+        var groups = new HashMap<String, List<ActivityInfo>>();
+        for (var info : activities) {
+            var key = activityKey(info);
+            groups.computeIfAbsent(key, k -> new ArrayList<>()).add(info);
+        }
+        return groups;
+    }
+
+    private static String activityKey(ActivityInfo info) {
+        return info.exported + ":" + info.directBootAware;
     }
 }
