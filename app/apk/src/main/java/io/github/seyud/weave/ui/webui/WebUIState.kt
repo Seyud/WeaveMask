@@ -8,7 +8,6 @@ import android.webkit.WebView
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.topjohnwu.superuser.Shell
 
 sealed class WebUIEvent {
     data object Loading : WebUIEvent()
@@ -23,12 +22,10 @@ sealed class WebUIEvent {
 
 class WebUIState {
     var webView: WebView? = null
-    var rootShell: Shell? = null
     lateinit var modDir: String
     var moduleName: String = ""
 
     var uiEvent by mutableStateOf<WebUIEvent>(WebUIEvent.Loading)
-    var isUrlLoaded = false
     var currentInsets: Insets = Insets(0, 0, 0, 0)
     var isInsetsEnabled by mutableStateOf(false)
     var webCanGoBack by mutableStateOf(false)
@@ -74,6 +71,5 @@ class WebUIState {
             view.destroy()
         }
         webView = null
-        rootShell?.close()
     }
 }

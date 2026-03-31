@@ -3,9 +3,7 @@ package io.github.seyud.weave.ui.webui
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import android.view.View
 import android.view.ViewGroup
-import android.webkit.WebView
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -103,27 +101,6 @@ fun WebUIScreen(webUIState: WebUIState) {
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT
                         )
-                        if (!webUIState.isUrlLoaded) {
-                            val homePage = "https://mui.kernelsu.org/index.html"
-                            if (width > 0 && height > 0) {
-                                loadUrl(homePage)
-                                webUIState.isUrlLoaded = true
-                            } else {
-                                val listener = object : View.OnLayoutChangeListener {
-                                    override fun onLayoutChange(
-                                        v: View, left: Int, top: Int, right: Int, bottom: Int,
-                                        oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int
-                                    ) {
-                                        if (v.width > 0 && v.height > 0) {
-                                            (v as WebView).loadUrl(homePage)
-                                            webUIState.isUrlLoaded = true
-                                            v.removeOnLayoutChangeListener(this)
-                                        }
-                                    }
-                                }
-                                addOnLayoutChangeListener(listener)
-                            }
-                        }
                     }
                 }
             )

@@ -15,6 +15,7 @@ import com.topjohnwu.superuser.ShellUtils
 import com.topjohnwu.superuser.internal.UiThreadHandler
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.util.concurrent.CompletableFuture
 
 class WebViewInterface(private val state: WebUIState) {
@@ -24,7 +25,7 @@ class WebViewInterface(private val state: WebUIState) {
     private fun newRootShell(): Shell {
         return Shell.Builder.create()
             .setFlags(Shell.FLAG_MOUNT_MASTER)
-            .build("su")
+            .build()
     }
 
     private fun <T> withNewRootShell(block: Shell.() -> T): T {
@@ -61,6 +62,12 @@ class WebViewInterface(private val state: WebUIState) {
         }
     }
 
+    private fun postJavascript(jsCode: String) {
+        webView?.post {
+            webView?.evaluateJavascript(jsCode, null)
+        }
+    }
+
     @JavascriptInterface
     fun exec(cmd: String, options: String?, callbackFunc: String) {
         val finalCommand = StringBuilder()
@@ -74,10 +81,10 @@ class WebViewInterface(private val state: WebUIState) {
         val stderr = result.err.joinToString(separator = "\n")
 
         val jsCode =
-            "javascript: (function() { try { ${callbackFunc}(${result.code}, ${
+            "(function() { try { ${callbackFunc}(${result.code}, ${
                 JSONObject.quote(stdout)
             }, ${JSONObject.quote(stderr)}); } catch(e) { console.error(e); } })();"
-        webView?.post { webView?.loadUrl(jsCode) }
+        postJavascript(jsCode)
     }
 
     @JavascriptInterface
@@ -101,10 +108,10 @@ class WebViewInterface(private val state: WebUIState) {
 
         val emitData = fun(name: String, data: String) {
             val jsCode =
-                "javascript: (function() { try { ${callbackFunc}.${name}.emit('data', ${
+                "(function() { try { ${callbackFunc}.${name}.emit('data', ${
                     JSONObject.quote(data)
                 }); } catch(e) { console.error('emitData', e); } })();"
-            webView?.post { webView?.loadUrl(jsCode) }
+            postJavascript(jsCode)
         }
 
         val stdout = object : CallbackList<String>(UiThreadHandler::runAndWait) {
@@ -124,15 +131,15 @@ class WebViewInterface(private val state: WebUIState) {
 
         completableFuture.thenAccept { result ->
             val emitExitCode =
-                "javascript: (function() { try { ${callbackFunc}.emit('exit', ${result.code}); } catch(e) { console.error(`emitExit error: \${e}`); } })();"
-            webView?.post { webView?.loadUrl(emitExitCode) }
+                "(function() { try { ${callbackFunc}.emit('exit', ${result.code}); } catch(e) { console.error(`emitExit error: \${e}`); } })();"
+            postJavascript(emitExitCode)
 
             if (result.code != 0) {
                 val emitErrCode =
-                    "javascript: (function() { try { var err = new Error(); err.exitCode = ${result.code}; err.message = ${
+                    "(function() { try { var err = new Error(); err.exitCode = ${result.code}; err.message = ${
                         JSONObject.quote(result.err.joinToString("\n"))
                     };${callbackFunc}.emit('error', err); } catch(e) { console.error('emitErr', e); } })();"
-                webView?.post { webView?.loadUrl(emitErrCode) }
+                postJavascript(emitErrCode)
             }
         }.whenComplete { _, _ ->
             runCatching { shell.close() }
@@ -168,6 +175,14 @@ class WebViewInterface(private val state: WebUIState) {
 
     @JavascriptInterface
     fun enableInsets(enable: Boolean = true) = enableEdgeToEdge(enable)
+
+    @JavascriptInterface
+    fun moduleInfo(): String {
+        val currentModuleInfo = JSONObject()
+        currentModuleInfo.put("moduleDir", modDir)
+        currentModuleInfo.put("id", File(modDir).name)
+        return currentModuleInfo.toString()
+    }
 
     @JavascriptInterface
     fun listPackages(type: String): String {
