@@ -10,13 +10,21 @@ import io.github.seyud.weave.ui.navigation3.Route
 
 data class FlashRequest(
     val action: String,
-    val dataUri: Uri? = null,
+    val dataUris: List<Uri> = emptyList(),
 ) {
-    fun toRoute(): Route.Flash = Route.Flash(action, dataUri?.toString())
+    val dataUri: Uri? get() = dataUris.singleOrNull()
+
+    fun toRoute(): Route.Flash = Route.Flash(action, dataUris.map(Uri::toString))
 
     fun toPendingIntent(context: Context): PendingIntent {
         val intent = Intent(context, MainActivity::class.java).apply {
             putExtra(MainActivity.EXTRA_FLASH_ACTION, action)
+            if (dataUris.isNotEmpty()) {
+                putStringArrayListExtra(
+                    MainActivity.EXTRA_FLASH_URIS,
+                    ArrayList(dataUris.map(Uri::toString))
+                )
+            }
             dataUri?.let { putExtra(MainActivity.EXTRA_FLASH_URI, it.toString()) }
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
@@ -32,14 +40,19 @@ data class FlashRequest(
 
         fun patch(uri: Uri) = FlashRequest(
             action = Const.Value.PATCH_FILE,
-            dataUri = uri,
+            dataUris = listOf(uri),
         )
 
         fun uninstall() = FlashRequest(action = Const.Value.UNINSTALL)
 
         fun install(file: Uri) = FlashRequest(
             action = Const.Value.FLASH_ZIP,
-            dataUri = file,
+            dataUris = listOf(file),
+        )
+
+        fun install(files: List<Uri>) = FlashRequest(
+            action = Const.Value.FLASH_ZIP,
+            dataUris = files,
         )
     }
 }

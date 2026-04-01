@@ -28,6 +28,7 @@ import io.github.seyud.weave.core.ktx.getBitmap
 import io.github.seyud.weave.dialog.LocalModuleInstallDialog
 import io.github.seyud.weave.dialog.OnlineModuleInstallDialog
 import io.github.seyud.weave.ui.MainActivity
+import io.github.seyud.weave.ui.module.ModuleInstallTarget
 import io.github.seyud.weave.ui.module.ModuleShortcutState
 import io.github.seyud.weave.ui.module.ShortcutType
 import kotlinx.coroutines.launch
@@ -47,7 +48,7 @@ internal fun ModuleScreenDialogs(
     showShortcutTypeDialog: Boolean,
     onDismissOnlineInstallDialog: () -> Unit,
     onDismissLocalInstallDialog: () -> Unit,
-    onConfirmLocalInstall: (Uri) -> Unit,
+    onConfirmLocalInstall: (List<Uri>) -> Unit,
     onDismissShortcutTypeDialog: () -> Unit,
     onSelectShortcutType: (ShortcutType) -> Unit,
     onDismissShortcutDialog: () -> Unit,
@@ -77,9 +78,10 @@ internal fun ModuleScreenDialogs(
         context = context,
         onDismiss = onDismissLocalInstallDialog,
         onConfirm = {
-            val uri = localInstallDialogState.uri ?: return@LocalModuleInstallDialog
+            val uris = localInstallDialogState.modules.map(ModuleInstallTarget::uri)
+            if (uris.isEmpty()) return@LocalModuleInstallDialog
             onDismissLocalInstallDialog()
-            onConfirmLocalInstall(uri)
+            onConfirmLocalInstall(uris)
         },
     )
 

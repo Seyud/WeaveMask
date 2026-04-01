@@ -64,7 +64,9 @@ import io.github.seyud.weave.ui.flash.FlashViewModel
 import io.github.seyud.weave.ui.home.HomeViewModel
 import io.github.seyud.weave.ui.install.InstallViewModel
 import io.github.seyud.weave.ui.log.LogViewModel
+import io.github.seyud.weave.ui.module.ModuleInstallTarget
 import io.github.seyud.weave.ui.module.ModuleViewModel
+import io.github.seyud.weave.ui.module.state.copyModuleDocumentsToCache
 import io.github.seyud.weave.events.SnackbarEvent
 import io.github.seyud.weave.ui.component.MiuixConfirmDialog
 import io.github.seyud.weave.ui.settings.SettingsViewModel
@@ -105,6 +107,7 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
         const val EXTRA_START_MAIN_TAB = "start_main_tab"
         const val EXTRA_FLASH_ACTION = "extra_flash_action"
         const val EXTRA_FLASH_URI = "extra_flash_uri"
+        const val EXTRA_FLASH_URIS = "extra_flash_uris"
     }
 
     /** Activity 扩展，用于处理权限请求等通用功能 */
@@ -193,12 +196,17 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
 
         // 从下载完成的 PendingIntent 中提取 flash 参数
         val pendingFlashAction = intent.getStringExtra(EXTRA_FLASH_ACTION)
-        val pendingFlashUri = intent.getStringExtra(EXTRA_FLASH_URI)?.let { Uri.parse(it) }
+        val pendingFlashUris = intent.getStringArrayListExtra(EXTRA_FLASH_URIS)
+            ?.map(Uri::parse)
+            ?.takeIf { it.isNotEmpty() }
+            ?: intent.getStringExtra(EXTRA_FLASH_URI)?.let { listOf(Uri.parse(it)) }
+            ?: emptyList()
         intent.removeExtra(EXTRA_FLASH_ACTION)
         intent.removeExtra(EXTRA_FLASH_URI)
+        intent.removeExtra(EXTRA_FLASH_URIS)
 
         // 检查是否通过"打开方式"启动（首次启动时检查）
-        val initialExternalZipUri = checkForExternalZipIntent(intent)
+        val initialExternalZipUris = checkForExternalZipIntent(intent)
 
         // 设置 Compose 内容
         setContent {
@@ -253,12 +261,12 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
                 LocalEnableFloatingBottomBarBlur provides enableFloatingBottomBarBlur,
             ) {
                 // 处理外部应用通过"打开方式"打开 ZIP 文件
-                var externalZipUri by remember { mutableStateOf(initialExternalZipUri) }
+                var externalZipUris by remember { mutableStateOf(initialExternalZipUris) }
 
                 // 监听外部 Intent 打开的 ZIP 文件（用于 Activity 已在后台时）
                 ZipFileIntentHandler(
                     intentState = intentState,
-                    onZipReceived = { uri -> externalZipUri = uri }
+                    onZipReceived = { uris -> externalZipUris = uris }
                 )
 
                 // 根 Scaffold 用于提供 LocalRootDialogStates，使 SuperDialog 能够正确渲染
@@ -275,9 +283,9 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
                             initialMainTab = initialMainTab,
                             intentVersion = intentVersion,
                             pendingFlashAction = pendingFlashAction,
-                            pendingFlashUri = pendingFlashUri,
-                            externalZipUri = externalZipUri,
-                            onExternalZipHandled = { externalZipUri = null },
+                            pendingFlashUris = pendingFlashUris,
+                            externalZipUris = externalZipUris,
+                            onExternalZipHandled = { externalZipUris = null },
                             colorMode = colorMode,
                             keyColor = keyColor,
                             snackbarHostState = snackbarHostState,
@@ -570,25 +578,24 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
      * @param intent 要检查的 Intent
      * @return 如果是有效的 ZIP 文件则返回缓存文件的 URI，否则返回 null
      */
-    private fun checkForExternalZipIntent(intent: Intent): Uri? {
-        val uri = intent.data ?: return null
-
-        // 验证 Intent 有效性
-        if (uri.scheme != "content") return null
+    private fun checkForExternalZipIntent(intent: Intent): List<ModuleInstallTarget>? {
+        val uris = extractExternalZipUris(intent)
+        if (uris.isEmpty()) return null
 
         // 检查 MIME type，允许 null（某些文件管理器不设置 type）
         val mimeType = intent.type
-        if (mimeType != null && mimeType != "application/zip" && !mimeType.contains("zip")) {
+        if (!isSupportedZipMimeType(mimeType)) {
             return null
         }
 
         // 清除 Intent 数据防止重复处理
         intent.data = null
         intent.type = null
+        intent.clipData = null
 
         // 立即将文件复制到缓存目录，因为此时 Activity 拥有临时读取权限
         return try {
-            copyUriToCache(uri)
+            copyUriToCache(uris)
         } catch (e: Exception) {
             Timber.e(e, "Failed to copy external ZIP to cache")
             null
@@ -599,33 +606,36 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
      * 将 content URI 复制到缓存目录
      * 必须在 Activity 中调用，因为临时读取权限只授予给 Activity
      *
-     * @param uri content URI
+     * @param uris content URI 列表
      * @return 缓存文件的 file:// URI
      */
-    private fun copyUriToCache(uri: Uri): Uri? {
-        val cacheDir = File(cacheDir, "external_module")
-        cacheDir.mkdirs()
+    private fun copyUriToCache(uris: List<Uri>): List<ModuleInstallTarget> {
+        return copyModuleDocumentsToCache(
+            context = this,
+            sourceUris = uris,
+            cacheDirectoryName = "external_module",
+            fallbackName = "module.zip",
+        )
+    }
 
-        // 获取文件名
-        val fileName = try {
-            contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
-                val index = cursor.getColumnIndexOrThrow(android.provider.OpenableColumns.DISPLAY_NAME)
-                if (cursor.moveToFirst()) cursor.getString(index) else "module.zip"
-            } ?: "module.zip"
-        } catch (e: Exception) {
-            "module.zip"
-        }
-
-        val cacheFile = File(cacheDir, fileName)
-
-        // 复制文件
-        contentResolver.openInputStream(uri)?.use { input ->
-            cacheFile.outputStream().use { output ->
-                input.copyTo(output)
+    private fun extractExternalZipUris(intent: Intent): List<Uri> {
+        val orderedUris = LinkedHashSet<Uri>()
+        intent.data?.let { orderedUris.add(it) }
+        val clipData = intent.clipData
+        if (clipData != null) {
+            for (index in 0 until clipData.itemCount) {
+                clipData.getItemAt(index)?.uri?.let { orderedUris.add(it) }
             }
-        } ?: return null
+        }
+        return orderedUris.filter { it.scheme == "content" }
+    }
 
-        return Uri.fromFile(cacheFile)
+    private fun isSupportedZipMimeType(mimeType: String?): Boolean {
+        return mimeType == null ||
+            mimeType == "*/*" ||
+            mimeType == "application/zip" ||
+            mimeType == "application/octet-stream" ||
+            mimeType.contains("zip")
     }
 
     /**
@@ -641,38 +651,39 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
     @Composable
     private fun ZipFileIntentHandler(
         intentState: MutableStateFlow<Int>,
-        onZipReceived: (Uri) -> Unit
+        onZipReceived: (List<ModuleInstallTarget>) -> Unit
     ) {
         val activity = this
         val intentStateValue by intentState.collectAsStateWithLifecycle()
 
         LaunchedEffect(intentStateValue) {
             val currentIntent = activity.intent
-            val uri = currentIntent?.data ?: return@LaunchedEffect
-
-            // 验证 Intent 有效性
-            if (uri.scheme != "content") return@LaunchedEffect
+            val uris = currentIntent?.let(::extractExternalZipUris).orEmpty()
+            if (uris.isEmpty()) return@LaunchedEffect
 
             // 检查 MIME type，允许 null（某些文件管理器不设置 type）
             val mimeType = currentIntent.type
-            if (mimeType != null && mimeType != "application/zip" && !mimeType.contains("zip")) {
+            if (!isSupportedZipMimeType(mimeType)) {
                 return@LaunchedEffect
             }
 
             // 清除 Intent 数据防止重复处理
             activity.intent.data = null
             activity.intent.type = null
+            activity.intent.clipData = null
 
             // 立即将文件复制到缓存目录，因为此时 Activity 拥有临时读取权限
-            val cachedUri = try {
-                copyUriToCache(uri)
+            val cachedUris = try {
+                copyUriToCache(uris)
             } catch (e: Exception) {
                 Timber.e(e, "Failed to copy external ZIP to cache")
-                null
+                emptyList()
             }
 
             // 通知外部 ZIP 文件已接收
-            cachedUri?.let { onZipReceived(it) }
+            if (cachedUris.isNotEmpty()) {
+                onZipReceived(cachedUris)
+            }
         }
     }
 }

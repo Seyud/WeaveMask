@@ -351,11 +351,10 @@ class ModuleViewModel : AsyncLoadViewModel() {
         GetContentEvent("application/zip", UriCallback()).publish()
     }
 
-    fun requestInstallLocalModule(uri: Uri, displayName: String) {
+    fun requestInstallLocalModule(modules: List<ModuleInstallTarget>) {
         localInstallDialogState = LocalModuleInstallDialog.DialogState(
             visible = true,
-            uri = uri,
-            displayName = displayName
+            modules = modules
         )
     }
 

@@ -144,6 +144,7 @@
     <string name="zygisk_module_unloaded">存在兼容性问题，此模块未加载</string>
     <string name="module_empty">未安装任何模块</string>
     <string name="confirm_install">安装模块 %1$s？</string>
+    <string name="confirm_install_multiple">安装以下模块？\n%1$s</string>
     <string name="confirm_install_title">安装确认</string>
 
     <!--Settings-->

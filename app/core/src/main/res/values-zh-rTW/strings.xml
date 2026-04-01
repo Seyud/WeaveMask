@@ -125,6 +125,7 @@
     <string name="zygisk_module_unloaded">此模組因不相容 Zygisk 而未載入</string>
     <string name="module_empty">未安裝任何模組</string>
     <string name="confirm_install">安裝模組 %1$s？</string>
+    <string name="confirm_install_multiple">安裝以下模組？\n%1$s</string>
     <string name="confirm_install_title">安裝確認</string>
 
     <!--Settings -->

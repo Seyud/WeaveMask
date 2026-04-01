@@ -64,7 +64,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 fun FlashScreen(
     viewModel: FlashViewModel,
     action: String,
-    additionalData: Uri?,
+    additionalData: List<Uri>,
     onNavigateBack: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -88,7 +88,7 @@ fun FlashScreen(
     BackHandler(enabled = isFlashing) {}
 
     LaunchedEffect(Unit) {
-        viewModel.prepareForCompose(action = action, uri = additionalData)
+        viewModel.prepareForCompose(action = action, uris = additionalData)
         viewModel.startFlashing()
     }
 

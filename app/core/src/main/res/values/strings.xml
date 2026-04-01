@@ -143,6 +143,7 @@
     <string name="zygisk_module_unloaded">Zygisk module not loaded due to incompatibility</string>
     <string name="module_empty">No module installed</string>
     <string name="confirm_install">Install module %1$s?</string>
+    <string name="confirm_install_multiple">Install the following modules?\n%1$s</string>
     <string name="confirm_install_title">Install confirmation</string>
 
     <!--Settings-->

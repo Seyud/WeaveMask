@@ -1,7 +1,6 @@
 package io.github.seyud.weave.dialog
 
 import android.content.Context
-import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +9,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.github.seyud.weave.ui.module.ModuleInstallTarget
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.extra.SuperDialog
@@ -25,13 +25,11 @@ object LocalModuleInstallDialog {
      * 对话框状态
      *
      * @param visible 是否显示
-     * @param uri 本地模块文件 URI
-     * @param displayName 模块文件显示名称
+     * @param modules 待安装模块文件
      */
     data class DialogState(
         val visible: Boolean = false,
-        val uri: Uri? = null,
-        val displayName: String = ""
+        val modules: List<ModuleInstallTarget> = emptyList(),
     )
 }
 
@@ -52,12 +50,21 @@ fun LocalModuleInstallDialog(
     onConfirm: () -> Unit,
     renderInRootScaffold: Boolean = false
 ) {
-    if (!state.visible) return
+    if (!state.visible || state.modules.isEmpty()) return
+
+    val summary = if (state.modules.size == 1) {
+        context.getString(CoreR.string.confirm_install, state.modules.first().displayName)
+    } else {
+        val moduleNames = state.modules.mapIndexed { index, module ->
+            "${index + 1}. ${module.displayName}"
+        }.joinToString("\n")
+        context.getString(CoreR.string.confirm_install_multiple, moduleNames)
+    }
 
     SuperDialog(
         show = state.visible,
         title = context.getString(CoreR.string.confirm_install_title),
-        summary = context.getString(CoreR.string.confirm_install, state.displayName),
+        summary = summary,
         onDismissRequest = onDismiss,
         renderInRootScaffold = renderInRootScaffold
     ) {

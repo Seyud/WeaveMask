@@ -24,7 +24,7 @@ sealed interface Route : NavKey, Parcelable {
     /** 刷写页面 */
     @Parcelize
     @Serializable
-    data class Flash(val action: String, val uriString: String? = null) : Route
+    data class Flash(val action: String, val uriStrings: List<String> = emptyList()) : Route
 
     /** 日志页面 */
     @Parcelize

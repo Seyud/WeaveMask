@@ -81,7 +81,28 @@ open class FlashZip(
             false
         } finally {
             Shell.cmd("cd /", "rm -rf $installDir ${Const.TMPDIR}").submit()
-            File(AppContext.cacheDir, "module_install").deleteRecursively()
+            cleanupSourceIfNeeded()
         }
+    }
+
+    private fun cleanupSourceIfNeeded() {
+        if (mUri.scheme != "file") return
+
+        val sourceFile = runCatching { mUri.toFile().canonicalFile }.getOrNull() ?: return
+        val cacheRoots = listOf(
+            File(AppContext.cacheDir, "module_install"),
+            File(AppContext.cacheDir, "external_module"),
+        ).mapNotNull { runCatching { it.canonicalFile }.getOrNull() }
+
+        val sourcePath = sourceFile.path
+        val safeRoot = cacheRoots.firstOrNull { root ->
+            sourcePath == root.path || sourcePath.startsWith(root.path + File.separator)
+        } ?: return
+
+        val parent = sourceFile.parentFile?.canonicalFile ?: return
+        if (parent == safeRoot) return
+        if (!parent.path.startsWith(safeRoot.path + File.separator)) return
+
+        parent.deleteRecursively()
     }
 }

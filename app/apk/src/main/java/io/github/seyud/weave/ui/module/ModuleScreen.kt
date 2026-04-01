@@ -38,7 +38,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 fun ModuleScreen(
     viewModel: ModuleViewModel,
     contentBottomPadding: Dp,
-    onInstallModuleFromLocal: (Uri) -> Unit,
+    onInstallModuleFromLocal: (List<Uri>) -> Unit,
     onRunAction: (String, String) -> Unit,
     onOpenWebUi: (String, String) -> Unit,
     modifier: Modifier = Modifier,

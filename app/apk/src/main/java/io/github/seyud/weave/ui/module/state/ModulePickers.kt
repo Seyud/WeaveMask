@@ -14,6 +14,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import io.github.seyud.weave.core.R as CoreR
+import io.github.seyud.weave.ui.module.ModuleInstallTarget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,27 +28,27 @@ private val MODULE_ARCHIVE_MIME_TYPES = arrayOf(
 
 @Composable
 internal fun rememberLocalModulePicker(
-    onModulePicked: (Uri, String) -> Unit,
+    onModulePicked: (List<ModuleInstallTarget>) -> Unit,
 ): () -> Unit {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val currentOnModulePicked by rememberUpdatedState(onModulePicked)
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-    ) { uri ->
-        uri ?: return@rememberLauncherForActivityResult
+        contract = ActivityResultContracts.OpenMultipleDocuments(),
+    ) { uris ->
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
         scope.launch {
             val result = runCatching {
-                copyDocumentToCache(
+                copyModuleDocumentsToCache(
                     context = context,
-                    sourceUri = uri,
+                    sourceUris = uris,
                     cacheDirectoryName = "module_install",
                     fallbackName = "install.zip",
                 )
             }
             result
-                .onSuccess { (localUri, displayName) ->
-                    currentOnModulePicked(localUri, displayName)
+                .onSuccess { modules ->
+                    currentOnModulePicked(modules)
                 }
                 .onFailure { error ->
                     Toast.makeText(
@@ -86,32 +87,51 @@ private suspend fun copyDocumentToCache(
     cacheDirectoryName: String,
     fallbackName: String,
 ): Pair<Uri, String> = withContext(Dispatchers.IO) {
-    val originalName = context.contentResolver.query(
-        sourceUri,
-        arrayOf(OpenableColumns.DISPLAY_NAME),
-        null,
-        null,
-        null,
-    )?.use { cursor ->
-        if (cursor.moveToFirst()) {
-            cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
-        } else {
-            null
-        }
-    } ?: fallbackName
+    copyModuleDocumentsToCache(
+        context = context,
+        sourceUris = listOf(sourceUri),
+        cacheDirectoryName = cacheDirectoryName,
+        fallbackName = fallbackName,
+    ).single().let { it.uri to it.displayName }
+}
 
+fun copyModuleDocumentsToCache(
+    context: Context,
+    sourceUris: List<Uri>,
+    cacheDirectoryName: String,
+    fallbackName: String,
+): List<ModuleInstallTarget> {
     val cacheDir = File(context.cacheDir, cacheDirectoryName).apply {
         deleteRecursively()
         mkdirs()
     }
-    val target = File(cacheDir, originalName)
-    val input = context.contentResolver.openInputStream(sourceUri)
-        ?: throw IOException("Cannot read selected file")
-    input.use { source ->
-        target.outputStream().use { sink ->
-            source.copyTo(sink)
-        }
-    }
 
-    target.toUri() to originalName
+    return sourceUris.mapIndexed { index, sourceUri ->
+        val originalName = context.contentResolver.query(
+            sourceUri,
+            arrayOf(OpenableColumns.DISPLAY_NAME),
+            null,
+            null,
+            null,
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
+            } else {
+                null
+            }
+        }?.let { File(it).name } ?: fallbackName
+
+        val targetDir = File(cacheDir, index.toString()).apply {
+            mkdirs()
+        }
+        val target = File(targetDir, originalName)
+        val input = context.contentResolver.openInputStream(sourceUri)
+            ?: throw IOException("Cannot read selected file")
+        input.use { source ->
+            target.outputStream().use { sink ->
+                source.copyTo(sink)
+            }
+        }
+        ModuleInstallTarget(target.toUri(), originalName)
+    }
 }

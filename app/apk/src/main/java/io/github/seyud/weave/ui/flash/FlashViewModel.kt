@@ -19,6 +19,7 @@ import io.github.seyud.weave.core.ktx.toTime
 import io.github.seyud.weave.core.tasks.FlashZip
 import io.github.seyud.weave.core.tasks.MagiskInstaller
 import io.github.seyud.weave.core.utils.MediaStoreUtils
+import io.github.seyud.weave.core.utils.MediaStoreUtils.displayName
 import io.github.seyud.weave.core.utils.MediaStoreUtils.outputStream
 import io.github.seyud.weave.events.SnackbarEvent
 import com.topjohnwu.superuser.CallbackList
@@ -78,15 +79,15 @@ class FlashViewModel : BaseViewModel() {
      * 每次进入 Flash 页面时都会调用，重置所有状态以确保可以重复执行安装
      *
      * @param action 刷写操作类型（如 FLASH_MAGISK、PATCH_FILE 等）
-     * @param uri 附加数据 URI（如修补文件时的文件 URI）
+     * @param uris 附加数据 URI 列表（如模块 ZIP 或修补文件 URI）
      */
-    fun prepareForCompose(action: String, uri: android.net.Uri?) {
+    fun prepareForCompose(action: String, uris: List<android.net.Uri>) {
         // 重置状态标志，允许重复初始化
         isInitialized = true
         isFlashingStarted = false
 
         // 重新初始化参数和状态
-        request = FlashRequest(action = action, dataUri = uri)
+        request = FlashRequest(action = action, dataUris = uris)
         _state.value = State.FLASHING
         showReboot = Info.isRooted
         synchronized(logItems) {
@@ -108,18 +109,18 @@ class FlashViewModel : BaseViewModel() {
     fun startFlashing() {
         if (isFlashingStarted) return
         isFlashingStarted = true
-        val (action, uri) = request
+        val (action, uris) = request
 
         viewModelScope.launch {
             try {
                 val result = when (action) {
                     Const.Value.FLASH_ZIP -> {
-                        if (uri == null) {
+                        if (uris.isEmpty()) {
                             console.add("Error: No file selected")
                             false
                         } else {
                             appendModuleInstallBanner()
-                            FlashZip(uri, outItems, logItems).exec()
+                            flashSelectedModules(uris)
                         }
                     }
                     Const.Value.UNINSTALL -> {
@@ -137,6 +138,7 @@ class FlashViewModel : BaseViewModel() {
                         MagiskInstaller.SecondSlot(outItems, logItems).exec()
                     }
                     Const.Value.PATCH_FILE -> {
+                        val uri = uris.singleOrNull()
                         if (uri == null) {
                             console.add("Error: No file selected")
                             false
@@ -157,6 +159,19 @@ class FlashViewModel : BaseViewModel() {
                 onResult(false)
             }
         }
+    }
+
+    private suspend fun flashSelectedModules(uris: List<android.net.Uri>): Boolean {
+        uris.forEachIndexed { index, uri ->
+            if (uris.size > 1) {
+                appendVisibleConsoleLine("")
+                appendVisibleConsoleLine("==== Module ${index + 1}/${uris.size}: ${uri.displayName} ====")
+            }
+            if (!FlashZip(uri, outItems, logItems).exec()) {
+                return false
+            }
+        }
+        return true
     }
 
     private fun onResult(success: Boolean) {

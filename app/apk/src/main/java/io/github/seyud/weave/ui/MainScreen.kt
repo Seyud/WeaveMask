@@ -92,6 +92,7 @@ import io.github.seyud.weave.ui.install.InstallViewModel
 import io.github.seyud.weave.ui.log.LogScreen
 import io.github.seyud.weave.ui.log.LogViewModel
 import io.github.seyud.weave.ui.module.ActionScreen
+import io.github.seyud.weave.ui.module.ModuleInstallTarget
 import io.github.seyud.weave.ui.module.ModuleShortcutContract
 import io.github.seyud.weave.ui.module.ModuleScreen
 import io.github.seyud.weave.ui.module.ModuleViewModel
@@ -213,8 +214,8 @@ fun MainScreen(
     initialMainTab: Int = 0,
     intentVersion: Int = 0,
     pendingFlashAction: String? = null,
-    pendingFlashUri: Uri? = null,
-    externalZipUri: Uri? = null,
+    pendingFlashUris: List<Uri> = emptyList(),
+    externalZipUris: List<ModuleInstallTarget>? = null,
     onExternalZipHandled: () -> Unit = {},
     colorMode: Int = 0,
     keyColor: Color? = null,
@@ -231,35 +232,28 @@ fun MainScreen(
     }
 
     // 处理来自下载完成通知的 flash 导航请求
-    LaunchedEffect(pendingFlashAction) {
+    LaunchedEffect(pendingFlashAction, pendingFlashUris) {
         if (pendingFlashAction != null) {
-            navigator.push(Route.Flash(pendingFlashAction, pendingFlashUri?.toString()))
+            navigator.push(Route.Flash(pendingFlashAction, pendingFlashUris.map(Uri::toString)))
         }
     }
 
     // 处理外部应用通过"打开方式"打开的 ZIP 文件
-    var pendingExternalZip by remember { mutableStateOf<Uri?>(null) }
+    var pendingExternalZip by remember { mutableStateOf<List<ModuleInstallTarget>?>(null) }
     val context = LocalContext.current
 
-    LaunchedEffect(externalZipUri) {
-        if (externalZipUri != null) {
-            pendingExternalZip = externalZipUri
+    LaunchedEffect(externalZipUris) {
+        if (!externalZipUris.isNullOrEmpty()) {
+            pendingExternalZip = externalZipUris
         }
     }
 
     // 显示外部 ZIP 文件确认对话框
-    if (pendingExternalZip != null) {
-        val displayName = remember(pendingExternalZip) {
-            pendingExternalZip?.let { uri ->
-                runCatching { with(MediaStoreUtils) { uri.displayName } }.getOrDefault("module.zip")
-            } ?: "module.zip"
-        }
-
+    if (!pendingExternalZip.isNullOrEmpty()) {
         LocalModuleInstallDialog(
             state = LocalModuleInstallDialog.DialogState(
                 visible = true,
-                uri = pendingExternalZip,
-                displayName = displayName
+                modules = pendingExternalZip.orEmpty()
             ),
             context = context,
             onDismiss = {
@@ -267,8 +261,9 @@ fun MainScreen(
                 onExternalZipHandled()
             },
             onConfirm = {
-                pendingExternalZip?.let { uri ->
-                    navigator.push(Route.Flash(Const.Value.FLASH_ZIP, uri.toString()))
+                val uris = pendingExternalZip.orEmpty().map(ModuleInstallTarget::uri)
+                if (uris.isNotEmpty()) {
+                    navigator.push(Route.Flash(Const.Value.FLASH_ZIP, uris.map(Uri::toString)))
                 }
                 pendingExternalZip = null
                 onExternalZipHandled()
@@ -324,14 +319,19 @@ fun MainScreen(
                                 onNavigateBack = { navigator.pop() },
                                 onNavigateToFlash = { action, uri ->
                                     navigator.pop() // pop Install
-                                    navigator.push(Route.Flash(action, uri?.toString()))
+                                    navigator.push(
+                                        Route.Flash(
+                                            action,
+                                            uri?.let { listOf(it.toString()) } ?: emptyList()
+                                        )
+                                    )
                                 }
                             )
                         }
                         entry<Route.Flash> { key ->
-                            val uriArg = key.uriString
-                                ?.takeIf { it.isNotEmpty() }
-                                ?.let(Uri::parse)
+                            val uriArgs = key.uriStrings
+                                .filter { it.isNotEmpty() }
+                                .map(Uri::parse)
 
                             DisposableEffect(key.action) {
                                 onDispose {
@@ -344,7 +344,7 @@ fun MainScreen(
                             FlashScreen(
                                 viewModel = flashViewModel,
                                 action = key.action,
-                                additionalData = uriArg,
+                                additionalData = uriArgs,
                                 onNavigateBack = { navigator.pop() }
                             )
                         }
@@ -602,7 +602,7 @@ private fun MainTabScreen(
                         navigator.push(Route.Install)
                     },
                     onNavigateToUninstall = {
-                        navigator.push(Route.Flash(Const.Value.UNINSTALL, null))
+                        navigator.push(Route.Flash(Const.Value.UNINSTALL))
                     }
                 )
                 1 -> if (isCurrentPage || contentReady) SuperuserScreen(
@@ -612,8 +612,10 @@ private fun MainTabScreen(
                 2 -> if (isCurrentPage || contentReady) ModuleScreen(
                     viewModel = moduleViewModel,
                     contentBottomPadding = contentBottomPadding,
-                    onInstallModuleFromLocal = { uri ->
-                        navigator.push(Route.Flash(Const.Value.FLASH_ZIP, uri.toString()))
+                    onInstallModuleFromLocal = { uris ->
+                        if (uris.isNotEmpty()) {
+                            navigator.push(Route.Flash(Const.Value.FLASH_ZIP, uris.map(Uri::toString)))
+                        }
                     },
                     onRunAction = { id, name ->
                         navigator.push(Route.Action(id, name))
