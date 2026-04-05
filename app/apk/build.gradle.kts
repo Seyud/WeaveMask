@@ -2,7 +2,7 @@ plugins {
     id("com.android.application")
     kotlin("plugin.parcelize")
     kotlin("plugin.serialization") version "2.3.20"
-    id("org.jetbrains.kotlin.plugin.compose") version "2.3.20"
+    alias(libs.plugins.compose.compiler)
 }
 
 setupMainApk()

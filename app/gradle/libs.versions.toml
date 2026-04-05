@@ -32,9 +32,9 @@ timber = { module = "com.jakewharton.timber:timber", version = "5.0.1" }
 hiddenapibypass = { module = "org.lsposed.hiddenapibypass:hiddenapibypass", version.ref = "hiddenapibypass" }
 
 # AndroidX
-activity = { module = "androidx.activity:activity", version = "1.12.4" }
+activity = { module = "androidx.activity:activity", version = "1.13.0" }
 appcompat = { module = "androidx.appcompat:appcompat", version = "1.7.1" }
-core-ktx = { module = "androidx.core:core-ktx", version = "1.17.0" }
+core-ktx = { module = "androidx.core:core-ktx", version = "1.18.0" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version = "1.2.0" }
 constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version = "2.2.1" }
 fragment-ktx = { module = "androidx.fragment:fragment-ktx", version = "1.8.9" }
@@ -50,7 +50,7 @@ room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefreshlayout", version = "1.2.0" }
 transition = { module = "androidx.transition:transition", version = "1.7.0" }
-collection-ktx = { module = "androidx.collection:collection-ktx", version = "1.5.0" }
+collection-ktx = { module = "androidx.collection:collection-ktx", version = "1.6.0" }
 material = { module = "com.google.android.material:material", version = "1.13.0" }
 jdk-libs = { module = "com.android.tools:desugar_jdk_libs_nio", version = "2.1.5" }
 test-runner = { module = "androidx.test:runner", version = "1.7.0" }
@@ -86,5 +86,6 @@ android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref
 
 [plugins]
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 lsparanoid = { id = "org.lsposed.lsparanoid", version = "0.6.0" }
 moshi = { id = "dev.zacsweers.moshix", version = "0.35.0" }
