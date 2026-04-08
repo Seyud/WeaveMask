@@ -55,7 +55,8 @@ dependencies {
     implementation(libs.miuix.navigation3.ui)
 
     // Miuix
-    implementation(libs.miuix)
+    implementation(libs.miuix.ui)
+    implementation(libs.miuix.preference)
     implementation(libs.miuix.icons)
 
     // Haze

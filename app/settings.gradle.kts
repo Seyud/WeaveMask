@@ -14,6 +14,9 @@ pluginManagement {
         google()
     }
 }
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
 
 rootProject.name = "Magisk"
 include(":apk", ":core", ":shared", ":stub", ":test")

@@ -173,7 +173,6 @@ fun InstallScreen(
                 title = context.getString(CoreR.string.install),
                 navigationIcon = {
                     IconButton(
-                        modifier = Modifier.padding(start = 16.dp),
                         onClick = onNavigateBack
                     ) {
                         Icon(

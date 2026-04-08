@@ -40,7 +40,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.extra.SuperDialog
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.basic.TextField
 
 @Composable
@@ -121,7 +121,7 @@ private fun HandleWebUIEvent(
         is WebUIEvent.ShowAlert -> {
             val showDialog = remember { mutableStateOf(true) }
             if (showDialog.value) {
-                SuperDialog(
+                OverlayDialog(
                     show = showDialog.value,
                     title = "",
                     onDismissRequest = {
@@ -149,7 +149,7 @@ private fun HandleWebUIEvent(
         is WebUIEvent.ShowConfirm -> {
             val showDialog = remember { mutableStateOf(true) }
             if (showDialog.value) {
-                SuperDialog(
+                OverlayDialog(
                     show = showDialog.value,
                     title = "",
                     onDismissRequest = {
@@ -185,7 +185,7 @@ private fun HandleWebUIEvent(
             val showDialog = remember { mutableStateOf(true) }
             var inputValue by remember { mutableStateOf(event.defaultValue) }
             if (showDialog.value) {
-                SuperDialog(
+                OverlayDialog(
                     show = showDialog.value,
                     title = "",
                     onDismissRequest = {

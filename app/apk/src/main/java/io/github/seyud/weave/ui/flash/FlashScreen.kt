@@ -99,7 +99,6 @@ fun FlashScreen(
                 title = context.getString(CoreR.string.flash_screen_title),
                 navigationIcon = {
                     IconButton(
-                        modifier = Modifier.padding(start = 16.dp),
                         onClick = {
                             if (!isFlashing) onNavigateBack()
                         }
@@ -113,7 +112,6 @@ fun FlashScreen(
                 },
                 actions = {
                     IconButton(
-                        modifier = Modifier.padding(end = 16.dp),
                         onClick = { viewModel.saveLogForCompose(context) }
                     ) {
                         Icon(

@@ -20,7 +20,7 @@ import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.CircularProgressIndicator
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextButtonColors
-import top.yukonga.miuix.kmp.extra.SuperDialog
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
@@ -42,7 +42,7 @@ object UninstallDialog {
 
 /**
  * 卸载对话框 Compose 组件
- * 使用 Miuix SuperDialog 实现二次确认弹窗
+ * 使用 Miuix OverlayDialog 实现二次确认弹窗
  *
  * @param state 对话框状态
  * @param context Context 用于显示 Toast
@@ -60,7 +60,7 @@ fun UninstallDialog(
 ) {
     if (!state.visible) return
 
-    SuperDialog(
+    OverlayDialog(
         show = state.visible,
         title = context.getString(CoreR.string.uninstall_magisk_title),
         summary = context.getString(CoreR.string.uninstall_magisk_msg),

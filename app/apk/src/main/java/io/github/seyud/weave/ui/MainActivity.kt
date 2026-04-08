@@ -263,7 +263,7 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
                     onZipReceived = { uris -> externalZipUris = uris }
                 )
 
-                // 根 Scaffold 用于提供 LocalRootDialogStates，使 SuperDialog 能够正确渲染
+                // 根 Scaffold 用于承载 overlay 弹层组件，使 OverlayDialog 等组件正确渲染
                 WeaveMagiskTheme(colorMode = colorMode, keyColor = keyColor) {
                     Scaffold(modifier = Modifier.fillMaxSize()) {
                         MainScreen(

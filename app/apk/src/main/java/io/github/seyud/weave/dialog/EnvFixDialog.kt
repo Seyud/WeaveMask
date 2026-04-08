@@ -26,10 +26,10 @@ import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.CircularProgressIndicator
 import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.extra.SuperDialog
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 /**
- * EnvFixDialog 使用 Miuix SuperDialog 实现
+ * EnvFixDialog 使用 Miuix OverlayDialog 实现
  * 用于修复 Magisk 运行环境
  */
 object EnvFixDialog {
@@ -96,7 +96,7 @@ fun EnvFixDialog(
         else -> context.getString(CoreR.string.env_fix_msg)
     }
 
-    SuperDialog(
+    OverlayDialog(
         show = state.visible,
         title = title,
         summary = summary,

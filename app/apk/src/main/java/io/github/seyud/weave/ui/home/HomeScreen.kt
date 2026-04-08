@@ -126,7 +126,6 @@ fun HomeScreen(
                 actions = {
                     // 添加电源重启弹出菜单
                     RebootListPopup(
-                        modifier = Modifier.padding(end = 16.dp),
                         alignment = PopupPositionProvider.Align.TopEnd,
                     )
                 }

@@ -33,7 +33,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * 超级用户请求 Activity
- * 使用 Compose + Miuix SuperDialog 实现 su 请求弹窗
+ * 使用 Compose + Miuix OverlayDialog 实现 su 请求弹窗
  *
  * 安全特性：
  * 1. 点击劫持防护 - 在 dispatchTouchEvent 中检测 FLAG_WINDOW_IS_OBSCURED

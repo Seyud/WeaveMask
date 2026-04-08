@@ -25,7 +25,7 @@ import io.github.seyud.weave.ui.component.MarkdownText
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.extra.SuperDialog
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 @Composable
 internal fun HomeDialogHost(
@@ -105,7 +105,7 @@ internal fun ManagerInstallDialog(
 ) {
     if (!show) return
 
-    SuperDialog(
+    OverlayDialog(
         show = show,
         title = title,
         summary = version,

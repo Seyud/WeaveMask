@@ -83,7 +83,7 @@ import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 import top.yukonga.miuix.kmp.basic.rememberScrollBarAdapter
 import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
-import top.yukonga.miuix.kmp.extra.SuperListPopup
+import top.yukonga.miuix.kmp.overlay.OverlayListPopup
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Delete
 import top.yukonga.miuix.kmp.icon.extended.MoreCircle
@@ -225,7 +225,7 @@ fun SuperuserScreen(
                         largeTitleColor = MiuixTheme.colorScheme.onBackground,
                         scrollBehavior = scrollBehavior,
                         actions = {
-                            SuperListPopup(
+                            OverlayListPopup(
                                 show = showTopPopup.value,
                                 popupPositionProvider = ListPopupDefaults.ContextMenuPositionProvider,
                                 alignment = PopupPositionProvider.Align.TopEnd,
@@ -251,7 +251,6 @@ fun SuperuserScreen(
                                 }
                             }
                             IconButton(
-                                modifier = Modifier.padding(end = 16.dp),
                                 onClick = {
                                     showTopPopup.value = true
                                 },

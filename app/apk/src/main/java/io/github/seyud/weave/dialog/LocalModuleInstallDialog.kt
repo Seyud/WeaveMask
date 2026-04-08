@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import io.github.seyud.weave.ui.module.ModuleInstallTarget
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.extra.SuperDialog
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import io.github.seyud.weave.core.R as CoreR
 
 /**
@@ -61,7 +61,7 @@ fun LocalModuleInstallDialog(
         context.getString(CoreR.string.confirm_install_multiple, moduleNames)
     }
 
-    SuperDialog(
+    OverlayDialog(
         show = state.visible,
         title = context.getString(CoreR.string.confirm_install_title),
         summary = summary,

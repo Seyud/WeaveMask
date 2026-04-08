@@ -18,7 +18,7 @@ import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextField
-import top.yukonga.miuix.kmp.extra.SuperDialog
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import io.github.seyud.weave.core.R as CoreR
 
@@ -28,7 +28,7 @@ fun ScaleDialog(
     scaleState: () -> Float,
     onScaleChange: (Float) -> Unit,
 ) {
-    SuperDialog(
+    OverlayDialog(
         title = stringResource(CoreR.string.settings_page_scale),
         summary = "80% - 110%",
         show = showDialog.value,

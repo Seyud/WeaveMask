@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import io.github.seyud.weave.core.R as CoreR
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextButtonColors
-import top.yukonga.miuix.kmp.extra.SuperDialog
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
@@ -34,7 +34,7 @@ object SuperuserRevokeDialog {
 
 /**
  * 撤销超级用户权限对话框 Compose 组件
- * 使用 Miuix SuperDialog 实现二次确认弹窗
+ * 使用 Miuix OverlayDialog 实现二次确认弹窗
  *
  * @param state 对话框状态
  * @param context Context 用于获取字符串资源
@@ -50,7 +50,7 @@ fun SuperuserRevokeDialog(
 ) {
     if (!state.visible) return
 
-    SuperDialog(
+    OverlayDialog(
         show = state.visible,
         title = context.getString(CoreR.string.su_revoke_title),
         summary = context.getString(CoreR.string.su_revoke_msg, state.appName),

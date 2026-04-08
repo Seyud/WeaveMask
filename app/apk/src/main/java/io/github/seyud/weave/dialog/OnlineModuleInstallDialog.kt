@@ -73,7 +73,7 @@ object OnlineModuleInstallDialog {
 
 /**
  * 在线模块安装对话框 Compose 组件
- * 参考 KernelSU 的实现，使用 Miuix SuperDialog 显示更新日志和操作按钮
+ * 参考 KernelSU 的实现，使用 Miuix OverlayDialog 显示更新日志和操作按钮
  *
  * @param state 对话框状态
  * @param context Context

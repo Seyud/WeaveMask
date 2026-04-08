@@ -93,9 +93,9 @@ import top.yukonga.miuix.kmp.basic.SliderDefaults
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.extra.SuperArrow
-import top.yukonga.miuix.kmp.extra.SuperDropdown
-import top.yukonga.miuix.kmp.extra.SuperSwitch
+import top.yukonga.miuix.kmp.preference.ArrowPreference
+import top.yukonga.miuix.kmp.preference.OverlayDropdownPreference
+import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
@@ -205,7 +205,7 @@ fun SettingsScreen(
                         .padding(top = 12.dp)
                         .fillMaxWidth()
                 ) {
-                    SuperArrow(
+                    ArrowPreference(
                         title = stringResource(CoreR.string.logs),
                         startAction = {
                             Icon(
@@ -241,7 +241,7 @@ fun SettingsScreen(
                         stringResource(CoreR.string.settings_theme_mode_monet_dark),
                     )
                     var themeMode by rememberSaveable { mutableIntStateOf(Config.colorMode) }
-                    SuperDropdown(
+                    OverlayDropdownPreference(
                         title = stringResource(CoreR.string.settings_theme),
                         summary = stringResource(CoreR.string.settings_theme_summary),
                         items = themeItems,
@@ -303,7 +303,7 @@ fun SettingsScreen(
                                 colorValues.indexOf(Config.keyColor).takeIf { it >= 0 } ?: 0
                             )
                         }
-                        SuperDropdown(
+                        OverlayDropdownPreference(
                             title = stringResource(CoreR.string.settings_key_color),
                             summary = stringResource(CoreR.string.settings_key_color_summary),
                             items = colorItems,
@@ -325,7 +325,7 @@ fun SettingsScreen(
 
                     // 模糊
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        SuperSwitch(
+                        SwitchPreference(
                             title = stringResource(CoreR.string.settings_enable_blur),
                             summary = stringResource(CoreR.string.settings_enable_blur_summary),
                             startAction = {
@@ -346,7 +346,7 @@ fun SettingsScreen(
                     }
 
                     // 悬浮底栏
-                    SuperSwitch(
+                    SwitchPreference(
                         title = stringResource(CoreR.string.settings_floating_bottom_bar),
                         summary = stringResource(CoreR.string.settings_floating_bottom_bar_summary),
                         startAction = {
@@ -368,7 +368,7 @@ fun SettingsScreen(
                     AnimatedVisibility(
                         visible = enableFloatingBottomBar && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                     ) {
-                        SuperSwitch(
+                        SwitchPreference(
                             title = stringResource(CoreR.string.settings_enable_glass),
                             summary = stringResource(CoreR.string.settings_enable_glass_summary),
                             startAction = {
@@ -391,7 +391,7 @@ fun SettingsScreen(
                     // 预测性返回手势（Android 14+）
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                         var enablePredictiveBack by rememberSaveable { mutableStateOf(Config.enablePredictiveBack) }
-                        SuperSwitch(
+                        SwitchPreference(
                             title = stringResource(CoreR.string.settings_enable_predictive_back),
                             summary = stringResource(CoreR.string.settings_enable_predictive_back_summary),
                             startAction = {
@@ -414,7 +414,7 @@ fun SettingsScreen(
 
                     // 界面缩放
                     var sliderValue by rememberSaveable { mutableStateOf(Config.pageScale) }
-                    SuperArrow(
+                    ArrowPreference(
                         title = stringResource(CoreR.string.settings_page_scale),
                         summary = stringResource(CoreR.string.settings_page_scale_summary),
                         startAction = {
@@ -458,7 +458,7 @@ fun SettingsScreen(
                     )
 
                     // 语言
-                    SuperArrow(
+                    ArrowPreference(
                         title = stringResource(CoreR.string.language),
                         summary = appLanguageSummary(res),
                         startAction = {
@@ -474,7 +474,7 @@ fun SettingsScreen(
 
                     // 添加桌面快捷方式
                     if (showAddShortcut) {
-                        SuperArrow(
+                        ArrowPreference(
                             title = stringResource(CoreR.string.add_shortcut_title),
                             summary = stringResource(CoreR.string.setting_add_shortcut_summary),
                             startAction = {
@@ -510,7 +510,7 @@ fun SettingsScreen(
 
                     // 自定义更新通道 URL
                     AnimatedVisibility(visible = updateChannelIndex == Config.Value.CUSTOM_CHANNEL) {
-                        SuperArrow(
+                        ArrowPreference(
                             title = stringResource(CoreR.string.settings_update_custom),
                             summary = UpdateChannelUrl.getDescription(res),
                             startAction = {
@@ -530,7 +530,7 @@ fun SettingsScreen(
 
                     // DNS over HTTPS
                     var dohEnabled by rememberSaveable { mutableStateOf(Config.doh) }
-                    SuperSwitch(
+                    SwitchPreference(
                         title = stringResource(CoreR.string.settings_doh_title),
                         summary = stringResource(CoreR.string.settings_doh_description),
                         checked = dohEnabled,
@@ -550,7 +550,7 @@ fun SettingsScreen(
 
                     // 检查更新
                     var checkUpdateEnabled by rememberSaveable { mutableStateOf(Config.checkUpdate) }
-                    SuperSwitch(
+                    SwitchPreference(
                         title = stringResource(CoreR.string.settings_check_update_title),
                         summary = stringResource(CoreR.string.settings_check_update_summary),
                         checked = checkUpdateEnabled,
@@ -569,7 +569,7 @@ fun SettingsScreen(
                     )
 
                     // 下载路径
-                    SuperArrow(
+                    ArrowPreference(
                         title = stringResource(CoreR.string.settings_download_path_title),
                         summary = MediaStoreUtils.fullPath(Config.downloadDir).takeIf { it.isNotEmpty() },
                         startAction = {
@@ -588,7 +588,7 @@ fun SettingsScreen(
 
                     // 随机文件名
                     var randNameEnabled by rememberSaveable { mutableStateOf(Config.randName) }
-                    SuperSwitch(
+                    SwitchPreference(
                         title = stringResource(CoreR.string.settings_random_name_title),
                         summary = stringResource(CoreR.string.settings_random_name_description),
                         checked = randNameEnabled,
@@ -609,7 +609,7 @@ fun SettingsScreen(
                     // 隐藏/恢复 Magisk app
                     if (showHideRestore) {
                         if (hidden) {
-                            SuperArrow(
+                            ArrowPreference(
                                 title = stringResource(CoreR.string.settings_restore_app_title),
                                 summary = stringResource(CoreR.string.settings_restore_app_summary),
                                 startAction = {
@@ -627,7 +627,7 @@ fun SettingsScreen(
                                 }
                             )
                         } else {
-                            SuperArrow(
+                            ArrowPreference(
                                 title = stringResource(CoreR.string.settings_hide_app_title),
                                 summary = stringResource(CoreR.string.settings_hide_app_summary),
                                 startAction = {
@@ -656,7 +656,7 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         // Systemless Hosts
-                        SuperArrow(
+                        ArrowPreference(
                             title = stringResource(CoreR.string.settings_hosts_title),
                             summary = stringResource(CoreR.string.settings_hosts_summary),
                             startAction = {
@@ -674,7 +674,7 @@ fun SettingsScreen(
                             // Zygisk
                             var zygiskEnabled by rememberSaveable { mutableStateOf(Config.zygisk) }
                             val zygiskMismatch = zygiskEnabled != Info.isZygiskEnabled
-                            SuperSwitch(
+                            SwitchPreference(
                                 title = stringResource(CoreR.string.zygisk),
                                 summary = if (zygiskMismatch) stringResource(CoreR.string.reboot_apply_change) else stringResource(CoreR.string.settings_zygisk_summary),
                                 checked = zygiskEnabled,
@@ -694,7 +694,7 @@ fun SettingsScreen(
 
                             // DenyList
                             var denyListEnabled by rememberSaveable { mutableStateOf(Config.denyList) }
-                            SuperSwitch(
+                            SwitchPreference(
                                 title = stringResource(CoreR.string.settings_denylist_title),
                                 summary = stringResource(CoreR.string.settings_denylist_summary),
                                 checked = denyListEnabled,
@@ -718,7 +718,7 @@ fun SettingsScreen(
                             )
 
                             // DenyList Config
-                            SuperArrow(
+                            ArrowPreference(
                                 title = stringResource(CoreR.string.settings_denylist_config_title),
                                 summary = stringResource(CoreR.string.settings_denylist_config_summary),
                                 startAction = {
@@ -746,7 +746,7 @@ fun SettingsScreen(
                         // 防窗口覆盖
                         if (showTapjack) {
                             var tapjackEnabled by rememberSaveable { mutableStateOf(Config.suTapjack) }
-                            SuperSwitch(
+                            SwitchPreference(
                                 title = stringResource(CoreR.string.settings_su_tapjack_title),
                                 summary = stringResource(CoreR.string.settings_su_tapjack_summary),
                                 checked = tapjackEnabled,
@@ -773,7 +773,7 @@ fun SettingsScreen(
                         } else {
                             stringResource(CoreR.string.settings_su_auth_insecure)
                         }
-                        SuperSwitch(
+                        SwitchPreference(
                             title = stringResource(CoreR.string.settings_su_auth_title),
                             summary = authSummary,
                             checked = authEnabled,
@@ -817,7 +817,7 @@ fun SettingsScreen(
                         // 重新认证
                         if (showReauthenticate) {
                             var reauthEnabled by rememberSaveable { mutableStateOf(Config.suReAuth) }
-                            SuperSwitch(
+                            SwitchPreference(
                                 title = stringResource(CoreR.string.settings_su_reauth_title),
                                 summary = stringResource(CoreR.string.settings_su_reauth_summary),
                                 checked = reauthEnabled,
@@ -839,7 +839,7 @@ fun SettingsScreen(
                         // 限制前台应用
                         if (showRestrict) {
                             var restrictEnabled by rememberSaveable { mutableStateOf(Config.suRestrict) }
-                            SuperSwitch(
+                            SwitchPreference(
                                 title = stringResource(CoreR.string.settings_su_restrict_title),
                                 summary = stringResource(CoreR.string.settings_su_restrict_summary),
                                 checked = restrictEnabled,
@@ -989,7 +989,7 @@ private fun UpdateChannelSelectorItem(
 ) {
     val entries = res.getStringArray(CoreR.array.update_channel)
 
-    SuperDropdown(
+    OverlayDropdownPreference(
         title = stringResource(CoreR.string.settings_update_channel_title),
         items = entries.toList(),
         selectedIndex = selectedIndex.coerceIn(0, entries.size - 1),
@@ -1013,7 +1013,7 @@ private fun AccessModeSelectorItem(res: Resources) {
     val entries = res.getStringArray(CoreR.array.su_access)
     var selected by rememberSaveable { mutableIntStateOf(Config.rootMode) }
 
-    SuperDropdown(
+    OverlayDropdownPreference(
         title = stringResource(CoreR.string.superuser_access),
         items = entries.toList(),
         selectedIndex = selected.coerceIn(0, entries.size - 1),
@@ -1042,7 +1042,7 @@ private fun MultiuserModeSelectorItem(res: Resources) {
     var selected by rememberSaveable { mutableIntStateOf(Config.suMultiuserMode) }
     val enabled = Const.USER_ID == 0
 
-    SuperDropdown(
+    OverlayDropdownPreference(
         title = stringResource(CoreR.string.multiuser_mode),
         summary = summaries.getOrElse(selected) { "" },
         items = entries.toList(),
@@ -1072,7 +1072,7 @@ private fun MountNamespaceModeSelectorItem(res: Resources) {
     val summaries = res.getStringArray(CoreR.array.namespace_summary)
     var selected by rememberSaveable { mutableIntStateOf(Config.suMntNamespaceMode) }
 
-    SuperDropdown(
+    OverlayDropdownPreference(
         title = stringResource(CoreR.string.mount_namespace_mode),
         summary = summaries.getOrElse(selected) { "" },
         items = entries.toList(),
@@ -1100,7 +1100,7 @@ private fun AutomaticResponseSelectorItem(res: Resources, viewModel: SettingsVie
     val entries = res.getStringArray(CoreR.array.auto_response)
     var selected by rememberSaveable { mutableIntStateOf(Config.suAutoResponse) }
 
-    SuperDropdown(
+    OverlayDropdownPreference(
         title = stringResource(CoreR.string.auto_response),
         items = entries.toList(),
         selectedIndex = selected.coerceIn(0, entries.size - 1),
@@ -1139,7 +1139,7 @@ private fun RequestTimeoutSelectorItem(res: Resources) {
         mutableIntStateOf(entryValues.indexOfFirst { it == Config.suDefaultTimeout }.coerceAtLeast(0))
     }
 
-    SuperDropdown(
+    OverlayDropdownPreference(
         title = stringResource(CoreR.string.request_timeout),
         items = entries.toList(),
         selectedIndex = selected.coerceIn(0, entries.size - 1),
@@ -1166,7 +1166,7 @@ private fun SUNotificationSelectorItem(res: Resources) {
     val entries = res.getStringArray(CoreR.array.su_notification)
     var selected by rememberSaveable { mutableIntStateOf(Config.suNotification) }
 
-    SuperDropdown(
+    OverlayDropdownPreference(
         title = stringResource(CoreR.string.superuser_notification),
         items = entries.toList(),
         selectedIndex = selected.coerceIn(0, entries.size - 1),

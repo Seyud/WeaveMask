@@ -31,7 +31,7 @@ import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.extra.SuperCheckbox
+import top.yukonga.miuix.kmp.preference.CheckboxPreference
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -124,7 +124,6 @@ fun AppLanguageScreen(
                 title = context.getString(CoreR.string.app_language),
                 navigationIcon = {
                     IconButton(
-                        modifier = Modifier.padding(start = 16.dp),
                         onClick = onNavigateBack,
                     ) {
                         Icon(
@@ -151,7 +150,7 @@ fun AppLanguageScreen(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         suggestedLanguages.forEach { option ->
-                            SuperCheckbox(
+                            CheckboxPreference(
                                 title = option.name,
                                 checked = selectedIndex == option.index,
                                 onCheckedChange = { checked ->
@@ -171,7 +170,7 @@ fun AppLanguageScreen(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         allLanguages.forEach { option ->
-                            SuperCheckbox(
+                            CheckboxPreference(
                                 title = option.name,
                                 checked = selectedIndex == option.index,
                                 onCheckedChange = { checked ->

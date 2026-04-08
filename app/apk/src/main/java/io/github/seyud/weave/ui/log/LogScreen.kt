@@ -136,7 +136,6 @@ fun LogScreen(
                 color = if (enableBlur) Color.Transparent else MiuixTheme.colorScheme.surface,
                 navigationIcon = {
                     IconButton(
-                        modifier = Modifier.padding(start = 16.dp),
                         onClick = onNavigateBack,
                     ) {
                         Icon(
@@ -157,7 +156,6 @@ fun LogScreen(
                         }
                     }
                     IconButton(
-                        modifier = Modifier.padding(end = 16.dp),
                         onClick = {
                             if (selectedTab == 0) viewModel.clearMagiskLog()
                             else viewModel.clearLog()

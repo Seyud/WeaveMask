@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextField
-import top.yukonga.miuix.kmp.extra.SuperDialog
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
@@ -120,7 +120,7 @@ private fun ModuleShortcutTypeDialog(
 ) {
     if (!show) return
 
-    SuperDialog(
+    OverlayDialog(
         show = show,
         title = stringResource(CoreR.string.module_shortcut_type_title),
         onDismissRequest = onDismiss,
@@ -168,7 +168,7 @@ private fun ModuleShortcutDialog(
         runCatching { context.getBitmap(CoreR.drawable.ic_launcher).asImageBitmap() }.getOrNull()
     }
 
-    SuperDialog(
+    OverlayDialog(
         show = show,
         title = stringResource(CoreR.string.module_shortcut_title),
         onDismissRequest = onDismiss,

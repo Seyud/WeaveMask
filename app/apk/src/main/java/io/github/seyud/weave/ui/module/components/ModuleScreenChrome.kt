@@ -25,7 +25,7 @@ import top.yukonga.miuix.kmp.basic.ListPopupDefaults
 import top.yukonga.miuix.kmp.basic.PopupPositionProvider
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.extra.SuperListPopup
+import top.yukonga.miuix.kmp.overlay.OverlayListPopup
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.MoreCircle
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -110,7 +110,7 @@ private fun ModuleTopBarActions(
     onToggleSortUpdateFirst: () -> Unit,
     onToggleSortExecutableFirst: () -> Unit,
 ) {
-    SuperListPopup(
+    OverlayListPopup(
         show = showTopPopup,
         popupPositionProvider = ListPopupDefaults.ContextMenuPositionProvider,
         alignment = PopupPositionProvider.Align.TopEnd,
@@ -153,7 +153,6 @@ private fun ModuleTopBarActions(
     }
 
     RebootListPopup(
-        modifier = Modifier.padding(end = 16.dp),
         alignment = PopupPositionProvider.Align.TopEnd,
     )
 }
