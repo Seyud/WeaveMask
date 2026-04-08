@@ -60,7 +60,6 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
-    implementation(libs.core.splashscreen)
     implementation(libs.core.ktx)
     implementation(libs.activity)
     implementation(libs.collection.ktx)

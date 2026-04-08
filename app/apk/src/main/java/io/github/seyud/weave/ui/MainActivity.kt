@@ -10,8 +10,6 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -33,14 +31,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.core.content.pm.ShortcutManagerCompat
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.topjohnwu.superuser.Shell
+import io.github.seyud.weave.StubApk
 import io.github.seyud.weave.arch.BaseViewModel
 import io.github.seyud.weave.arch.ActivityExecutor
 import io.github.seyud.weave.arch.ContextExecutor
@@ -48,17 +46,23 @@ import io.github.seyud.weave.arch.VMFactory
 import io.github.seyud.weave.arch.UiEvent
 import io.github.seyud.weave.arch.ViewModelHolder
 import io.github.seyud.weave.arch.viewModel
+import io.github.seyud.weave.core.BuildConfig
+import io.github.seyud.weave.core.BuildConfig.APP_PACKAGE_NAME
 import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.Const
 import io.github.seyud.weave.core.Info
+import io.github.seyud.weave.core.JobService
 import io.github.seyud.weave.core.base.ActivityExtension
 import io.github.seyud.weave.core.base.IActivityExtension
-import io.github.seyud.weave.core.base.SplashController
-import io.github.seyud.weave.core.base.SplashScreenHost
+import io.github.seyud.weave.core.base.launchPackage
+import io.github.seyud.weave.core.di.ServiceLocator
+import io.github.seyud.weave.core.integration.AppNotifications
 import io.github.seyud.weave.core.integration.AppShortcuts
 import io.github.seyud.weave.core.isRunningAsStub
 import io.github.seyud.weave.core.ktx.toast
+import io.github.seyud.weave.core.ktx.writeTo
 import io.github.seyud.weave.core.tasks.AppMigration
+import io.github.seyud.weave.core.utils.RootUtils
 import io.github.seyud.weave.events.SnackbarEvent
 import io.github.seyud.weave.ui.component.MiuixConfirmDialog
 import io.github.seyud.weave.ui.dialog.WeaveDialog
@@ -84,9 +88,8 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SnackbarHostState
-import top.yukonga.miuix.kmp.basic.Text
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.io.File
+import java.io.IOException
 import io.github.seyud.weave.core.R as CoreR
 
 /**
@@ -98,17 +101,24 @@ class MainViewModel : BaseViewModel()
 /**
  * 应用主 Activity
  * 使用 Jetpack Compose 构建用户界面
- * 实现 SplashScreenHost 接口以支持启动画面控制
  * 实现 IActivityExtension 接口以支持权限请求等功能
  */
-class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, ViewModelHolder,
-    WeaveDialogHost {
+class MainActivity : AppCompatActivity(), IActivityExtension, ViewModelHolder, WeaveDialogHost {
 
     companion object {
         const val EXTRA_START_MAIN_TAB = "start_main_tab"
         const val EXTRA_FLASH_ACTION = "extra_flash_action"
         const val EXTRA_FLASH_URI = "extra_flash_uri"
         const val EXTRA_FLASH_URIS = "extra_flash_uris"
+
+        private val startupLock = Any()
+        private val pendingUiCreation = mutableListOf<(Boolean) -> Unit>()
+
+        @Volatile
+        private var appInitialized = false
+
+        @Volatile
+        private var initializationInProgress = false
     }
 
     /** Activity 扩展，用于处理权限请求等通用功能 */
@@ -116,9 +126,6 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
 
     /** 主 ViewModel 实例 */
     override val viewModel by viewModel<MainViewModel>()
-
-    /** 启动画面控制器 */
-    override val splashController = SplashController(this)
 
     /** 主页 ViewModel */
     private val homeViewModel: HomeViewModel by viewModels { VMFactory }
@@ -165,25 +172,16 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
 
     /**
      * Activity 创建时的生命周期回调
-     * 设置主题并初始化启动画面控制器
+     * 设置主题并初始化应用状态
      *
      * @param savedInstanceState 保存的实例状态
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(Theme.themeRes)
         applySystemBarStyle(resolveDarkMode(Config.colorMode))
-        splashController.preOnCreate()
         super.onCreate(savedInstanceState)
-        splashController.onCreate(savedInstanceState)
-    }
-
-    /**
-     * Activity 恢复时的生命周期回调
-     * 通知启动画面控制器
-     */
-    override fun onResume() {
-        super.onResume()
-        splashController.onResume()
+        extension.onCreate(savedInstanceState)
+        ensureAppInitialized(savedInstanceState)
     }
 
     /**
@@ -193,7 +191,7 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
      * @param savedInstanceState 保存的实例状态
      */
     @SuppressLint("InlinedApi")
-    override fun onCreateUi(savedInstanceState: Bundle?) {
+    private fun createUi(savedInstanceState: Bundle?) {
         val initialMainTab = intent.getIntExtra(EXTRA_START_MAIN_TAB, 0)
         intent.removeExtra(EXTRA_START_MAIN_TAB)
         pendingFlashRequestState.value = consumePendingFlashRequest()
@@ -312,7 +310,6 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
                 }
             }
         }
-        installSplashUiReadyObserver()
 
         // 显示不支持的消息对话框
         showUnsupportedMessage()
@@ -330,38 +327,112 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
         startObserveLiveData()
     }
 
-    private fun installSplashUiReadyObserver() {
-        val contentView = findViewById<ViewGroup>(android.R.id.content) ?: return
-        val rootView = contentView.getChildAt(0) ?: contentView
-        var handled = false
-
-        fun markUiReady() {
-            if (handled) return
-            handled = true
-            splashController.notifyUiReady()
-            ViewCompat.setOnApplyWindowInsetsListener(rootView, null)
-        }
-
-        if (ViewCompat.getRootWindowInsets(rootView) != null) {
-            markUiReady()
+    private fun ensureAppInitialized(savedInstanceState: Bundle?) {
+        if (appInitialized) {
+            createUi(savedInstanceState)
             return
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(rootView) { _: View, insets ->
-            markUiReady()
-            insets
+        val shouldStartInitialization: Boolean
+        synchronized(startupLock) {
+            if (appInitialized) {
+                createUi(savedInstanceState)
+                return
+            }
+            pendingUiCreation += { shouldCreateUi ->
+                if (shouldCreateUi) {
+                    runOnUiThread {
+                        if (!isDestroyed && !isFinishing) {
+                            createUi(savedInstanceState)
+                        }
+                    }
+                }
+            }
+            shouldStartInitialization = !initializationInProgress
+            if (shouldStartInitialization) {
+                initializationInProgress = true
+            }
         }
 
-        rootView.post {
-            if (!handled && ViewCompat.getRootWindowInsets(rootView) != null) {
-                markUiReady()
+        if (!shouldStartInitialization) return
+
+        Shell.getShell(Shell.EXECUTOR) { shell ->
+            val shouldCreateUi = if (isRunningAsStub && !shell.isRoot) {
+                showInvalidStateMessage()
+                false
+            } else {
+                initializeApp()
+            }
+            val callbacks = synchronized(startupLock) {
+                if (shouldCreateUi) {
+                    appInitialized = true
+                }
+                initializationInProgress = false
+                pendingUiCreation.toList().also { pendingUiCreation.clear() }
+            }
+            callbacks.forEach { callback -> callback(shouldCreateUi) }
+        }
+    }
+
+    private fun initializeApp(): Boolean {
+        val prevPkg = intent.getStringExtra(Const.Key.PREV_PKG) ?: launchPackage
+        val prevConfig = intent.getBundleExtra(Const.Key.PREV_CONFIG)
+        val isPackageMigration = prevPkg != null && prevConfig != null
+
+        Config.init(prevConfig)
+
+        if (packageName != APP_PACKAGE_NAME) {
+            runCatching {
+                // Hidden, remove io.github.seyud.weave if exist as it could be malware
+                packageManager.getApplicationInfo(APP_PACKAGE_NAME, 0)
+                Shell.cmd("(pm uninstall $APP_PACKAGE_NAME)& >/dev/null 2>&1").exec()
+            }
+        } else {
+            if (Config.suManager.isNotEmpty()) {
+                Config.suManager = ""
+            }
+            if (isPackageMigration) {
+                Shell.cmd("(pm uninstall $prevPkg)& >/dev/null 2>&1").exec()
             }
         }
-        rootView.postDelayed({
-            if (!handled) {
-                markUiReady()
+
+        if (isPackageMigration) {
+            runOnUiThread {
+                StubApk.restartProcess(this)
             }
-        }, 500)
+            return false
+        }
+
+        if (isRunningAsStub && (
+                Info.stub!!.version != BuildConfig.STUB_VERSION ||
+                    intent.component!!.className.contains(AppMigration.PLACEHOLDER))
+        ) {
+            runOnUiThread {
+                withPermission(REQUEST_INSTALL_PACKAGES) { granted ->
+                    if (granted) {
+                        lifecycleScope.launch {
+                            val apk = File(cacheDir, "stub.apk")
+                            try {
+                                assets.open("stub.apk").writeTo(apk)
+                                AppMigration.upgradeStub(this@MainActivity, apk)?.let {
+                                    startActivity(it)
+                                }
+                            } catch (e: IOException) {
+                                Timber.e(e)
+                            }
+                        }
+                    }
+                }
+            }
+            return false
+        }
+
+        AppNotifications.setup()
+        JobService.schedule(this)
+        AppShortcuts.setupDynamic(this)
+        ServiceLocator.networkService
+        RootUtils.Connection.await()
+        return true
     }
 
     private fun applySystemBarStyle(darkMode: Boolean) {
@@ -476,7 +547,7 @@ class MainActivity : AppCompatActivity(), SplashScreenHost, IActivityExtension, 
      * 当应用以 stub 模式运行但没有 root 权限时显示
      */
     @SuppressLint("InlinedApi")
-    override fun showInvalidStateMessage(): Unit = runOnUiThread {
+    private fun showInvalidStateMessage(): Unit = runOnUiThread {
         WeaveDialog(this).apply {
             setTitle(CoreR.string.unsupport_nonroot_stub_title)
             setMessage(CoreR.string.unsupport_nonroot_stub_msg)
