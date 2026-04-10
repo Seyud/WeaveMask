@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import android.os.Process
 import androidx.collection.LruCache
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.drawable.toDrawable
@@ -25,13 +26,13 @@ object AppIconCache : CoroutineScope {
         get() = Dispatchers.Main
 
     private class IconLruCache(maxSize: Int) :
-        LruCache<Triple<String, Int, Int>, Bitmap>(maxSize) {
-        override fun sizeOf(key: Triple<String, Int, Int>, value: Bitmap): Int {
+        LruCache<String, Bitmap>(maxSize) {
+        override fun sizeOf(key: String, value: Bitmap): Int {
             return value.byteCount / 1024
         }
     }
 
-    private val lruCache: LruCache<Triple<String, Int, Int>, Bitmap>
+    private val lruCache: LruCache<String, Bitmap>
     private val dispatcher: CoroutineDispatcher
 
     init {
@@ -44,26 +45,38 @@ object AppIconCache : CoroutineScope {
         dispatcher = loadIconExecutor.asCoroutineDispatcher()
     }
 
-    private fun get(packageName: String, userId: Int, size: Int): Bitmap? =
-        lruCache[Triple(packageName, userId, size)]
+    private fun buildKey(info: ApplicationInfo, size: Int): String {
+        return "${info.packageName}:${info.uid}:${info.sourceDir}:$size"
+    }
 
-    private fun put(packageName: String, userId: Int, size: Int, bitmap: Bitmap) {
-        if (get(packageName, userId, size) == null) {
-            lruCache.put(Triple(packageName, userId, size), bitmap)
+    fun getCachedBitmap(info: ApplicationInfo, size: Int): Bitmap? =
+        lruCache[buildKey(info, size)]
+
+    private fun put(info: ApplicationInfo, size: Int, bitmap: Bitmap) {
+        val key = buildKey(info, size)
+        if (lruCache[key] == null) {
+            lruCache.put(key, bitmap)
         }
+    }
+
+    private fun ApplicationInfo.withCurrentUserUid(): ApplicationInfo {
+        val myUserId = Process.myUid() / 100000
+        val appId = uid % 100000
+        val targetUid = myUserId * 100000 + appId
+        if (uid == targetUid) return this
+        return ApplicationInfo(this).apply { uid = targetUid }
     }
 
     private fun getOrLoadBitmap(
         context: Context,
         info: ApplicationInfo,
-        userId: Int,
         size: Int
     ): Bitmap {
-        get(info.packageName, userId, size)?.let { return it }
+        getCachedBitmap(info, size)?.let { return it }
 
-        val drawable = info.loadIcon(context.packageManager)
-        val bitmap = drawable.toBitmap(size, size)
-        put(info.packageName, userId, size, bitmap)
+        val drawable = info.withCurrentUserUid().loadIcon(context.packageManager)
+        val bitmap = drawable.toBitmap(size, size).also { it.prepareToDraw() }
+        put(info, size, bitmap)
         return bitmap
     }
 
@@ -78,7 +91,7 @@ object AppIconCache : CoroutineScope {
     suspend fun loadIconDrawable(context: Context, info: ApplicationInfo, size: Int): Drawable? {
         return try {
             val bitmap = withContext(dispatcher) {
-                getOrLoadBitmap(context, info, 0, size)
+                getOrLoadBitmap(context, info, size)
             }
             bitmap.toDrawable(context.resources)
         } catch (e: Exception) {
@@ -98,7 +111,7 @@ object AppIconCache : CoroutineScope {
     suspend fun loadIconBitmap(context: Context, info: ApplicationInfo, size: Int): Bitmap? {
         return try {
             withContext(dispatcher) {
-                getOrLoadBitmap(context, info, 0, size)
+                getOrLoadBitmap(context, info, size)
             }
         } catch (e: Exception) {
             e.printStackTrace()

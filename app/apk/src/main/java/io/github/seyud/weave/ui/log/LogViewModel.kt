@@ -33,6 +33,7 @@ class LogViewModel(
 
     var loadingState by mutableStateOf(true)
         private set
+    private var hasLoadedOnce = false
 
     // --- su log
     val itemsState = mutableStateListOf<SuLog>()
@@ -40,6 +41,11 @@ class LogViewModel(
     // --- magisk log
     val magiskLogEntriesState = mutableStateListOf<MagiskLogEntry>()
     var magiskLogRaw = " "
+
+    fun ensureLoaded() {
+        if (hasLoadedOnce) return
+        startLoading()
+    }
 
     override suspend fun doLoadWork() {
         loadingState = true
@@ -61,6 +67,7 @@ class LogViewModel(
 
             itemsState.clear()
             itemsState.addAll(result.suItems)
+            hasLoadedOnce = true
         } catch (e: Throwable) {
             SnackbarEvent(R.string.failure).publish()
         } finally {

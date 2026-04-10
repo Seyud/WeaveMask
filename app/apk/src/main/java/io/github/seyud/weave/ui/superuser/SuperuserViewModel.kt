@@ -1,11 +1,10 @@
 package io.github.seyud.weave.ui.superuser
 
 import android.annotation.SuppressLint
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
-import android.graphics.drawable.Drawable
 import android.os.Process
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.viewModelScope
 import io.github.seyud.weave.arch.AsyncLoadViewModel
@@ -42,13 +41,13 @@ data class SuperuserUiState(
     val revokeDialogState: SuperuserRevokeDialog.DialogState = SuperuserRevokeDialog.DialogState(),
 )
 
-@Immutable
+@Stable
 data class PolicyCardUiState(
     val key: String,
     val uid: Int,
     val packageName: String,
     val appName: String,
-    val icon: Drawable,
+    val applicationInfo: ApplicationInfo,
     val policy: Int,
     val shouldNotify: Boolean,
     val shouldLog: Boolean,
@@ -60,7 +59,7 @@ private data class PolicyEntry(
     val item: SuPolicy,
     val packageName: String,
     val isSharedUid: Boolean,
-    val icon: Drawable,
+    val applicationInfo: ApplicationInfo,
     val appName: String,
 )
 
@@ -80,7 +79,7 @@ class SuperuserViewModel(
         uid = item.uid,
         packageName = packageName,
         appName = if (isSharedUid) "[SharedUID] $appName" else appName,
-        icon = icon,
+        applicationInfo = applicationInfo,
         policy = item.policy,
         shouldNotify = item.notification,
         shouldLog = item.logging,
@@ -151,12 +150,13 @@ class SuperuserViewModel(
                     val map = pkgs.mapNotNull { pkg ->
                         try {
                             val info = pm.getPackageInfo(pkg, MATCH_UNINSTALLED_PACKAGES)
+                            val applicationInfo = info.applicationInfo ?: return@mapNotNull null
                             PolicyEntry(
                                 item = policy,
                                 packageName = info.packageName,
                                 isSharedUid = info.sharedUserId != null,
-                                icon = info.applicationInfo?.loadIcon(pm) ?: pm.defaultActivityIcon,
-                                appName = info.applicationInfo?.getLabel(pm) ?: info.packageName,
+                                applicationInfo = applicationInfo,
+                                appName = applicationInfo.getLabel(pm),
                             )
                         } catch (_: PackageManager.NameNotFoundException) {
                             null

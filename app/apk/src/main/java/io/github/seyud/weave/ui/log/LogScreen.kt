@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +61,7 @@ import io.github.seyud.weave.ui.theme.LocalEnableBlur
 import io.github.seyud.weave.ui.util.attachBarBlurBackdrop
 import io.github.seyud.weave.ui.util.barBlurContainerColor
 import io.github.seyud.weave.ui.util.defaultBarBlur
+import io.github.seyud.weave.ui.util.rememberContentReady
 import io.github.seyud.weave.ui.util.rememberBarBlurBackdrop
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.basic.Card
@@ -105,9 +107,13 @@ fun LogScreen(
     val enableBlur = LocalEnableBlur.current
     val surfaceColor = MiuixTheme.colorScheme.surface
     val blurBackdrop = rememberBarBlurBackdrop(enableBlur, surfaceColor)
+    val contentReady = rememberContentReady()
+    val settledPage by remember(pagerState) {
+        derivedStateOf { pagerState.settledPage }
+    }
 
     LaunchedEffect(Unit) {
-        viewModel.startLoading()
+        viewModel.ensureLoaded()
     }
 
     LaunchedEffect(pagerState.currentPage) {
@@ -217,10 +223,12 @@ fun LogScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .attachBarBlurBackdrop(blurBackdrop),
+                    beyondViewportPageCount = if (contentReady) 1 else 0,
                     userScrollEnabled = true,
                 ) { page ->
+                    val isCurrentPage = page == settledPage
                     when (page) {
-                        0 -> MagiskLogTab(
+                        0 -> if (isCurrentPage || contentReady) MagiskLogTab(
                             entries = magiskLogs,
                             scrollBehavior = scrollBehavior,
                             blurBackdrop = blurBackdrop,
@@ -229,7 +237,7 @@ fun LogScreen(
                             startPadding = contentStartPadding,
                             endPadding = contentEndPadding,
                         )
-                        else -> SuLogTab(
+                        else -> if (isCurrentPage || contentReady) SuLogTab(
                             suLogs = suLogs,
                             scrollBehavior = scrollBehavior,
                             blurBackdrop = blurBackdrop,
@@ -278,6 +286,7 @@ private fun SuLogTab(
             items(
                 items = suLogs,
                 key = { it.id },
+                contentType = { "su_log" },
             ) { log ->
                 SuLogCard(log)
             }
@@ -415,7 +424,13 @@ private fun MagiskLogTab(
             contentPadding = PaddingValues(top = topPadding, bottom = bottomPadding),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            items(entries.size, key = { it }) { index ->
+            items(
+                count = entries.size,
+                key = { it },
+                contentType = { index ->
+                    if (entries[index].isParsed) "parsed_magisk_log" else "raw_magisk_log"
+                },
+            ) { index ->
                 MagiskLogCard(entry = entries[index])
             }
         }

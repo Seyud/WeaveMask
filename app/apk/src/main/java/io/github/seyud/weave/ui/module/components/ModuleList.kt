@@ -91,6 +91,7 @@ internal fun LazyListScope.moduleItems(
     items(
         items = modules,
         key = { it.id },
+        contentType = { "module" },
     ) { module ->
         ModuleItem(
             module = module,

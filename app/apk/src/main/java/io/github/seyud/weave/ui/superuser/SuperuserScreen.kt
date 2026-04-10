@@ -36,7 +36,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -52,8 +51,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.core.graphics.drawable.toBitmap
 import io.github.seyud.weave.core.model.su.SuPolicy
+import io.github.seyud.weave.ui.component.AppIconImage
 import io.github.seyud.weave.dialog.SuperuserRevokeDialog
 import io.github.seyud.weave.ui.component.SearchBox
 import io.github.seyud.weave.ui.component.SearchPager
@@ -529,10 +528,10 @@ private fun PolicyItem(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                androidx.compose.foundation.Image(
-                    bitmap = item.icon.toBitmap().asImageBitmap(),
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp)
+                AppIconImage(
+                    applicationInfo = item.applicationInfo,
+                    label = item.appName,
+                    modifier = Modifier.size(40.dp),
                 )
                 Spacer(modifier = Modifier.width(12.dp))
 
