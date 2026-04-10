@@ -1,17 +1,28 @@
 package io.github.seyud.weave.ui.module.components
 
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Storefront
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.seyud.weave.core.R as CoreR
 import io.github.seyud.weave.ui.component.SearchPager
+import io.github.seyud.weave.ui.component.SearchBarFake
 import io.github.seyud.weave.ui.component.SearchStatus
 import io.github.seyud.weave.ui.module.ModuleInfo
 import io.github.seyud.weave.ui.module.ModuleUiState
@@ -68,6 +79,7 @@ internal fun ModuleScreenTopBar(
     uiState: ModuleUiState,
     blurBackdrop: LayerBackdrop?,
     scrollBehavior: ScrollBehavior,
+    onSearchStatusChange: (SearchStatus) -> Unit,
     showTopPopup: Boolean,
     onShowTopPopupChange: (Boolean) -> Unit,
     onOpenRepo: () -> Unit,
@@ -76,6 +88,10 @@ internal fun ModuleScreenTopBar(
     onToggleSortExecutableFirst: () -> Unit,
 ) {
     val context = LocalContext.current
+    val density = LocalDensity.current
+    val dynamicTopPadding by remember {
+        derivedStateOf { 12.dp * (1f - scrollBehavior.state.collapsedFraction) }
+    }
 
     uiSearchStatus.TopAppBarAnim(
         blurBackdrop = blurBackdrop,
@@ -96,6 +112,35 @@ internal fun ModuleScreenTopBar(
                 }
             },
             scrollBehavior = scrollBehavior,
+            bottomContent = {
+                Box(
+                    modifier = Modifier
+                        .alpha(if (uiSearchStatus.isCollapsed()) 1f else 0f)
+                        .onGloballyPositioned { coordinates ->
+                            with(density) {
+                                val newOffsetY = coordinates.positionInWindow().y.toDp()
+                                if (uiSearchStatus.offsetY != newOffsetY) {
+                                    onSearchStatusChange(uiSearchStatus.copy(offsetY = newOffsetY))
+                                }
+                            }
+                        }
+                        .then(
+                            if (uiSearchStatus.isCollapsed()) {
+                                Modifier.pointerInput(Unit) {
+                                    detectTapGestures {
+                                        onSearchStatusChange(
+                                            uiSearchStatus.copy(current = SearchStatus.Status.EXPANDING)
+                                        )
+                                    }
+                                }
+                            } else {
+                                Modifier
+                            }
+                        ),
+                ) {
+                    SearchBarFake(uiSearchStatus.label, dynamicTopPadding)
+                }
+            },
             actions = {
                 ModuleTopBarActions(
                     uiState = uiState,

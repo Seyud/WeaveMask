@@ -3,7 +3,9 @@ package io.github.seyud.weave.ui.home
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -138,14 +140,8 @@ internal fun MagiskCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(
-                    painter = painterResource(id = CoreR.drawable.ic_weave_card),
-                    contentDescription = null,
-                    colorFilter = if (isMonetTheme) {
-                        ColorFilter.tint(MiuixTheme.colorScheme.primary)
-                    } else {
-                        null
-                    },
+                WeaveCardIcon(
+                    isMonetTheme = isMonetTheme,
                     modifier = Modifier.size(56.dp)
                 )
 
@@ -205,6 +201,36 @@ internal fun MagiskCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun WeaveCardIcon(
+    isMonetTheme: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    if (!isMonetTheme) {
+        Image(
+            painter = painterResource(id = CoreR.drawable.ic_weave_card),
+            contentDescription = null,
+            modifier = modifier
+        )
+        return
+    }
+
+    Box(modifier = modifier) {
+        Image(
+            painter = painterResource(id = CoreR.drawable.ic_weave_card),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(MiuixTheme.colorScheme.primary),
+            modifier = Modifier.fillMaxSize()
+        )
+        Image(
+            painter = painterResource(id = CoreR.drawable.ic_weave_card_monet_detail),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(MiuixTheme.colorScheme.onPrimary),
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 

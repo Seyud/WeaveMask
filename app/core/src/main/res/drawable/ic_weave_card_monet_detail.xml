@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="256"
+    android:viewportHeight="256">
+  <group
+      android:pivotX="128"
+      android:pivotY="128"
+      android:scaleX="0.84"
+      android:scaleY="0.84">
+    <path
+        android:strokeWidth="1"
+        android:pathData="M154,152C145,147 136.76,148.09 128,159C125.19,162.5 140.5,168 147,174.5C177.88,199.29 208.82,201.34 232,161.5C234,157 227.33,154.5 225,159C218,172.5 208.5,179 197.5,179C182.5,179 159.5,155.06 154,152Z"
+        android:fillColor="@color/weave_brand_accent"
+        android:strokeColor="@color/weave_brand_accent_stroke"/>
+    <path
+        android:strokeWidth="1"
+        android:pathData="M101.37,151.86C110.37,146.86 118.61,147.95 127.37,158.86C130.18,162.36 114.87,167.86 108.37,174.36C77.49,199.15 46.55,201.2 23.37,161.36C21.37,156.86 28.04,154.36 30.37,158.86C37.37,172.36 46.87,178.86 57.87,178.86C72.87,178.86 95.87,154.92 101.37,151.86Z"
+        android:fillColor="@color/weave_brand_accent"
+        android:strokeColor="@color/weave_brand_accent_stroke"/>
+    <path
+        android:strokeWidth="1"
+        android:pathData="M206,106L202,101C180,111.5 168.71,108.5 163,110.5C153,114 146,118 146,126.5C146,131.5 173.15,133.5 175,132.5C189.88,124.44 196.9,118.83 206,106Z"
+        android:fillColor="@color/weave_brand_accent"
+        android:strokeColor="@color/weave_brand_accent_stroke"/>
+    <path
+        android:strokeWidth="1"
+        android:pathData="M50,106L54,101C76,111.5 87.29,108.5 93,110.5C103,114 110,118 110,126.5C110,131.5 82.85,133.5 81,132.5C66.12,124.44 59.1,118.83 50,106Z"
+        android:fillColor="@color/weave_brand_accent"
+        android:strokeColor="@color/weave_brand_accent_stroke"/>
+  </group>
+</vector>

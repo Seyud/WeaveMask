@@ -143,6 +143,7 @@ fun SearchStatus.SearchBox(
     searchBarTopPadding: Dp = 12.dp,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     blurBackdrop: LayerBackdrop? = null,
+    renderCollapsedBar: Boolean = true,
     content: @Composable (MutableState<Dp>) -> Unit
 ) {
     val searchStatus = this
@@ -152,37 +153,39 @@ fun SearchStatus.SearchBox(
     val offsetY = remember { mutableIntStateOf(0) }
     val boxHeight = remember { mutableStateOf(0.dp) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .zIndex(10f)
-            .graphicsLayer {
-                alpha = if (searchStatus.isCollapsed()) 1f else 0f
-            }
-            .offset(y = contentPadding.calculateTopPadding())
-            .onGloballyPositioned {
-                it.positionInWindow().y.apply {
-                    offsetY.intValue = (this@apply * 0.9).toInt()
-                    with(density) {
-                        val newOffsetY = this@apply.toDp()
-                        val newBoxHeight = it.size.height.toDp()
-                        if (searchStatus.offsetY != newOffsetY) {
-                            onSearchStatusChange(searchStatus.copy(offsetY = newOffsetY))
+    if (renderCollapsedBar) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .zIndex(10f)
+                .graphicsLayer {
+                    alpha = if (searchStatus.isCollapsed()) 1f else 0f
+                }
+                .offset(y = contentPadding.calculateTopPadding())
+                .onGloballyPositioned {
+                    it.positionInWindow().y.apply {
+                        offsetY.intValue = (this@apply * 0.9).toInt()
+                        with(density) {
+                            val newOffsetY = this@apply.toDp()
+                            val newBoxHeight = it.size.height.toDp()
+                            if (searchStatus.offsetY != newOffsetY) {
+                                onSearchStatusChange(searchStatus.copy(offsetY = newOffsetY))
+                            }
+                            boxHeight.value = newBoxHeight
                         }
-                        boxHeight.value = newBoxHeight
                     }
                 }
-            }
-            .pointerInput(Unit) {
-                detectTapGestures {
-                    onSearchStatusChange(searchStatus.copy(current = SearchStatus.Status.EXPANDING))
+                .pointerInput(Unit) {
+                    detectTapGestures {
+                        onSearchStatusChange(searchStatus.copy(current = SearchStatus.Status.EXPANDING))
+                    }
                 }
-            }
-            .then(
-                Modifier.defaultBarBlur(blurBackdrop, surfaceColor)
-            )
-    ) {
-        collapseBar(searchStatus, searchBarTopPadding, contentPadding)
+                .then(
+                    Modifier.defaultBarBlur(blurBackdrop, surfaceColor)
+                )
+        ) {
+            collapseBar(searchStatus, searchBarTopPadding, contentPadding)
+        }
     }
     Box {
         AnimatedVisibility(

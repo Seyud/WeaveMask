@@ -59,6 +59,7 @@ internal fun ModuleScreenContent(
             end = innerPadding.calculateEndPadding(layoutDirection),
         ),
         blurBackdrop = blurBackdrop,
+        renderCollapsedBar = false,
     ) { boxHeight ->
         PullToRefresh(
             modifier = Modifier

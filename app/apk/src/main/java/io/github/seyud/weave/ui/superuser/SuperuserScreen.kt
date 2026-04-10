@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
@@ -24,7 +25,7 @@ import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,13 +35,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,6 +61,7 @@ import androidx.compose.ui.zIndex
 import io.github.seyud.weave.core.model.su.SuPolicy
 import io.github.seyud.weave.ui.component.AppIconImage
 import io.github.seyud.weave.dialog.SuperuserRevokeDialog
+import io.github.seyud.weave.ui.component.SearchBarFake
 import io.github.seyud.weave.ui.component.SearchBox
 import io.github.seyud.weave.ui.component.SearchPager
 import io.github.seyud.weave.ui.component.SearchStatus
@@ -120,7 +128,11 @@ fun SuperuserScreen(
     val pullToRefreshState = rememberPullToRefreshState()
     val scrollBehavior = MiuixScrollBehavior()
     val enableBlur = LocalEnableBlur.current
+    val density = LocalDensity.current
     val blurBackdrop = rememberBarBlurBackdrop(enableBlur, MiuixTheme.colorScheme.surface)
+    val dynamicTopPadding by remember {
+        derivedStateOf { 12.dp * (1f - scrollBehavior.state.collapsedFraction) }
+    }
     val uiSearchStatus = searchStatus.copy(
         resultStatus = when {
             uiState.isLoading -> SearchStatus.ResultStatus.LOAD
@@ -214,6 +226,35 @@ fun SuperuserScreen(
                         titleColor = MiuixTheme.colorScheme.onBackground,
                         largeTitleColor = MiuixTheme.colorScheme.onBackground,
                         scrollBehavior = scrollBehavior,
+                        bottomContent = {
+                            Box(
+                                modifier = Modifier
+                                    .alpha(if (uiSearchStatus.isCollapsed()) 1f else 0f)
+                                    .onGloballyPositioned { coordinates ->
+                                        with(density) {
+                                            val newOffsetY = coordinates.positionInWindow().y.toDp()
+                                            if (searchStatus.offsetY != newOffsetY) {
+                                                searchStatus = searchStatus.copy(offsetY = newOffsetY)
+                                            }
+                                        }
+                                    }
+                                    .then(
+                                        if (uiSearchStatus.isCollapsed()) {
+                                            Modifier.pointerInput(Unit) {
+                                                detectTapGestures {
+                                                    searchStatus = uiSearchStatus.copy(
+                                                        current = SearchStatus.Status.EXPANDING
+                                                    )
+                                                }
+                                            }
+                                        } else {
+                                            Modifier
+                                        }
+                                    )
+                            ) {
+                                SearchBarFake(uiSearchStatus.label, dynamicTopPadding)
+                            }
+                        },
                         actions = {
                             OverlayListPopup(
                                 show = showTopPopup.value,
@@ -263,7 +304,8 @@ fun SuperuserScreen(
                         start = innerPadding.calculateStartPadding(layoutDirection),
                         end = innerPadding.calculateEndPadding(layoutDirection)
                     ),
-                    blurBackdrop = blurBackdrop
+                    blurBackdrop = blurBackdrop,
+                    renderCollapsedBar = false
                 ) { boxHeight ->
                     PullToRefresh(
                         modifier = Modifier

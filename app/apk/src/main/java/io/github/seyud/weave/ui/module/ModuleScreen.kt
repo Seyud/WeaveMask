@@ -155,6 +155,7 @@ fun ModuleScreen(
                     uiState = uiState,
                     blurBackdrop = blurBackdrop,
                     scrollBehavior = scrollBehavior,
+                    onSearchStatusChange = { localState.searchStatus = it },
                     showTopPopup = localState.showTopPopup,
                     onShowTopPopupChange = { localState.showTopPopup = it },
                     onOpenRepo = onOpenRepo,
