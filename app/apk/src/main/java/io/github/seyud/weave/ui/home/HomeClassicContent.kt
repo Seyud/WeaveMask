@@ -47,6 +47,7 @@ internal fun LazyListScope.classicHomeContent(
                     InstallActionButton(
                         appState = viewModel.magiskState,
                         matchUninstallMetrics = true,
+                        usePrimaryBlockStyleWhenNonMonet = true,
                         onClick = onNavigateToInstall
                     )
                     if (Info.env.isActive) {

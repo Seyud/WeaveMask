@@ -40,6 +40,17 @@ fun WeaveMagiskTheme(
 ) {
     val isDark = isSystemInDarkTheme()
     val isMonetTheme = colorMode in 3..5
+    val monetDark = when (colorMode) {
+        4 -> false
+        5 -> true
+        else -> isDark
+    }
+    // Read framework dynamic color roles directly so root-mode fabricated overlays are reflected.
+    val effectiveSystemMonetColors = if (isMonetTheme && keyColor == null) {
+        rememberEffectiveSystemMonetColors(dark = monetDark)
+    } else {
+        null
+    }
     val controller = when (colorMode) {
         1 -> ThemeController(ColorSchemeMode.Light)
         2 -> ThemeController(ColorSchemeMode.Dark)
@@ -59,10 +70,18 @@ fun WeaveMagiskTheme(
         else -> ThemeController(ColorSchemeMode.System)
     }
     CompositionLocalProvider(LocalIsMonetTheme provides isMonetTheme) {
-        MiuixTheme(
-            controller = controller,
-            smoothRounding = enableSmoothCorner,
-            content = content
-        )
+        if (effectiveSystemMonetColors != null) {
+            MiuixTheme(
+                colors = effectiveSystemMonetColors,
+                smoothRounding = enableSmoothCorner,
+                content = content
+            )
+        } else {
+            MiuixTheme(
+                controller = controller,
+                smoothRounding = enableSmoothCorner,
+                content = content
+            )
+        }
     }
 }

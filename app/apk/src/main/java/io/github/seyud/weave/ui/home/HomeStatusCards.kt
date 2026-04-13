@@ -142,6 +142,7 @@ internal fun InlineCardActionButton(
 internal fun InstallActionButton(
     appState: HomeViewModel.State,
     matchUninstallMetrics: Boolean = false,
+    usePrimaryBlockStyleWhenNonMonet: Boolean = false,
     onClick: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -170,15 +171,25 @@ internal fun InstallActionButton(
 
     if (matchUninstallMetrics) {
         val isWeaveBrandAccent = !isMonetTheme
-        val containerColor = if (appState == HomeViewModel.State.OUTDATED) {
+        val usePrimaryBlockStyle = usePrimaryBlockStyleWhenNonMonet && isWeaveBrandAccent
+        val containerColor = if (usePrimaryBlockStyle) {
+            MiuixTheme.colorScheme.primary
+        } else if (appState == HomeViewModel.State.OUTDATED) {
             if (isWeaveBrandAccent) weaveAccentColor else MiuixTheme.colorScheme.primary
         } else {
             if (isWeaveBrandAccent) weaveAccentColor.copy(alpha = 0.14f) else MiuixTheme.colorScheme.secondaryContainer
         }
-        val buttonIconTint = if (isWeaveBrandAccent) {
+        val buttonIconTint = if (usePrimaryBlockStyle) {
+            MiuixTheme.colorScheme.onPrimary
+        } else if (isWeaveBrandAccent) {
             if (appState == HomeViewModel.State.OUTDATED) Color.White else weaveAccentColor
         } else {
             iconTint
+        }
+        val border = if (usePrimaryBlockStyle) {
+            BorderStroke(1.dp, MiuixTheme.colorScheme.onPrimary)
+        } else {
+            null
         }
 
         Surface(
@@ -187,6 +198,7 @@ internal fun InstallActionButton(
                 .padding(top = 12.dp)
                 .fillMaxWidth(),
             color = containerColor,
+            border = border,
             shape = RoundedCornerShape(16.dp)
         ) {
             Row(

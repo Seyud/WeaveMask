@@ -172,7 +172,7 @@
     <string name="settings_home_layout_weavsk">Weavsk</string>
     <string name="settings_key_color">种子颜色</string>
     <string name="settings_key_color_summary">选择莫奈主题的种子颜色</string>
-    <string name="settings_key_color_default">默认（壁纸取色）</string>
+    <string name="settings_key_color_default">默认（主题取色）</string>
     <string name="settings_app_icon_title">APP 图标</string>
     <string name="settings_app_icon_summary">选择 WeaveMask 使用的桌面图标</string>
     <string name="settings_app_icon_current">Monet</string>
