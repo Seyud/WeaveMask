@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- API 31+ 夜间模式 SplashScreen 主题 -->
+    <style name="Theme.WeaveMagisk.Splash" parent="Theme.WeaveMagisk.Splash.Default" />
+</resources>

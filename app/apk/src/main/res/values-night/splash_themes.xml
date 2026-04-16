@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.WeaveMagisk.Splash.Default" parent="Theme.WeaveMagisk.Splash.Default.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetSystem" parent="Theme.WeaveMagisk.Splash.MonetSystem.Dark" />
+
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.Red" parent="Theme.WeaveMagisk.Splash.MonetPreset.Red.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.Pink" parent="Theme.WeaveMagisk.Splash.MonetPreset.Pink.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.Purple" parent="Theme.WeaveMagisk.Splash.MonetPreset.Purple.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.DeepPurple" parent="Theme.WeaveMagisk.Splash.MonetPreset.DeepPurple.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.Indigo" parent="Theme.WeaveMagisk.Splash.MonetPreset.Indigo.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.Blue" parent="Theme.WeaveMagisk.Splash.MonetPreset.Blue.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.Cyan" parent="Theme.WeaveMagisk.Splash.MonetPreset.Cyan.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.Teal" parent="Theme.WeaveMagisk.Splash.MonetPreset.Teal.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.Green" parent="Theme.WeaveMagisk.Splash.MonetPreset.Green.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.Yellow" parent="Theme.WeaveMagisk.Splash.MonetPreset.Yellow.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.Amber" parent="Theme.WeaveMagisk.Splash.MonetPreset.Amber.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.Orange" parent="Theme.WeaveMagisk.Splash.MonetPreset.Orange.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.Brown" parent="Theme.WeaveMagisk.Splash.MonetPreset.Brown.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.BlueGrey" parent="Theme.WeaveMagisk.Splash.MonetPreset.BlueGrey.Dark" />
+    <style name="Theme.WeaveMagisk.Splash.MonetPreset.Sakura" parent="Theme.WeaveMagisk.Splash.MonetPreset.Sakura.Dark" />
+
+</resources>

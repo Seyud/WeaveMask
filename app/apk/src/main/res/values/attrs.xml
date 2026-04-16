@@ -16,6 +16,9 @@
     <attr name="colorOnPrimaryVariant" format="color" />
     <attr name="colorOnSurfaceVariant" format="color" />
     <attr name="colorSurfaceSurfaceVariant" format="color" />
+    <attr name="splashScreenWindowBackgroundColor" format="color" />
+    <attr name="splashScreenCenterIcon" format="reference" />
+    <attr name="splashScreenIconTint" format="color" />
 
     <!--endregion-->
 

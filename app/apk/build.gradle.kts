@@ -32,6 +32,7 @@ dependencies {
     implementation(project(":core"))
     coreLibraryDesugaring(libs.jdk.libs)
 
+    implementation(libs.core.splashscreen)
     implementation(libs.appcompat)
     implementation(libs.material)
 

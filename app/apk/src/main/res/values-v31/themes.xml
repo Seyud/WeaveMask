@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        API 31+ SplashScreen 主题。
+        - windowSplashScreenBackground：Splash 窗口背景色，匹配亮色 colorSurface
+        - windowSplashScreenAnimatedIcon：Splash 中心图标
+        - windowSplashScreenIconBackgroundColor：图标背景圆形色
+        - postSplashScreenTheme：Splash 消失后切换的宿主主题
+    -->
+    <style name="Theme.WeaveMagisk.Splash" parent="Theme.WeaveMagisk.Splash.Default" />
+</resources>

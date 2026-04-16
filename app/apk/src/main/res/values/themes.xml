@@ -44,4 +44,11 @@
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
     </style>
 
+    <!--
+        Splash Screen 主题（API 21-30 降级版本）
+        用于冷启动时立即显示应用背景色，避免白屏闪烁。
+        postSplashScreenTheme 在 API 31+ 由 values-v31/themes.xml 重新定义。
+    -->
+    <style name="Theme.WeaveMagisk.Splash" parent="Theme.WeaveMagisk.Splash.Default" />
+
 </resources>

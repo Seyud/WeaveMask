@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/splashScreenWindowBackgroundColor" />
+        </shape>
+    </item>
+
+    <item
+        android:width="172dp"
+        android:height="172dp"
+        android:gravity="center"
+        android:drawable="?attr/splashScreenCenterIcon" />
+</layer-list>

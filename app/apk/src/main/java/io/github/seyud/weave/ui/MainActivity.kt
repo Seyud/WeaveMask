@@ -11,9 +11,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -34,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -83,7 +82,6 @@ import io.github.seyud.weave.ui.theme.LocalEnableBlur
 import io.github.seyud.weave.ui.theme.LocalEnableFloatingBottomBar
 import io.github.seyud.weave.ui.theme.LocalEnableFloatingBottomBarBlur
 import io.github.seyud.weave.ui.theme.LocalHomeLayoutMode
-import io.github.seyud.weave.ui.theme.Theme
 import io.github.seyud.weave.ui.theme.WeaveMagiskTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -175,17 +173,18 @@ class MainActivity : AppCompatActivity(), IActivityExtension, ViewModelHolder, W
         intentState.value += 1
     }
 
-    /**
-     * Activity 创建时的生命周期回调
-     * 设置主题并初始化应用状态
-     *
-     * @param savedInstanceState 保存的实例状态
-     */
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(Theme.themeRes)
-        applySystemBarStyle(resolveDarkMode(Config.colorMode))
+        Config.init(intent.getBundleExtra(Const.Key.PREV_CONFIG))
+        val splashThemeRes = resolveSplashThemeRes()
+        setTheme(splashThemeRes)
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         extension.onCreate(savedInstanceState)
+
+        syncPlatformSplashTheme(splashThemeRes)
+        applySystemBarStyle(resolveDarkForSplash())
+        splashScreen.setKeepOnScreenCondition { !appInitialized }
+
         ensureAppInitialized(savedInstanceState)
     }
 
@@ -227,15 +226,21 @@ class MainActivity : AppCompatActivity(), IActivityExtension, ViewModelHolder, W
             }
 
             DisposableEffect(darkMode) {
-                updateSystemBarAppearance(darkMode)
+                applySystemBarStyle(darkMode)
                 onDispose {}
             }
 
             DisposableEffect(Unit) {
                 val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
                     when (key) {
-                        Config.Key.COLOR_MODE -> colorMode = Config.colorMode
-                        Config.Key.KEY_COLOR -> keyColorInt = Config.keyColor
+                        Config.Key.COLOR_MODE -> {
+                            colorMode = Config.colorMode
+                            syncPlatformSplashTheme()
+                        }
+                        Config.Key.KEY_COLOR -> {
+                            keyColorInt = Config.keyColor
+                            syncPlatformSplashTheme()
+                        }
                         Config.Key.ENABLE_BLUR -> enableBlur = Config.enableBlur
                         Config.Key.ENABLE_FLOATING_BOTTOM_BAR -> enableFloatingBottomBar = Config.enableFloatingBottomBar
                         Config.Key.ENABLE_FLOATING_BOTTOM_BAR_BLUR -> enableFloatingBottomBarBlur = Config.enableFloatingBottomBarBlur
@@ -277,7 +282,7 @@ class MainActivity : AppCompatActivity(), IActivityExtension, ViewModelHolder, W
                     keyColor = keyColor,
                     enableSmoothCorner = enableSmoothCorner,
                 ) {
-                    Scaffold(modifier = Modifier.fillMaxSize()) {
+                    Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
                         MainScreen(
                             homeViewModel = homeViewModel,
                             flashViewModel = flashViewModel,
@@ -299,13 +304,7 @@ class MainActivity : AppCompatActivity(), IActivityExtension, ViewModelHolder, W
                             modifier = Modifier.fillMaxSize()
                         )
                     }
-                }
 
-                WeaveMagiskTheme(
-                    colorMode = colorMode,
-                    keyColor = keyColor,
-                    enableSmoothCorner = enableSmoothCorner,
-                ) {
                     MiuixConfirmDialog(
                         show = showAddShortcutDialog,
                         title = getString(CoreR.string.add_shortcut_title),
@@ -318,13 +317,7 @@ class MainActivity : AppCompatActivity(), IActivityExtension, ViewModelHolder, W
                             AppShortcuts.addHomeIcon(this@MainActivity)
                         },
                     )
-                }
 
-                WeaveMagiskTheme(
-                    colorMode = colorMode,
-                    keyColor = keyColor,
-                    enableSmoothCorner = enableSmoothCorner,
-                ) {
                     WeaveDialogHostContent(
                         dialog = activeDialogs.firstOrNull()
                     )
@@ -457,37 +450,40 @@ class MainActivity : AppCompatActivity(), IActivityExtension, ViewModelHolder, W
     }
 
     private fun applySystemBarStyle(darkMode: Boolean) {
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.auto(
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.TRANSPARENT
-            ) { darkMode },
-            navigationBarStyle = SystemBarStyle.auto(
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.TRANSPARENT
-            ) { darkMode }
-        )
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.isAppearanceLightStatusBars = !darkMode
+        controller.isAppearanceLightNavigationBars = !darkMode
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.isNavigationBarContrastEnforced = false
         }
-        updateSystemBarAppearance(darkMode)
     }
 
-    private fun updateSystemBarAppearance(darkMode: Boolean) {
-        val controller = WindowInsetsControllerCompat(window, window.decorView)
-        val useLightBars = !darkMode
-        controller.isAppearanceLightStatusBars = useLightBars
-        controller.isAppearanceLightNavigationBars = useLightBars
+    private fun isSystemDarkForSplash(): Boolean {
+        val nightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        return nightMode == Configuration.UI_MODE_NIGHT_YES
     }
 
-    private fun resolveDarkMode(colorMode: Int): Boolean {
-        return when (colorMode) {
-            2, 5 -> true
-            0, 3 -> {
-                val nightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-                nightMode == Configuration.UI_MODE_NIGHT_YES
-            }
-            else -> false
+    private fun resolveDarkForSplash(): Boolean {
+        return SplashThemeResolver.resolve(
+            colorMode = Config.colorMode,
+            keyColor = Config.keyColor,
+            sdkInt = Build.VERSION.SDK_INT,
+            isSystemDark = isSystemDarkForSplash(),
+        ).dark
+    }
+
+    private fun resolveSplashThemeRes(): Int {
+        return SplashThemeResolver.resolveThemeRes(
+            colorMode = Config.colorMode,
+            keyColor = Config.keyColor,
+            sdkInt = Build.VERSION.SDK_INT,
+            isSystemDark = isSystemDarkForSplash(),
+        )
+    }
+
+    private fun syncPlatformSplashTheme(themeRes: Int = resolveSplashThemeRes()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            splashScreen.setSplashScreenTheme(themeRes)
         }
     }
 
