@@ -18,6 +18,7 @@ import io.github.seyud.weave.core.model.su.SuPolicy
 import io.github.seyud.weave.dialog.SuperuserRevokeDialog
 import io.github.seyud.weave.events.AuthEvent
 import io.github.seyud.weave.events.SnackbarEvent
+import io.github.seyud.weave.core.utils.InstalledPackageLoader
 import io.github.seyud.weave.utils.asText
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +35,7 @@ data class SuperuserUiState(
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val query: String = "",
-    val showSystemApps: Boolean = true,
+    val showSystemApps: Boolean = false,
     val policies: List<PolicyCardUiState> = emptyList(),
     val errorMessage: String? = null,
     val revision: Long = 0L,
@@ -53,6 +54,7 @@ data class PolicyCardUiState(
     val shouldLog: Boolean,
     val showSlider: Boolean,
     val isEnabled: Boolean,
+    val isSystemApp: Boolean,
 )
 
 private data class PolicyEntry(
@@ -85,6 +87,7 @@ class SuperuserViewModel(
         shouldLog = item.logging,
         showSlider = Config.suRestrict || item.policy == SuPolicy.RESTRICT,
         isEnabled = item.policy >= SuPolicy.ALLOW,
+        isSystemApp = (applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
     )
 
     private fun findPolicyByKey(key: String) =
@@ -136,44 +139,40 @@ class SuperuserViewModel(
         try {
             val policies = withContext(Dispatchers.IO) {
                 db.deleteOutdated()
-                db.delete(AppContext.applicationInfo.uid)
-                val newPolicies = ArrayList<PolicyEntry>()
+                val myUid = AppContext.applicationInfo.uid
+                db.delete(myUid)
+
+                val allDbPolicies = db.fetchAll().associateBy { it.uid }.toMutableMap()
                 val pm = AppContext.packageManager
-                for (policy in db.fetchAll()) {
-                    val pkgs =
-                        if (policy.uid == Process.SYSTEM_UID) arrayOf("android")
-                        else pm.getPackagesForUid(policy.uid)
-                    if (pkgs == null) {
-                        db.delete(policy.uid)
-                        continue
-                    }
-                    val map = pkgs.mapNotNull { pkg ->
-                        try {
-                            val info = pm.getPackageInfo(pkg, MATCH_UNINSTALLED_PACKAGES)
-                            val applicationInfo = info.applicationInfo ?: return@mapNotNull null
-                            PolicyEntry(
-                                item = policy,
-                                packageName = info.packageName,
-                                isSharedUid = info.sharedUserId != null,
-                                applicationInfo = applicationInfo,
-                                appName = applicationInfo.getLabel(pm),
-                            )
-                        } catch (_: PackageManager.NameNotFoundException) {
-                            null
-                        }
-                    }
-                    if (map.isEmpty()) {
-                        db.delete(policy.uid)
-                        continue
-                    }
-                    newPolicies.addAll(map)
+                val packageInfos = InstalledPackageLoader.loadPackages(MATCH_UNINSTALLED_PACKAGES).items
+                val installedUids = packageInfos.mapNotNull { it.applicationInfo?.uid }.toSet()
+
+
+                allDbPolicies.keys.filter { it !in installedUids && it != Process.SYSTEM_UID }.forEach { uid ->
+                    db.delete(uid)
+                    allDbPolicies.remove(uid)
                 }
-                newPolicies.sortedWith(
-                    compareBy(
-                        { it.appName.lowercase(Locale.ROOT) },
-                        { it.packageName },
-                    ),
-                )
+
+                packageInfos.asSequence()
+                    .mapNotNull { info ->
+                        val appInfo = info.applicationInfo ?: return@mapNotNull null
+                        if (appInfo.uid == myUid) return@mapNotNull null
+                        
+                        val policy = allDbPolicies.getOrPut(appInfo.uid) { SuPolicy(appInfo.uid) }
+                        PolicyEntry(
+                            item = policy,
+                            packageName = info.packageName,
+                            isSharedUid = info.sharedUserId != null,
+                            applicationInfo = appInfo,
+                            appName = appInfo.getLabel(pm),
+                        )
+                    }
+                    .sortedWith(
+                        compareByDescending<PolicyEntry> { it.item.policy >= SuPolicy.ALLOW }
+                            .thenBy { it.appName.lowercase(Locale.ROOT) }
+                            .thenBy { it.packageName }
+                    )
+                    .toList()
             }
 
             allPolicies = policies
@@ -200,7 +199,7 @@ class SuperuserViewModel(
         val base = if (state.showSystemApps) {
             allPolicies
         } else {
-            allPolicies.filter { it.item.uid >= Process.FIRST_APPLICATION_UID }
+            allPolicies.filter { (it.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
         }
         val filtered = if (query.isEmpty()) {
             base
@@ -269,7 +268,9 @@ class SuperuserViewModel(
         findPolicyByKey(key)?.let { entry ->
             viewModelScope.launch {
                 db.delete(entry.item.uid)
-                allPolicies = allPolicies.filterNot { it.item.uid == entry.item.uid }
+                entry.item.policy = SuPolicy.QUERY
+                entry.item.notification = true
+                entry.item.logging = true
                 publishFilteredPolicies()
             }
         }
@@ -281,7 +282,9 @@ class SuperuserViewModel(
         fun doRevoke() {
             viewModelScope.launch {
                 db.delete(entry.item.uid)
-                allPolicies = allPolicies.filterNot { it.item.uid == entry.item.uid }
+                entry.item.policy = SuPolicy.QUERY
+                entry.item.notification = true
+                entry.item.logging = true
                 publishFilteredPolicies()
             }
         }
@@ -325,16 +328,34 @@ class SuperuserViewModel(
         if (entry.item.policy == policy) return
 
         fun updateState() {
-            entry.item.policy = policy
-            publishFilteredPolicies()
             viewModelScope.launch {
-                val res = if (policy >= SuPolicy.ALLOW) {
-                    R.string.su_snack_grant
+                val isRevoking = policy < SuPolicy.DENY
+                if (isRevoking) {
+                    db.delete(entry.item.uid)
+                    entry.item.policy = SuPolicy.QUERY
+                    entry.item.remain = -1
+                    entry.item.notification = true
+                    entry.item.logging = true
                 } else {
-                    R.string.su_snack_deny
+
+                    val actualPolicy = if (policy == SuPolicy.ALLOW && Config.suRestrict) {
+                        SuPolicy.RESTRICT
+                    } else {
+                        policy
+                    }
+                    entry.item.policy = actualPolicy
+
+                    entry.item.remain = 0
+                    db.update(entry.item)
                 }
-                db.update(entry.item)
+                
                 publishFilteredPolicies()
+                
+                val res = when {
+                    isRevoking -> R.string.superuser_toggle_revoke
+                    policy >= SuPolicy.ALLOW -> R.string.su_snack_grant
+                    else -> R.string.su_snack_deny
+                }
                 SnackbarEvent(res.asText(entry.appName)).publish()
             }
         }

@@ -546,6 +546,8 @@ private fun PolicyItem(
 ) {
     val context = LocalContext.current
     val cardAlpha = if (item.isEnabled) 1f else 0.5f
+    // 判断是否已经有明确的 Root 记录（允许或拒绝）
+    val hasPolicyRecord = item.policy != SuPolicy.QUERY
     val isAllowed = item.policy >= SuPolicy.ALLOW
     var sliderValue by remember(item.key) { mutableFloatStateOf(policyToSliderValue(item.policy)) }
 
@@ -558,8 +560,8 @@ private fun PolicyItem(
             .fillMaxWidth()
             .graphicsLayer { alpha = cardAlpha },
         cornerRadius = 12.dp,
-        onClick = onToggleExpanded,
-        pressFeedbackType = PressFeedbackType.Sink
+        onClick = { if (hasPolicyRecord) onToggleExpanded() },
+        pressFeedbackType = if (hasPolicyRecord) PressFeedbackType.Sink else PressFeedbackType.None
     ) {
         Column(
             modifier = Modifier
@@ -599,7 +601,7 @@ private fun PolicyItem(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    val policyTag = policyTagText(item.uid)
+                    val policyTag = policyTagText(item.uid, item.isSystemApp)
                     if (policyTag.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
@@ -648,7 +650,7 @@ private fun PolicyItem(
             }
 
             AnimatedVisibility(
-                visible = isExpanded,
+                visible = isExpanded && hasPolicyRecord,
                 enter = fadeIn(animationSpec = tween(220)) + expandVertically(animationSpec = tween(260)),
                 exit = fadeOut(animationSpec = tween(180)) + shrinkVertically(animationSpec = tween(220))
             ) {
@@ -726,11 +728,12 @@ private fun policyToTextRes(policy: Int): Int {
     }
 }
 
-private fun policyTagText(uid: Int): String {
+private fun policyTagText(uid: Int, isSystemApp: Boolean): String {
     return when {
         uid == 0 -> "ROOT"
         uid == Process.SYSTEM_UID -> "SYSTEM"
         uid < Process.FIRST_APPLICATION_UID -> "CUSTOM"
+        isSystemApp -> "SYSTEM"
         else -> ""
     }
 }
