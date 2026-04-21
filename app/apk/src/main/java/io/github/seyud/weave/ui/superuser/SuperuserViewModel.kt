@@ -2,7 +2,7 @@ package io.github.seyud.weave.ui.superuser
 
 import android.annotation.SuppressLint
 import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
 import android.os.Process
 import androidx.compose.runtime.Stable
@@ -15,13 +15,19 @@ import io.github.seyud.weave.core.R
 import io.github.seyud.weave.core.data.magiskdb.PolicyDao
 import io.github.seyud.weave.core.ktx.getLabel
 import io.github.seyud.weave.core.model.su.SuPolicy
+import io.github.seyud.weave.core.utils.InstalledItemLoadResult
+import io.github.seyud.weave.core.utils.InstalledItemSource
 import io.github.seyud.weave.dialog.SuperuserRevokeDialog
 import io.github.seyud.weave.events.AuthEvent
 import io.github.seyud.weave.events.SnackbarEvent
 import io.github.seyud.weave.core.utils.InstalledPackageLoader
+import io.github.seyud.weave.core.utils.RootUtils
 import io.github.seyud.weave.utils.asText
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -65,14 +71,63 @@ private data class PolicyEntry(
     val appName: String,
 )
 
-class SuperuserViewModel(
-    private val db: PolicyDao,
+internal interface SuperuserPolicyStore {
+    suspend fun deleteOutdated()
+    suspend fun delete(uid: Int)
+    suspend fun fetchAll(): List<SuPolicy>
+    suspend fun update(policy: SuPolicy)
+}
+
+private class PolicyDaoSuperuserPolicyStore(
+    private val dao: PolicyDao,
+) : SuperuserPolicyStore {
+    override suspend fun deleteOutdated() = dao.deleteOutdated()
+
+    override suspend fun delete(uid: Int) = dao.delete(uid)
+
+    override suspend fun fetchAll(): List<SuPolicy> = dao.fetchAll()
+
+    override suspend fun update(policy: SuPolicy) = dao.update(policy)
+}
+
+private const val ROOT_REFRESH_INTERVAL_MS = 350L
+private const val ROOT_REFRESH_MAX_ATTEMPTS = 15
+
+internal data class SuperuserLoadConfig(
+    val loadPackages: (Int) -> InstalledItemLoadResult<PackageInfo> = { flags ->
+        InstalledPackageLoader.loadPackages(flags)
+    },
+    val isSuperuserVisible: () -> Boolean = { Info.showSuperUser },
+    val isRestrictEnabled: () -> Boolean = { Config.suRestrict },
+    val appUid: () -> Int = { AppContext.applicationInfo.uid },
+    val resolveAppName: (ApplicationInfo) -> String = { appInfo ->
+        appInfo.getLabel(AppContext.packageManager)
+    },
+    val rootServiceConnected: () -> Boolean = { RootUtils.isServiceConnected() },
+    val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    val delayMillis: suspend (Long) -> Unit = { delay(it) },
+    val rootRefreshIntervalMs: Long = ROOT_REFRESH_INTERVAL_MS,
+    val rootRefreshMaxAttempts: Int = ROOT_REFRESH_MAX_ATTEMPTS,
+)
+
+private data class LoadedPolicies(
+    val policies: List<PolicyEntry>,
+    val source: InstalledItemSource,
+    val shouldRefreshFromRoot: Boolean,
+)
+
+class SuperuserViewModel internal constructor(
+    private val db: SuperuserPolicyStore,
+    private val loadConfig: SuperuserLoadConfig = SuperuserLoadConfig(),
 ) : AsyncLoadViewModel() {
+
+    constructor(db: PolicyDao) : this(PolicyDaoSuperuserPolicyStore(db))
 
     private val _uiState = MutableStateFlow(SuperuserUiState())
     val uiState: StateFlow<SuperuserUiState> = _uiState.asStateFlow()
 
     private var allPolicies: List<PolicyEntry> = emptyList()
+    private var rootRefreshJob: Job? = null
 
     internal fun policyKey(uid: Int, packageName: String) = "$uid:$packageName"
 
@@ -85,9 +140,9 @@ class SuperuserViewModel(
         policy = item.policy,
         shouldNotify = item.notification,
         shouldLog = item.logging,
-        showSlider = Config.suRestrict || item.policy == SuPolicy.RESTRICT,
+        showSlider = shouldShowPolicySlider(item.policy, loadConfig.isRestrictEnabled()),
         isEnabled = item.policy >= SuPolicy.ALLOW,
-        isSystemApp = (applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
+        isSystemApp = isSystemApp(applicationInfo),
     )
 
     private fun findPolicyByKey(key: String) =
@@ -115,8 +170,11 @@ class SuperuserViewModel(
     }
 
     @SuppressLint("InlinedApi")
-    private suspend fun loadPolicies(isInitialLoad: Boolean) {
-        if (!Info.showSuperUser) {
+    private suspend fun loadPolicies(
+        isInitialLoad: Boolean,
+        showProgress: Boolean = true,
+    ) {
+        if (!loadConfig.isSuperuserVisible()) {
             allPolicies = emptyList()
             _uiState.update {
                 it.copy(
@@ -130,53 +188,19 @@ class SuperuserViewModel(
             return
         }
 
-        if (isInitialLoad) {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-        } else {
-            _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
+        if (showProgress) {
+            if (isInitialLoad) {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            } else {
+                _uiState.update { it.copy(isRefreshing = true, errorMessage = null) }
+            }
         }
 
         try {
-            val policies = withContext(Dispatchers.IO) {
-                db.deleteOutdated()
-                val myUid = AppContext.applicationInfo.uid
-                db.delete(myUid)
-
-                val allDbPolicies = db.fetchAll().associateBy { it.uid }.toMutableMap()
-                val pm = AppContext.packageManager
-                val packageInfos = InstalledPackageLoader.loadPackages(MATCH_UNINSTALLED_PACKAGES).items
-                val installedUids = packageInfos.mapNotNull { it.applicationInfo?.uid }.toSet()
-
-
-                allDbPolicies.keys.filter { it !in installedUids && it != Process.SYSTEM_UID }.forEach { uid ->
-                    db.delete(uid)
-                    allDbPolicies.remove(uid)
-                }
-
-                packageInfos.asSequence()
-                    .mapNotNull { info ->
-                        val appInfo = info.applicationInfo ?: return@mapNotNull null
-                        if (appInfo.uid == myUid) return@mapNotNull null
-                        
-                        val policy = allDbPolicies.getOrPut(appInfo.uid) { SuPolicy(appInfo.uid) }
-                        PolicyEntry(
-                            item = policy,
-                            packageName = info.packageName,
-                            isSharedUid = info.sharedUserId != null,
-                            applicationInfo = appInfo,
-                            appName = appInfo.getLabel(pm),
-                        )
-                    }
-                    .sortedWith(
-                        compareByDescending<PolicyEntry> { it.item.policy >= SuPolicy.ALLOW }
-                            .thenBy { it.appName.lowercase(Locale.ROOT) }
-                            .thenBy { it.packageName }
-                    )
-                    .toList()
-            }
-
-            allPolicies = policies
+            val loadedPolicies = fetchPolicies()
+            allPolicies = loadedPolicies.policies
             publishFilteredPolicies(errorMessage = null)
+            scheduleRootRefreshIfNeeded(loadedPolicies.shouldRefreshFromRoot)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
@@ -189,8 +213,89 @@ class SuperuserViewModel(
                 )
             }
         } finally {
-            _uiState.update { it.copy(isLoading = false, isRefreshing = false) }
+            if (showProgress) {
+                _uiState.update { it.copy(isLoading = false, isRefreshing = false) }
+            }
         }
+    }
+
+    @SuppressLint("InlinedApi")
+    private suspend fun fetchPolicies(): LoadedPolicies = withContext(loadConfig.ioDispatcher) {
+        db.deleteOutdated()
+        val myUid = loadConfig.appUid()
+        db.delete(myUid)
+
+        val allDbPolicies = db.fetchAll().associateBy { it.uid }.toMutableMap()
+        val loadResult = loadConfig.loadPackages(MATCH_UNINSTALLED_PACKAGES)
+        val packageInfos = loadResult.items.filter { info ->
+            val appInfo = info.applicationInfo ?: return@filter false
+            appInfo.uid != myUid && isInstalledPackage(appInfo)
+        }
+
+        if (loadResult.source == InstalledItemSource.ROOT) {
+            val installedUids = packageInfos.mapNotNull { it.applicationInfo?.uid }.toSet()
+            allDbPolicies.keys
+                .filter { it !in installedUids && it != Process.SYSTEM_UID }
+                .forEach { uid ->
+                    db.delete(uid)
+                    allDbPolicies.remove(uid)
+                }
+        }
+
+        val policies = packageInfos.asSequence()
+            .mapNotNull { info ->
+                val appInfo = info.applicationInfo ?: return@mapNotNull null
+                val policy = allDbPolicies.getOrPut(appInfo.uid) { SuPolicy(appInfo.uid) }
+                PolicyEntry(
+                    item = policy,
+                    packageName = info.packageName,
+                    isSharedUid = info.sharedUserId != null,
+                    applicationInfo = appInfo,
+                    appName = loadConfig.resolveAppName(appInfo),
+                )
+            }
+            .sortedWith(
+                compareByDescending<PolicyEntry> { it.item.policy >= SuPolicy.ALLOW }
+                    .thenBy { it.appName.lowercase(Locale.ROOT) }
+                    .thenBy { it.packageName }
+            )
+            .toList()
+
+        LoadedPolicies(
+            policies = policies,
+            source = loadResult.source,
+            shouldRefreshFromRoot = loadResult.shouldRefreshFromRoot,
+        )
+    }
+
+    private fun scheduleRootRefreshIfNeeded(shouldRefreshFromRoot: Boolean) {
+        if (!shouldRefreshFromRoot || rootRefreshJob?.isActive == true) return
+        rootRefreshJob = viewModelScope.launch {
+            try {
+                repeat(loadConfig.rootRefreshMaxAttempts) { attempt ->
+                    if (loadConfig.rootServiceConnected()) {
+                        refreshPoliciesFromRoot()
+                        return@launch
+                    }
+                    if (attempt < loadConfig.rootRefreshMaxAttempts - 1) {
+                        loadConfig.delayMillis(loadConfig.rootRefreshIntervalMs)
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
+                // Keep the current list if the background root refresh fails.
+            }
+        }
+    }
+
+    private suspend fun refreshPoliciesFromRoot() {
+        val loadedPolicies = fetchPolicies()
+        if (loadedPolicies.source != InstalledItemSource.ROOT || loadedPolicies.policies.isEmpty()) {
+            return
+        }
+        allPolicies = loadedPolicies.policies
+        publishFilteredPolicies(errorMessage = null)
     }
 
     private fun publishFilteredPolicies(errorMessage: String? = _uiState.value.errorMessage) {
@@ -199,7 +304,7 @@ class SuperuserViewModel(
         val base = if (state.showSystemApps) {
             allPolicies
         } else {
-            allPolicies.filter { (it.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
+            allPolicies.filterNot { isSystemApp(it.applicationInfo) }
         }
         val filtered = if (query.isEmpty()) {
             base
@@ -269,6 +374,7 @@ class SuperuserViewModel(
             viewModelScope.launch {
                 db.delete(entry.item.uid)
                 entry.item.policy = SuPolicy.QUERY
+                entry.item.remain = -1
                 entry.item.notification = true
                 entry.item.logging = true
                 publishFilteredPolicies()
@@ -283,6 +389,7 @@ class SuperuserViewModel(
             viewModelScope.launch {
                 db.delete(entry.item.uid)
                 entry.item.policy = SuPolicy.QUERY
+                entry.item.remain = -1
                 entry.item.notification = true
                 entry.item.logging = true
                 publishFilteredPolicies()
@@ -337,14 +444,7 @@ class SuperuserViewModel(
                     entry.item.notification = true
                     entry.item.logging = true
                 } else {
-
-                    val actualPolicy = if (policy == SuPolicy.ALLOW && Config.suRestrict) {
-                        SuPolicy.RESTRICT
-                    } else {
-                        policy
-                    }
-                    entry.item.policy = actualPolicy
-
+                    entry.item.policy = policy
                     entry.item.remain = 0
                     db.update(entry.item)
                 }
