@@ -622,15 +622,15 @@ private fun PolicyItem(
                                 sliderValue = value
                             },
                             onValueChangeFinished = {
-                                val snapped = sliderValue.roundToInt().coerceIn(1, 3).toFloat()
-                                sliderValue = snapped
-                                val newPolicy = sliderValueToPolicy(snapped)
-                                if (newPolicy != item.policy) onUpdatePolicy(newPolicy)
-                            },
-                            valueRange = 1f..3f,
-                            steps = 1,
-                            modifier = Modifier.width(120.dp)
-                        )
+                            val snapped = sliderValue.roundToInt().coerceIn(0, 3).toFloat()
+                            sliderValue = snapped
+                            val newPolicy = sliderValueToPolicy(snapped)
+                            if (newPolicy != item.policy) onUpdatePolicy(newPolicy)
+                        },
+                        valueRange = 0f..3f,
+                        steps = 2,
+                        modifier = Modifier.width(120.dp)
+                    )
                         Text(
                             text = context.getString(policyToTextRes(item.policy)),
                             style = MiuixTheme.textStyles.body2,
@@ -699,32 +699,6 @@ private fun PolicyItem(
                 }
             }
         }
-    }
-}
-
-private fun policyToSliderValue(policy: Int): Float {
-    return when (policy) {
-        SuPolicy.DENY -> 1f
-        SuPolicy.RESTRICT -> 2f
-        SuPolicy.ALLOW -> 3f
-        else -> 1f
-    }
-}
-
-private fun sliderValueToPolicy(value: Float): Int {
-    return when (value.roundToInt().coerceIn(1, 3)) {
-        1 -> SuPolicy.DENY
-        2 -> SuPolicy.RESTRICT
-        3 -> SuPolicy.ALLOW
-        else -> SuPolicy.DENY
-    }
-}
-
-private fun policyToTextRes(policy: Int): Int {
-    return when {
-        policy >= SuPolicy.ALLOW -> CoreR.string.grant
-        policy == SuPolicy.RESTRICT -> CoreR.string.restrict
-        else -> CoreR.string.deny
     }
 }
 
