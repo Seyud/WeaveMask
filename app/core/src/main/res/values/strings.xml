@@ -228,6 +228,11 @@
     <string name="settings_su_request_45">45 seconds</string>
     <string name="settings_su_request_60">60 seconds</string>
     <string name="superuser_access">Superuser access</string>
+    <string name="settings_su_mode_title">Superuser mode</string>
+    <string name="settings_su_mode_blacklist">Blacklist mode</string>
+    <string name="settings_su_mode_whitelist">Whitelist mode</string>
+    <string name="settings_su_mode_summary_blacklist">Only apps with saved Superuser policies are shown. Revoking removes them from the list.</string>
+    <string name="settings_su_mode_summary_whitelist">Show all installed apps for pre-authorization. Revoking keeps them in the list as Prompt.</string>
     <string name="auto_response">Automatic response</string>
     <string name="request_timeout">Request timeout</string>
     <string name="superuser_notification">Superuser notification</string>

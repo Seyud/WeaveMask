@@ -37,6 +37,7 @@ object Config : PreferenceConfig, DBConfig {
         const val SU_NOTIFICATION = "su_notification"
         const val SU_REAUTH = "su_reauth"
         const val SU_TAPJACK = "su_tapjack"
+        const val SU_LIST_MODE = "su_list_mode"
         const val SU_RESTRICT = "su_restrict"
         const val CHECK_UPDATES = "check_update"
         const val RELEASE_CHANNEL = "release_channel"
@@ -103,6 +104,10 @@ object Config : PreferenceConfig, DBConfig {
         // su notification
         const val NO_NOTIFICATION = 0
         const val NOTIFICATION_TOAST = 1
+
+        // superuser list mode
+        const val SU_MODE_BLACKLIST = 0
+        const val SU_MODE_WHITELIST = 1
 
         // su auto response
         const val SU_PROMPT = 0
@@ -204,6 +209,7 @@ object Config : PreferenceConfig, DBConfig {
         }
     var suReAuth by preference(Key.SU_REAUTH, false)
     var suTapjack by preference(Key.SU_TAPJACK, true)
+    var suListMode by preference(Key.SU_LIST_MODE, Value.SU_MODE_WHITELIST)
     var suRestrict by preference(Key.SU_RESTRICT, false)
 
     private const val SU_FINGERPRINT = "su_fingerprint"

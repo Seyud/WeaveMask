@@ -21,6 +21,7 @@ import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Update
 import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.Const
+import io.github.seyud.weave.ui.icon.SuperuserIcon
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.preference.OverlayDropdownPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
@@ -66,6 +67,39 @@ internal fun AccessModeSelectorItem(res: Resources) {
         startAction = {
             Icon(
                 Icons.Rounded.AdminPanelSettings,
+                modifier = Modifier.padding(end = 6.dp),
+                contentDescription = null,
+                tint = colorScheme.onBackground,
+            )
+        },
+    )
+}
+
+@Composable
+internal fun SuperuserModeSelectorItem(res: Resources) {
+    val entries = remember(res) { res.getStringArray(CoreR.array.su_list_mode) }
+    var selected by rememberSaveable {
+        mutableIntStateOf(
+            Config.suListMode.coerceIn(0, entries.size - 1),
+        )
+    }
+    val summary = when (selected) {
+        Config.Value.SU_MODE_BLACKLIST -> stringResource(CoreR.string.settings_su_mode_summary_blacklist)
+        else -> stringResource(CoreR.string.settings_su_mode_summary_whitelist)
+    }
+
+    OverlayDropdownPreference(
+        title = stringResource(CoreR.string.settings_su_mode_title),
+        summary = summary,
+        items = entries.toList(),
+        selectedIndex = selected.coerceIn(0, entries.size - 1),
+        onSelectedIndexChange = { index ->
+            Config.suListMode = index
+            selected = index
+        },
+        startAction = {
+            Icon(
+                SuperuserIcon,
                 modifier = Modifier.padding(end = 6.dp),
                 contentDescription = null,
                 tint = colorScheme.onBackground,

@@ -179,6 +179,11 @@
     <string name="settings_su_request_45">45 秒</string>
     <string name="settings_su_request_60">60 秒</string>
     <string name="superuser_access">超級使用者存取權限</string>
+    <string name="settings_su_mode_title">超級使用者模式</string>
+    <string name="settings_su_mode_blacklist">黑名單模式</string>
+    <string name="settings_su_mode_whitelist">白名單模式</string>
+    <string name="settings_su_mode_summary_blacklist">僅顯示已儲存超級使用者策略的應用程式。撤銷後會從清單中移除。</string>
+    <string name="settings_su_mode_summary_whitelist">顯示所有已安裝應用程式以便預先授權。撤銷後會保留在清單中並恢復為詢問。</string>
     <string name="auto_response">自動回應</string>
     <string name="request_timeout">要求逾時</string>
     <string name="superuser_notification">超級使用者通知</string>

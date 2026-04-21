@@ -233,6 +233,11 @@
     <string name="settings_su_request_45">45 秒</string>
     <string name="settings_su_request_60">60 秒</string>
     <string name="superuser_access">超级用户访问权限</string>
+    <string name="settings_su_mode_title">超级用户模式</string>
+    <string name="settings_su_mode_blacklist">黑名单模式</string>
+    <string name="settings_su_mode_whitelist">白名单模式</string>
+    <string name="settings_su_mode_summary_blacklist">仅显示已保存超级用户策略的应用。撤销后会从列表中移除。</string>
+    <string name="settings_su_mode_summary_whitelist">显示所有已安装应用以便预授权。撤销后会保留在列表中并恢复为询问。</string>
     <string name="auto_response">自动响应</string>
     <string name="request_timeout">请求超时</string>
     <string name="superuser_notification">超级用户通知</string>

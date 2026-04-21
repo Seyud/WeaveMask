@@ -39,6 +39,8 @@ internal fun SuperuserSettingsSection(
 
     SmallTitle(text = stringResource(CoreR.string.superuser))
     Card(modifier = Modifier.fillMaxWidth()) {
+        SuperuserModeSelectorItem(res = res)
+
         if (visibility.showTapjack) {
             var tapjackEnabled by rememberSaveable { mutableStateOf(Config.suTapjack) }
             SwitchPreference(

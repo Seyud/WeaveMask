@@ -1,9 +1,22 @@
 package io.github.seyud.weave.ui.superuser
 
 import android.content.pm.ApplicationInfo
+import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.R as CoreR
 import io.github.seyud.weave.core.model.su.SuPolicy
 import kotlin.math.roundToInt
+
+internal fun normalizeSuperuserListMode(mode: Int): Int {
+    return when (mode) {
+        Config.Value.SU_MODE_BLACKLIST -> Config.Value.SU_MODE_BLACKLIST
+        else -> Config.Value.SU_MODE_WHITELIST
+    }
+}
+
+internal fun isWhitelistMode(mode: Int): Boolean =
+    normalizeSuperuserListMode(mode) == Config.Value.SU_MODE_WHITELIST
+
+internal fun defaultShowSystemAppsForMode(mode: Int): Boolean = !isWhitelistMode(mode)
 
 internal fun shouldShowPolicySlider(
     policy: Int,

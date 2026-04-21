@@ -28,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -58,6 +59,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.model.su.SuPolicy
 import io.github.seyud.weave.ui.component.AppIconImage
 import io.github.seyud.weave.dialog.SuperuserRevokeDialog
@@ -113,12 +115,16 @@ import kotlin.math.roundToInt
 fun SuperuserScreen(
     viewModel: SuperuserViewModel,
     contentBottomPadding: Dp,
+    isActive: Boolean,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val layoutDirection = LocalLayoutDirection.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var hasStartedLoading by rememberSaveable { mutableStateOf(false) }
+    var lastLoadedMode by rememberSaveable {
+        mutableIntStateOf(normalizeSuperuserListMode(Config.suListMode))
+    }
     val searchAppsLabel = stringResource(CoreR.string.search_apps_label)
     var searchStatus by remember(searchAppsLabel) {
         mutableStateOf(SearchStatus(label = searchAppsLabel))
@@ -162,7 +168,22 @@ fun SuperuserScreen(
     LaunchedEffect(hasStartedLoading) {
         if (!hasStartedLoading) {
             hasStartedLoading = true
+            lastLoadedMode = normalizeSuperuserListMode(Config.suListMode)
             viewModel.startLoading()
+        }
+    }
+
+    LaunchedEffect(isActive, hasStartedLoading) {
+        if (!hasStartedLoading || !isActive) {
+            return@LaunchedEffect
+        }
+        val currentMode = normalizeSuperuserListMode(Config.suListMode)
+        if (currentMode != lastLoadedMode) {
+            lastLoadedMode = currentMode
+            expandedPolicyKeys = emptyList()
+            pendingRevokeKey = null
+            viewModel.dismissRevokeDialog()
+            viewModel.refresh()
         }
     }
 
