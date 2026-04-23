@@ -29,9 +29,11 @@ import io.github.seyud.weave.core.R as CoreR
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     contentBottomPadding: Dp,
+    isActive: Boolean,
     onNavigateToLog: () -> Unit,
     onNavigateToAppLanguage: () -> Unit,
     onNavigateToDenyListConfig: () -> Unit,
+    onSuperuserModeChanged: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -42,12 +44,14 @@ fun SettingsScreen(
     val localState = rememberSettingsScreenLocalState()
     val visibility = rememberSettingsVisibility(context)
 
-    DisposableEffect(viewModel, onNavigateToLog, onNavigateToDenyListConfig) {
+    DisposableEffect(viewModel, onNavigateToLog, onNavigateToDenyListConfig, onSuperuserModeChanged) {
         viewModel.onNavigateToLog = onNavigateToLog
         viewModel.onNavigateToDenyListConfig = onNavigateToDenyListConfig
+        viewModel.onSuperuserModeChanged = onSuperuserModeChanged
         onDispose {
             viewModel.onNavigateToLog = null
             viewModel.onNavigateToDenyListConfig = null
+            viewModel.onSuperuserModeChanged = null
         }
     }
 
@@ -76,6 +80,7 @@ fun SettingsScreen(
                 viewModel = viewModel,
                 localState = localState,
                 visibility = visibility,
+                isActive = isActive,
                 contentBottomPadding = contentBottomPadding,
                 nestedScrollConnection = scrollBehavior.nestedScrollConnection,
                 onNavigateToAppLanguage = onNavigateToAppLanguage,

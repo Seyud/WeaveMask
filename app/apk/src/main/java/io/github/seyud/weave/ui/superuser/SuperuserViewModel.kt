@@ -118,6 +118,7 @@ private data class LoadedPolicies(
 
 class SuperuserViewModel internal constructor(
     private val db: SuperuserPolicyStore,
+    private val modeSync: SuperuserModeSyncCoordinator = SuperuserModeSyncCoordinator(),
     private val loadConfig: SuperuserLoadConfig = SuperuserLoadConfig(),
 ) : AsyncLoadViewModel() {
 
@@ -195,7 +196,7 @@ class SuperuserViewModel internal constructor(
             return
         }
 
-        val listMode = syncListModeState()
+        val listMode = syncListModeState(resolveListMode())
 
         if (showProgress) {
             if (isInitialLoad) {
@@ -233,8 +234,16 @@ class SuperuserViewModel internal constructor(
         }
     }
 
-    private fun syncListModeState(): Int {
-        val listMode = currentSuperuserListMode()
+    private suspend fun resolveListMode(): Int {
+        val currentMode = currentSuperuserListMode()
+        val resolvedMode = modeSync.resolveMode(currentMode)
+        if (resolvedMode != currentMode) {
+            Config.suListMode = resolvedMode
+        }
+        return resolvedMode
+    }
+
+    private fun syncListModeState(listMode: Int): Int {
         if (listMode == loadedListMode) {
             return listMode
         }
@@ -391,10 +400,11 @@ class SuperuserViewModel internal constructor(
     }
 
     private suspend fun refreshPoliciesFromRoot() {
-        if (!isWhitelistMode(currentSuperuserListMode())) {
+        val listMode = resolveListMode()
+        if (!isWhitelistMode(listMode)) {
             return
         }
-        val loadedPolicies = fetchPolicies(Config.Value.SU_MODE_WHITELIST)
+        val loadedPolicies = fetchPolicies(listMode)
         if (loadedPolicies.source != InstalledItemSource.ROOT || loadedPolicies.policies.isEmpty()) {
             return
         }

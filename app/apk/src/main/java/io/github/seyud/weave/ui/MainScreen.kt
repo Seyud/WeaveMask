@@ -691,6 +691,7 @@ private fun MainTabScreen(
                     3 -> if (isCurrentPage || contentReady) SettingsScreen(
                         viewModel = settingsViewModel,
                         contentBottomPadding = contentBottomPadding,
+                        isActive = isCurrentPage,
                         onNavigateToLog = {
                             navigator.push(Route.Log)
                         },
@@ -700,7 +701,10 @@ private fun MainTabScreen(
                         },
                         onNavigateToDenyListConfig = {
                             navigator.push(Route.Deny)
-                        }
+                        },
+                        onSuperuserModeChanged = {
+                            moduleViewModel.refresh()
+                        },
                     )
                 }
             }

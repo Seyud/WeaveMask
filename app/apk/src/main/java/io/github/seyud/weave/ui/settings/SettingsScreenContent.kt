@@ -31,6 +31,7 @@ internal fun SettingsScreenContent(
     viewModel: SettingsViewModel,
     localState: SettingsScreenLocalState,
     visibility: SettingsVisibility,
+    isActive: Boolean,
     contentBottomPadding: Dp,
     nestedScrollConnection: NestedScrollConnection,
     onNavigateToAppLanguage: () -> Unit,
@@ -93,6 +94,7 @@ internal fun SettingsScreenContent(
             SuperuserSettingsSection(
                 viewModel = viewModel,
                 visibility = visibility,
+                isActive = isActive,
             )
         }
 

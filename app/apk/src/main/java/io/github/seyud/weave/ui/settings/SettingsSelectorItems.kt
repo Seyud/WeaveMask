@@ -3,8 +3,10 @@ package io.github.seyud.weave.ui.settings
 import android.content.res.Resources
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.rounded.Update
 import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.Const
 import io.github.seyud.weave.ui.icon.SuperuserIcon
+import io.github.seyud.weave.ui.superuser.normalizeSuperuserListMode
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.preference.OverlayDropdownPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
@@ -76,13 +79,30 @@ internal fun AccessModeSelectorItem(res: Resources) {
 }
 
 @Composable
-internal fun SuperuserModeSelectorItem(res: Resources) {
+internal fun SuperuserModeSelectorItem(
+    res: Resources,
+    viewModel: SettingsViewModel,
+    isActive: Boolean,
+) {
     val entries = remember(res) { res.getStringArray(CoreR.array.su_list_mode) }
     var selected by rememberSaveable {
         mutableIntStateOf(
-            Config.suListMode.coerceIn(0, entries.size - 1),
+            normalizeSuperuserListMode(Config.suListMode).coerceIn(0, entries.size - 1),
         )
     }
+    var isUpdating by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel, isActive) {
+        if (!isActive) {
+            return@LaunchedEffect
+        }
+        isUpdating = true
+        viewModel.refreshSuperuserListMode { resolvedMode ->
+            selected = resolvedMode.coerceIn(0, entries.size - 1)
+            isUpdating = false
+        }
+    }
+
     val summary = when (selected) {
         Config.Value.SU_MODE_BLACKLIST -> stringResource(CoreR.string.settings_su_mode_summary_blacklist)
         else -> stringResource(CoreR.string.settings_su_mode_summary_whitelist)
@@ -93,9 +113,16 @@ internal fun SuperuserModeSelectorItem(res: Resources) {
         summary = summary,
         items = entries.toList(),
         selectedIndex = selected.coerceIn(0, entries.size - 1),
+        enabled = !isUpdating,
         onSelectedIndexChange = { index ->
-            Config.suListMode = index
-            selected = index
+            if (isUpdating) {
+                return@OverlayDropdownPreference
+            }
+            isUpdating = true
+            viewModel.setSuperuserListMode(index) { appliedMode ->
+                selected = appliedMode.coerceIn(0, entries.size - 1)
+                isUpdating = false
+            }
         },
         startAction = {
             Icon(
