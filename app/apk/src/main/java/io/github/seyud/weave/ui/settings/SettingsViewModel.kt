@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import io.github.seyud.weave.arch.BaseViewModel
 import io.github.seyud.weave.core.AppContext
+import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.integration.AppIconManager
 import io.github.seyud.weave.core.integration.AppIconVariant
 import io.github.seyud.weave.core.ktx.toast
@@ -12,6 +13,8 @@ import io.github.seyud.weave.core.tasks.AppMigration
 import io.github.seyud.weave.core.utils.RootUtils
 import io.github.seyud.weave.events.AddHomeIconEvent
 import io.github.seyud.weave.events.AuthEvent
+import io.github.seyud.weave.ui.superuser.SuperuserModeSyncCoordinator
+import io.github.seyud.weave.ui.superuser.normalizeSuperuserListMode
 import kotlinx.coroutines.launch
 import io.github.seyud.weave.core.R as CoreR
 
@@ -19,13 +22,20 @@ import io.github.seyud.weave.core.R as CoreR
  * 设置页面 ViewModel
  * 处理设置页面的业务逻辑和用户交互
  */
-class SettingsViewModel : BaseViewModel() {
+class SettingsViewModel internal constructor(
+    private val superuserModeSync: SuperuserModeSyncCoordinator = SuperuserModeSyncCoordinator(),
+) : BaseViewModel() {
+
+    constructor() : this(SuperuserModeSyncCoordinator())
 
     /** 日志页面导航回调 */
     var onNavigateToLog: (() -> Unit)? = null
 
     /** DenyList 配置页面导航回调 */
     var onNavigateToDenyListConfig: (() -> Unit)? = null
+
+    /** 超级用户模式切换完成后的联动回调 */
+    var onSuperuserModeChanged: (() -> Unit)? = null
 
     /**
      * 添加桌面快捷方式
@@ -85,6 +95,36 @@ class SettingsViewModel : BaseViewModel() {
      */
     fun authenticateAndToggle(checked: Boolean, callback: (Boolean) -> Unit) {
         AuthEvent { callback(true) }.publish()
+    }
+
+    fun setSuperuserListMode(mode: Int, onComplete: (Int) -> Unit = {}) {
+        val normalizedMode = normalizeSuperuserListMode(mode)
+        if (normalizeSuperuserListMode(Config.suListMode) == normalizedMode) {
+            onComplete(normalizedMode)
+            return
+        }
+
+        viewModelScope.launch {
+            val result = superuserModeSync.applyMode(normalizedMode)
+            if (result.success) {
+                Config.suListMode = result.appliedMode
+                onSuperuserModeChanged?.invoke()
+                onComplete(result.appliedMode)
+            } else {
+                onComplete(normalizeSuperuserListMode(Config.suListMode))
+            }
+        }
+    }
+
+    fun refreshSuperuserListMode(onComplete: (Int) -> Unit = {}) {
+        viewModelScope.launch {
+            val currentMode = normalizeSuperuserListMode(Config.suListMode)
+            val resolvedMode = superuserModeSync.resolveMode(currentMode)
+            if (resolvedMode != currentMode) {
+                Config.suListMode = resolvedMode
+            }
+            onComplete(resolvedMode)
+        }
     }
 
 }

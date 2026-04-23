@@ -30,6 +30,7 @@ import io.github.seyud.weave.core.R as CoreR
 internal fun SuperuserSettingsSection(
     viewModel: SettingsViewModel,
     visibility: SettingsVisibility,
+    isActive: Boolean,
 ) {
     if (!visibility.showSuperuserSection) {
         return
@@ -39,7 +40,11 @@ internal fun SuperuserSettingsSection(
 
     SmallTitle(text = stringResource(CoreR.string.superuser))
     Card(modifier = Modifier.fillMaxWidth()) {
-        SuperuserModeSelectorItem(res = res)
+        SuperuserModeSelectorItem(
+            res = res,
+            viewModel = viewModel,
+            isActive = isActive,
+        )
 
         if (visibility.showTapjack) {
             var tapjackEnabled by rememberSaveable { mutableStateOf(Config.suTapjack) }
