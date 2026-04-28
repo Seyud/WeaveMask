@@ -37,6 +37,7 @@ class SettingsViewModel internal constructor(
         val serial: Int,
         val targetMode: Int,
         val fallbackMode: Int,
+        val notifyOnFailure: Boolean,
     )
 
     private fun newLocalDenyListSyncRequest(
@@ -48,8 +49,17 @@ class SettingsViewModel internal constructor(
             serial = serial,
             targetMode = targetMode,
             fallbackMode = fallbackMode,
+            notifyOnFailure = true,
         )
     }
+
+    private fun passiveLocalDenyListSyncRequest(targetMode: Int): LocalDenyListSyncRequest =
+        LocalDenyListSyncRequest(
+            serial = 0,
+            targetMode = targetMode,
+            fallbackMode = targetMode,
+            notifyOnFailure = false,
+        )
 
     private fun pendingLocalDenyListSyncRequest(): LocalDenyListSyncRequest? {
         if (!Config.suListModeDenyListPendingValid) {
@@ -59,6 +69,7 @@ class SettingsViewModel internal constructor(
             serial = Config.suListModeDenyListPendingSerial,
             targetMode = normalizeSuperuserListMode(Config.suListModeDenyListPendingTargetMode),
             fallbackMode = normalizeSuperuserListMode(Config.suListModeDenyListPendingFallbackMode),
+            notifyOnFailure = true,
         )
     }
 
@@ -96,13 +107,27 @@ class SettingsViewModel internal constructor(
 
     init {
         viewModelScope.launch {
-            val pendingRequest = pendingLocalDenyListSyncRequest() ?: return@launch
-            if (!superuserModeSync.isZygiskNextActive()) {
-                if (normalizeSuperuserListMode(Config.suListMode) != pendingRequest.targetMode) {
-                    Config.suListMode = pendingRequest.targetMode
-                    _superuserListMode.value = pendingRequest.targetMode
+            val pendingRequest = pendingLocalDenyListSyncRequest()
+            val zygiskNextActive = superuserModeSync.isZygiskNextActive()
+            if (pendingRequest != null) {
+                if (!zygiskNextActive) {
+                    if (normalizeSuperuserListMode(Config.suListMode) != pendingRequest.targetMode) {
+                        Config.suListMode = pendingRequest.targetMode
+                        _superuserListMode.value = pendingRequest.targetMode
+                    }
+                    localDenyListSyncRequests.trySend(pendingRequest)
                 }
-                localDenyListSyncRequests.trySend(pendingRequest)
+                return@launch
+            }
+
+            val currentMode = normalizeSuperuserListMode(Config.suListMode)
+            if (shouldQueuePassiveWhitelistReconcile(
+                    hasPendingLocalSync = false,
+                    currentMode = currentMode,
+                    zygiskNextActive = zygiskNextActive,
+                )
+            ) {
+                localDenyListSyncRequests.trySend(passiveLocalDenyListSyncRequest(currentMode))
             }
         }
 
@@ -117,6 +142,7 @@ class SettingsViewModel internal constructor(
                 Config.denyList = denyListResult.denyListEnabled
                 if (pendingLocalDenyListSyncRequest() == request) {
                     if (!denyListResult.success &&
+                        request.notifyOnFailure &&
                         normalizeSuperuserListMode(Config.suListMode) == request.targetMode &&
                         _superuserListMode.value == request.targetMode
                     ) {

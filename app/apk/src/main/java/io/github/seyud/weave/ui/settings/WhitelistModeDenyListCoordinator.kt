@@ -1,5 +1,6 @@
 package io.github.seyud.weave.ui.settings
 
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
 import androidx.core.os.ProcessCompat
@@ -125,6 +126,10 @@ private object LibSuDenyListShellRunner : DenyListShellRunner {
 
 internal interface OrdinaryDenyListEntryProvider {
     suspend fun loadEntries(currentEntries: List<DenyListEntryRecord>): List<DenyListEntryRecord>
+    suspend fun loadEntriesForPackage(
+        packageName: String,
+        currentEntries: List<DenyListEntryRecord>,
+    ): List<DenyListEntryRecord>
 }
 
 internal class PackageManagerOrdinaryDenyListEntryProvider(
@@ -144,18 +149,7 @@ internal class PackageManagerOrdinaryDenyListEntryProvider(
                 .filter { isInstalledPackage(it) }
                 .filter { ProcessCompat.isApplicationUid(it.uid) }
                 .filterNot { isSystemApp(it) }
-                .concurrentMap { appInfo ->
-                    val app = buildDenyListAppInfo(appInfo, packageManager, denyEntries)
-                    buildList<DenyListEntryRecord> {
-                        add(DenyListEntryRecord(app.packageName))
-                        fetchProcesses(packageManager, app, denyEntries)
-                            .asSequence()
-                            .filter { it.defaultSelection }
-                            .map { DenyListEntryRecord(it.packageName, it.name) }
-                            .filterNot { it.processName == it.packageName }
-                            .forEach(::add)
-                    }
-                }
+                .concurrentMap { appInfo -> buildEntriesForApplication(appInfo, denyEntries) }
                 .toCollection(ArrayList<List<DenyListEntryRecord>>())
                 .asSequence()
                 .flatten()
@@ -163,6 +157,44 @@ internal class PackageManagerOrdinaryDenyListEntryProvider(
                 .sortedWith(compareBy<DenyListEntryRecord>({ it.packageName }, { it.processName }))
                 .toList()
         }
+
+    override suspend fun loadEntriesForPackage(
+        packageName: String,
+        currentEntries: List<DenyListEntryRecord>,
+    ): List<DenyListEntryRecord> = withContext(Dispatchers.IO) {
+        val denyEntries = currentEntries.map { CmdlineListItem(it.rawLine()) }
+        val applicationInfo = InstalledPackageLoader.loadApplications(
+            flags = MATCH_UNINSTALLED_PACKAGES,
+            packageManager = packageManager,
+        ).items.firstOrNull { it.packageName == packageName }
+            ?: return@withContext emptyList()
+        if (!isOrdinaryApplication(applicationInfo)) {
+            return@withContext emptyList()
+        }
+        buildEntriesForApplication(applicationInfo, denyEntries)
+    }
+
+    private fun isOrdinaryApplication(applicationInfo: ApplicationInfo): Boolean =
+        applicationInfo.packageName != AppContext.packageName &&
+            isInstalledPackage(applicationInfo) &&
+            ProcessCompat.isApplicationUid(applicationInfo.uid) &&
+            !isSystemApp(applicationInfo)
+
+    private fun buildEntriesForApplication(
+        applicationInfo: ApplicationInfo,
+        denyEntries: List<CmdlineListItem>,
+    ): List<DenyListEntryRecord> {
+        val app = buildDenyListAppInfo(applicationInfo, packageManager, denyEntries)
+        return buildList<DenyListEntryRecord> {
+            add(DenyListEntryRecord(app.packageName))
+            fetchProcesses(packageManager, app, denyEntries)
+                .asSequence()
+                .filter { it.defaultSelection }
+                .map { DenyListEntryRecord(it.packageName, it.name) }
+                .filterNot { it.processName == it.packageName }
+                .forEach(::add)
+        }
+    }
 }
 
 internal class WhitelistModeDenyListCoordinator(
@@ -212,6 +244,36 @@ internal class WhitelistModeDenyListCoordinator(
             snapshotStore.set(null)
         }
         result
+    }
+
+    suspend fun ensurePackageSynced(packageName: String): WhitelistModeDenyListResult = withContext(Dispatchers.IO) {
+        val currentEntries = listEntries()
+        val targetEntries = entryProvider.loadEntriesForPackage(packageName, currentEntries)
+        if (targetEntries.isEmpty()) {
+            return@withContext WhitelistModeDenyListResult(
+                success = true,
+                denyListEnabled = isDenyListEnabled(),
+            )
+        }
+
+        val wasEnabled = isDenyListEnabled()
+        if (!wasEnabled && !setDenyListEnabled(true)) {
+            return@withContext failureResult(wasEnabled)
+        }
+
+        val existingEntries = currentEntries.toMutableSet()
+        val entriesToAdd = targetEntries.filter(existingEntries::add)
+        if (entriesToAdd.isNotEmpty() && !addEntries(entriesToAdd)) {
+            if (!wasEnabled) {
+                setDenyListEnabled(false)
+            }
+            return@withContext failureResult(wasEnabled)
+        }
+
+        return@withContext WhitelistModeDenyListResult(
+            success = true,
+            denyListEnabled = true,
+        )
     }
 
     private fun restoreSnapshot(snapshot: BlacklistDenyListSnapshot): WhitelistModeDenyListResult {
@@ -278,4 +340,3 @@ internal class WhitelistModeDenyListCoordinator(
     private fun shellQuote(value: String): String =
         "'${value.replace("'", "'\\''")}'"
 }
-

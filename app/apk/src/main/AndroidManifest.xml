@@ -105,6 +105,17 @@
             android:authorities="${applicationId}.androidx-startup"
             tools:node="remove" />
 
+        <receiver
+            android:name=".ui.settings.WhitelistModePackageSyncReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED" />
+                <action android:name="android.intent.action.PACKAGE_REPLACED" />
+
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
+
         <!-- We handle profile installation ourselves  -->
         <receiver
             android:name="androidx.profileinstaller.ProfileInstallReceiver"
