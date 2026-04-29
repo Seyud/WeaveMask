@@ -133,7 +133,7 @@ object Config : PreferenceConfig, DBConfig {
     private var enableBlurPrefs by preference(Key.ENABLE_BLUR, true)
     var enableFloatingBottomBar by preference(Key.ENABLE_FLOATING_BOTTOM_BAR, false)
     private var enableFloatingBottomBarBlurPrefs by preference(Key.ENABLE_FLOATING_BOTTOM_BAR_BLUR, false)
-    var enableSmoothCorner by preference(Key.ENABLE_SMOOTH_CORNER, true)
+    var enableSmoothCorner by preference(Key.ENABLE_SMOOTH_CORNER, false)
     var enablePredictiveBack by preference(Key.ENABLE_PREDICTIVE_BACK, false)
     var pageScale by preference(Key.PAGE_SCALE, 1.0f)
     var homeLayoutMode by preference(Key.HOME_LAYOUT_MODE, Value.HOME_LAYOUT_CLASSIC)
