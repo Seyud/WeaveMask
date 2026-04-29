@@ -2,10 +2,10 @@ package io.github.seyud.weave.ui.component
 
 import android.annotation.SuppressLint
 import android.graphics.Color
-import android.view.ViewGroup
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -67,7 +67,8 @@ fun HtmlText(
             .wrapContentHeight()
             .clipToBounds(),
         factory = { context ->
-            WebView(context).apply {
+            val frameLayout = FrameLayout(context)
+            val webView = WebView(context).apply {
                 settings.javaScriptEnabled = false
                 settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
                 settings.domStorageEnabled = true
@@ -76,14 +77,17 @@ fun HtmlText(
                 isHorizontalScrollBarEnabled = false
                 overScrollMode = WebView.OVER_SCROLL_NEVER
                 setBackgroundColor(Color.TRANSPARENT)
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
                 )
                 webViewClient = object : WebViewClient() {}
             }
+            frameLayout.addView(webView)
+            frameLayout
         },
-        update = { webView ->
+        update = { frameLayout ->
+            val webView = frameLayout.getChildAt(0) as? WebView ?: return@AndroidView
             if (webView.tag != loadKey) {
                 webView.tag = loadKey
                 onLoadingChange(true)
@@ -99,9 +103,13 @@ fun HtmlText(
                 webView.loadDataWithBaseURL(baseUrl, html, "text/html", "utf-8", null)
             }
         },
-        onRelease = { webView ->
-            onLoadingChange(false)
-            webView.destroy()
+        onRelease = { frameLayout ->
+            val webView = frameLayout.getChildAt(0) as? WebView
+            frameLayout.removeAllViews()
+            webView?.apply {
+                stopLoading()
+                destroy()
+            }
         },
     )
 }
