@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@drawable/ic_launcher_background" />
-    <item>
-        <inset
-            android:drawable="@drawable/ic_launcher_foreground"
-            android:insetLeft="20dp"
-            android:insetTop="20dp"
-            android:insetRight="20dp"
-            android:insetBottom="20dp" />
-    </item>
+    <item android:drawable="@drawable/ic_app_logo_inset" android:gravity="center" />
 </layer-list>
