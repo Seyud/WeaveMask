@@ -78,7 +78,7 @@ class SuperuserViewModel(
         key = policyKey(item.uid, packageName),
         uid = item.uid,
         packageName = packageName,
-        appName = if (isSharedUid) "[SharedUID] $appName" else appName,
+        appName = if (isSharedUid) "[${AppContext.getString(R.string.shared_uid)}] $appName" else appName,
         applicationInfo = applicationInfo,
         policy = item.policy,
         shouldNotify = item.notification,

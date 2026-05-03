@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -231,7 +232,7 @@ private fun SuRequestAppInfo(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.Center
         ) {
-            val displayName = if (isSharedUid) "[SharedUID] $appName" else appName
+            val displayName = if (isSharedUid) "[${stringResource(CoreR.string.shared_uid)}] $appName" else appName
             Text(
                 text = displayName,
                 fontSize = 16.sp,

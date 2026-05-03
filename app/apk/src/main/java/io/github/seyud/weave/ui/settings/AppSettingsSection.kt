@@ -38,6 +38,7 @@ internal fun AppSettingsSection(
     visibility: SettingsVisibility,
 ) {
     val context = LocalContext.current
+    val settingsLabel = stringResource(CoreR.string.settings)
     val res = context.resources
     var dohEnabled by rememberSaveable { mutableStateOf(Config.doh) }
     var checkUpdateEnabled by rememberSaveable { mutableStateOf(Config.checkUpdate) }
@@ -194,7 +195,7 @@ internal fun AppSettingsSection(
                         )
                     },
                     onClick = {
-                        state.hideAppName = TextFieldValue(HideAppDefaultName)
+                        state.hideAppName = TextFieldValue(settingsLabel)
                         state.showHideDialog = true
                     },
                 )

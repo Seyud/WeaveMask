@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.core.content.pm.ShortcutManagerCompat
 import io.github.seyud.weave.core.BuildConfig
@@ -107,8 +108,9 @@ internal fun rememberSettingsScreenLocalState(): SettingsScreenLocalState {
     }
     val showHideDialogState = rememberSaveable { mutableStateOf(false) }
     val showRestoreConfirmDialogState = rememberSaveable { mutableStateOf(false) }
+    val settingsLabel = stringResource(CoreR.string.settings)
     val hideAppNameState = rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(HideAppDefaultName))
+        mutableStateOf(TextFieldValue(settingsLabel))
     }
     val isHideInProgressState = rememberSaveable { mutableStateOf(false) }
     val isRestoreInProgressState = rememberSaveable { mutableStateOf(false) }

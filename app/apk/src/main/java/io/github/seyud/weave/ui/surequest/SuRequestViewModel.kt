@@ -207,11 +207,11 @@ class SuRequestViewModel(
             // 请求不是来自应用进程，且 UID 是共享 UID
             // 无法确定请求来源
             appIcon = pm.defaultActivityIcon
-            appName = "[SharedUID] ${info.sharedUserId}"
+            appName = "[${AppContext.getString(R.string.shared_uid)}] ${info.sharedUserId}"
             pkgName = info.sharedUserId.toString()
             isSharedUid = true
         } else {
-            val prefix = if (info.sharedUserId == null) "" else "[SharedUID] "
+            val prefix = if (info.sharedUserId == null) "" else "[${AppContext.getString(R.string.shared_uid)}] "
             appIcon = app.loadIcon(pm)
             appName = "$prefix${app.getLabel(pm)}"
             pkgName = info.packageName

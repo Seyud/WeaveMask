@@ -107,6 +107,8 @@
     <string name="target_pid">Target PID: %s</string>
     <string name="selinux_context">SELinux context: %s</string>
     <string name="supp_group">Supplementary group: %s</string>
+    <string name="granted">Granted</string>
+    <string name="denied">Denied</string>
 
     <!--MagiskHide-->
     <string name="hide_system_app_action">Hide system apps</string>

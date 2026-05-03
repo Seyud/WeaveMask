@@ -5,12 +5,12 @@ import android.content.res.Resources
 abstract class TextHolder {
 
     open val isEmpty: Boolean get() = false
-    abstract fun getText(resources: Resources): CharSequence
+    abstract fun getText(resources: Resources): String
 
     // ---
 
-    class String(
-        private val value: CharSequence
+    class Str(
+        private val value: String
     ) : TextHolder() {
         override val isEmpty get() = value.isEmpty()
         override fun getText(resources: Resources) = value
@@ -27,7 +27,7 @@ abstract class TextHolder {
         value: Int,
         private vararg val params: Any
     ) : Resource(value) {
-        override fun getText(resources: Resources): kotlin.String {
+        override fun getText(resources: Resources): String {
             // Replace TextHolder with strings
             val args = params.map { if (it is TextHolder) it.getText(resources) else it }
             return resources.getString(value, *args.toTypedArray())
@@ -37,10 +37,10 @@ abstract class TextHolder {
     // ---
 
     companion object {
-        val EMPTY = String("")
+        val EMPTY = Str("")
     }
 }
 
 fun Int.asText(): TextHolder = TextHolder.Resource(this)
 fun Int.asText(vararg params: Any): TextHolder = TextHolder.ResourceArgs(this, *params)
-fun CharSequence.asText(): TextHolder = TextHolder.String(this)
+fun String.asText(): TextHolder = TextHolder.Str(this)

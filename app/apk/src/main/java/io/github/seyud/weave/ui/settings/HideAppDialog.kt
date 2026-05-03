@@ -7,7 +7,6 @@ import io.github.seyud.weave.core.R as CoreR
 import io.github.seyud.weave.ui.component.MiuixLoadingDialog
 import io.github.seyud.weave.ui.component.MiuixTextInputDialog
 
-internal const val HideAppDefaultName = "Settings"
 internal const val HideAppNameMaxLength = 30
 
 @Composable

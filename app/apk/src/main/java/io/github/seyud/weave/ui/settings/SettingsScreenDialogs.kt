@@ -21,6 +21,7 @@ internal fun SettingsScreenDialogs(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val settingsLabel = stringResource(CoreR.string.settings)
 
     HideAppDialog(
         show = state.showHideDialog,
@@ -32,7 +33,7 @@ internal fun SettingsScreenDialogs(
             }
         },
         onConfirm = {
-            val newName = state.hideAppName.text.ifBlank { HideAppDefaultName }
+            val newName = state.hideAppName.text.ifBlank { settingsLabel }
             coroutineScope.launch {
                 state.isHideInProgress = true
                 val success = viewModel.hideApp(context, newName)
