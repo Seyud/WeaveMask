@@ -71,6 +71,7 @@ import io.github.seyud.weave.ui.home.IconLink
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
@@ -187,7 +188,28 @@ private fun AboutScreenLegacy(
                 }
             }
             item { Spacer(modifier = Modifier.height(12.dp)) }
-            item { SmallTitle(stringResource(CoreR.string.about_page_title)) }
+            item { SmallTitle(stringResource(CoreR.string.about_section_title)) }
+            item {
+                Card(
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp)
+                        .padding(bottom = 12.dp)
+                ) {
+                    ArrowPreference(
+                        title = stringResource(CoreR.string.about_view_source_code),
+                        summary = stringResource(CoreR.string.about_view_source_code_summary),
+                        onClick = { onLinkPressed("https://github.com/Seyud/WeaveMask") }
+                    )
+                    ArrowPreference(
+                        title = stringResource(CoreR.string.about_join_telegram),
+                        onClick = { onLinkPressed("tg://resolve?domain=WeaveMask") }
+                    )
+                    ArrowPreference(
+                        title = stringResource(CoreR.string.about_join_qq),
+                        onClick = { onLinkPressed("https://qun.qq.com/universal-share/share?ac=1&authKey=2ORH6ytwk71mP%2FdaOhEoBuyr04XdfNI45f19OEycADR5%2Bo%2FLPH3kS%2FnHRUZuxzob&busi_data=eyJncm91cENvZGUiOiIxMDkwMDk1NzQ5IiwidG9rZW4iOiJvcWN1WlFadE5DdmRXU0R6bzdiWVpxeTZOUFQxY2ZuT1BuWDcvS0RySEZQYUV0a0t1MVNOcVVuSVdUdTVHQW9IIiwidWluIjoiMTEwNTc4MzAzMyJ9&data=uw11vDVnwRG1RrwKJtLsu55rKfiPn3DgchjhFFMtONvXMcqT1OhO_JuO2Lb73OVCPPIUKAitdy5FH1uRQp0E8Q&svctype=4&tempid=h5_group_info") }
+                    )
+                }
+            }
             item {
                 Card(
                     modifier = Modifier
@@ -507,8 +529,41 @@ private fun AboutContentBody(
                         .fillParentMaxHeight()
                         .padding(bottom = listContentPadding.calculateBottomPadding()),
                 ) {
-                    SmallTitle(stringResource(CoreR.string.about_page_title))
+                    SmallTitle(stringResource(CoreR.string.about_section_title))
 
+                    Card(
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp)
+                            .padding(bottom = 12.dp)
+                            .textureBlur(
+                                backdrop = backdrop,
+                                shape = SmoothRoundedCornerShape(16.dp),
+                                blurRadius = 60f,
+                                noiseCoefficient = BlurDefaults.NoiseCoefficient,
+                                colors = BlurColors(
+                                    blendColors = if (isDark) ColorBlendToken.Overlay_Extra_Thin_Dark else ColorBlendToken.Pured_Regular_Light,
+                                ),
+                                enabled = blurEnable,
+                            ),
+                        colors = CardDefaults.defaultColors(
+                            if (blurEnable) Color.Transparent else MiuixTheme.colorScheme.surfaceContainer,
+                            Color.Transparent,
+                        ),
+                    ) {
+                        ArrowPreference(
+                            title = stringResource(CoreR.string.about_view_source_code),
+                            summary = stringResource(CoreR.string.about_view_source_code_summary),
+                            onClick = { onLinkPressed("https://github.com/Seyud/WeaveMask") }
+                        )
+                        ArrowPreference(
+                            title = stringResource(CoreR.string.about_join_telegram),
+                            onClick = { onLinkPressed("tg://resolve?domain=WeaveMask") }
+                        )
+                        ArrowPreference(
+                            title = stringResource(CoreR.string.about_join_qq),
+                            onClick = { onLinkPressed("https://qun.qq.com/universal-share/share?ac=1&authKey=2ORH6ytwk71mP%2FdaOhEoBuyr04XdfNI45f19OEycADR5%2Bo%2FLPH3kS%2FnHRUZuxzob&busi_data=eyJncm91cENvZGUiOiIxMDkwMDk1NzQ5IiwidG9rZW4iOiJvcWN1WlFadE5DdmRXU0R6bzdiWVpxeTZOUFQxY2ZuT1BuWDcvS0RySEZQYUV0a0t1MVNOcVVuSVdUdTVHQW9IIiwidWluIjoiMTEwNTc4MzAzMyJ9&data=uw11vDVnwRG1RrwKJtLsu55rKfiPn3DgchjhFFMtONvXMcqT1OhO_JuO2Lb73OVCPPIUKAitdy5FH1uRQp0E8Q&svctype=4&tempid=h5_group_info") }
+                        )
+                    }
                     Card(
                         modifier = Modifier
                             .padding(horizontal = 12.dp)

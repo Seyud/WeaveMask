@@ -30,6 +30,11 @@
     <string name="home_support_title">Support Us</string>
     <string name="home_follow_title">Follow Us</string>
     <string name="about_page_title">About</string>
+    <string name="about_section_title">About Project</string>
+    <string name="about_view_source_code">View source code</string>
+    <string name="about_view_source_code_summary">Star the project on GitHub</string>
+    <string name="about_join_telegram">Join our Telegram channel</string>
+    <string name="about_join_qq">Join our QQ group</string>
     <string name="home_item_source">Source</string>
     <string name="home_support_content">Magisk is, and always will be, free, and open source. However, you can show us that you care by making a donation.</string>
     <string name="home_installed_version">Installed</string>

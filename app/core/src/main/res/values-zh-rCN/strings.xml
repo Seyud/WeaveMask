@@ -24,6 +24,11 @@
     <string name="home_support_title">支持开发</string>
     <string name="home_follow_title">关注我们</string>
     <string name="about_page_title">关于</string>
+    <string name="about_section_title">关于项目</string>
+    <string name="about_view_source_code">查看源代码</string>
+    <string name="about_view_source_code_summary">在 GitHub 上给项目点个 Star</string>
+    <string name="about_join_telegram">加入我们的 Telegram 频道</string>
+    <string name="about_join_qq">加入我们的 QQ 群组</string>
     <string name="home_item_source">源代码</string>
     <string name="home_support_content">Magisk 将一直保持免费且开源，向开发者捐赠以表示支持。</string>
     <string name="home_installed_version">当前</string>
