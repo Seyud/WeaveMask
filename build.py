@@ -617,7 +617,7 @@ def patch_avd_file():
 # We allow using several functionality without requirement to set ANDROID_HOME
 @functools.cache
 def adb_path():
-    if paths.cache_info().currsize > 1:
+    if paths.cache_info().currsize > 0:
         return paths().adb
     else:
         if adb := shutil.which("adb"):

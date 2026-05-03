@@ -123,7 +123,7 @@ def ensure_jdk():
             shell=True,
         )
         output = proc.stdout.strip().decode("utf-8")
-        no_jdk = proc.returncode != 0 and output.startswith("javac 21")
+        no_jdk = proc.returncode != 0 or not output.startswith("javac 21")
     except FileNotFoundError:
         no_jdk = True
 
