@@ -82,6 +82,8 @@ rikka-parcelablelist = { module = "dev.rikka.rikkax.parcelablelist:parcelablelis
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "android" }
 
 [plugins]
+android-application = { id = "com.android.application", version.ref = "android" }
+android-library = { id = "com.android.library", version.ref = "android" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 lsparanoid = { id = "org.lsposed.lsparanoid", version = "0.6.0" }
