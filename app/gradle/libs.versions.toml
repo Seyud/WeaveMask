@@ -1,6 +1,7 @@
 [versions]
 kotlin = "2.3.20"
 android = "9.1.0"
+android-tools = "32.1.0"
 ksp = "2.3.6"
 rikka = "1.3.0"
 parcelablelist = "2.0.1"
@@ -78,8 +79,9 @@ rikka-layoutinflater = { module = "dev.rikka.rikkax.layoutinflater:layoutinflate
 rikka-insets = { module = "dev.rikka.rikkax.insets:insets", version.ref = "rikka" }
 rikka-parcelablelist = { module = "dev.rikka.rikkax.parcelablelist:parcelablelist", version.ref = "parcelablelist" }
 
-# Build plugins
+# For build-logic
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "android" }
+android-build-sdk-common = { module = "com.android.tools:sdk-common", version.ref = "android-tools" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "android" }
