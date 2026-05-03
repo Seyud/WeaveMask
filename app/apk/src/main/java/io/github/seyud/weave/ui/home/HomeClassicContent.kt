@@ -24,6 +24,7 @@ internal fun LazyListScope.classicHomeContent(
     isManagerCardExpanded: Boolean,
     onManagerExpandedChange: (Boolean) -> Unit,
     onNavigateToInstall: () -> Unit,
+    onNavigateToAbout: () -> Unit,
     cardActionEnter: EnterTransition,
     cardActionExit: ExitTransition,
 ) {
@@ -117,6 +118,7 @@ internal fun LazyListScope.classicHomeContent(
 
     item {
         FollowCard(
+            onAboutClick = onNavigateToAbout,
             onLinkPressed = { link ->
                 viewModel.onLinkPressed(link)
             }

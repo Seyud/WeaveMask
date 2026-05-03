@@ -1,6 +1,7 @@
 package io.github.seyud.weave.ui
 
 import android.app.Activity
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.EaseInOut
@@ -94,6 +95,7 @@ import io.github.seyud.weave.ui.flash.FlashRequest
 import io.github.seyud.weave.ui.flash.FlashViewModel
 import io.github.seyud.weave.ui.home.HomeScreen
 import io.github.seyud.weave.ui.home.HomeViewModel
+import io.github.seyud.weave.ui.about.AboutScreen
 import io.github.seyud.weave.ui.install.InstallScreen
 import io.github.seyud.weave.ui.install.InstallViewModel
 import io.github.seyud.weave.ui.log.LogScreen
@@ -382,6 +384,16 @@ fun MainScreen(
                                 onNavigateBack = { navigator.pop() }
                             )
                         }
+                        entry<Route.About> {
+                            AboutScreen(
+                                onNavigateBack = { navigator.pop() },
+                                onLinkPressed = { link ->
+                                    context.startActivity(
+                                        Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                                    )
+                                }
+                            )
+                        }
                         entry<Route.Action> { key ->
                             ActionScreen(
                                 moduleId = key.moduleId,
@@ -659,6 +671,9 @@ private fun MainTabScreen(
                         },
                         onNavigateToUninstall = {
                             navigator.push(Route.Flash(Const.Value.UNINSTALL))
+                        },
+                        onNavigateToAbout = {
+                            navigator.push(Route.About)
                         }
                     )
                     1 -> if (isCurrentPage || contentReady) SuperuserScreen(

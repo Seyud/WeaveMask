@@ -56,6 +56,7 @@ fun HomeScreen(
     contentBottomPadding: Dp,
     onNavigateToInstall: () -> Unit,
     onNavigateToUninstall: () -> Unit,
+    onNavigateToAbout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -66,7 +67,6 @@ fun HomeScreen(
     var isMagiskCardExpanded by rememberSaveable { mutableStateOf(false) }
     var isManagerCardExpanded by rememberSaveable { mutableStateOf(false) }
     var isSupportCardExpanded by rememberSaveable { mutableStateOf(false) }
-    var isFollowCardExpanded by rememberSaveable { mutableStateOf(false) }
     val scrollBehavior = MiuixScrollBehavior()
     val enableBlur = LocalEnableBlur.current
     val surfaceColor = MiuixTheme.colorScheme.surface
@@ -165,9 +165,8 @@ fun HomeScreen(
                         onMagiskExpandedChange = { isMagiskCardExpanded = it },
                         isSupportCardExpanded = isSupportCardExpanded,
                         onSupportExpandedChange = { isSupportCardExpanded = it },
-                        isFollowCardExpanded = isFollowCardExpanded,
-                        onFollowExpandedChange = { isFollowCardExpanded = it },
                         onNavigateToInstall = onNavigateToInstall,
+                        onNavigateToAbout = onNavigateToAbout,
                         cardActionEnter = cardActionEnter,
                         cardActionExit = cardActionExit
                     )
@@ -181,6 +180,7 @@ fun HomeScreen(
                         isManagerCardExpanded = isManagerCardExpanded,
                         onManagerExpandedChange = { isManagerCardExpanded = it },
                         onNavigateToInstall = onNavigateToInstall,
+                        onNavigateToAbout = onNavigateToAbout,
                         cardActionEnter = cardActionEnter,
                         cardActionExit = cardActionExit
                     )

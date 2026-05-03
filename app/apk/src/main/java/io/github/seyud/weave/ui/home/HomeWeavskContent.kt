@@ -16,9 +16,8 @@ internal fun LazyListScope.weavskHomeContent(
     onMagiskExpandedChange: (Boolean) -> Unit,
     isSupportCardExpanded: Boolean,
     onSupportExpandedChange: (Boolean) -> Unit,
-    isFollowCardExpanded: Boolean,
-    onFollowExpandedChange: (Boolean) -> Unit,
     onNavigateToInstall: () -> Unit,
+    onNavigateToAbout: () -> Unit,
     cardActionEnter: EnterTransition,
     cardActionExit: ExitTransition,
 ) {
@@ -76,8 +75,7 @@ internal fun LazyListScope.weavskHomeContent(
 
     item {
         FollowCard(
-            expanded = isFollowCardExpanded,
-            onExpandedChange = onFollowExpandedChange,
+            onAboutClick = onNavigateToAbout,
             onLinkPressed = { link ->
                 viewModel.onLinkPressed(link)
             }
