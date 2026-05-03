@@ -11,6 +11,7 @@ lsparanoid {
 
 android {
     namespace = "io.github.seyud.weave"
+    enableKotlin = false
 
     val canary = !Config.version.contains(".")
     val base = "https://github.com/Seyud/WeaveMask/releases/download/"
@@ -30,7 +31,6 @@ android {
             if (canary) buildConfigField("String", "APK_URL", "\"${canaryUrl}app-release.apk\"")
             proguardFiles("proguard-rules.pro")
             isMinifyEnabled = true
-            isShrinkResources = false
         }
         debug {
             if (canary) buildConfigField("String", "APK_URL", "\"${canaryUrl}app-debug.apk\"")
