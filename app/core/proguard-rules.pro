@@ -28,6 +28,9 @@
   public void d(**);
 }
 
+# Wire protobuf
+-keep class com.squareup.wire.** { *; }
+
 # With R8 full mode generic signatures are stripped for classes that are not
 # kept. Suspend functions are wrapped in continuations where the type argument
 # is used.

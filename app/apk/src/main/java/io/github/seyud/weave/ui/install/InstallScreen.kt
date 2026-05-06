@@ -5,6 +5,11 @@ import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -43,6 +48,7 @@ import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
@@ -59,7 +65,8 @@ import java.io.IOException
 enum class InstallMethod {
     PATCH,
     DIRECT,
-    INACTIVE_SLOT
+    INACTIVE_SLOT,
+    DOWNLOAD
 }
 
 /**
@@ -96,6 +103,7 @@ fun InstallScreen(
                 InstallViewModel.METHOD_PATCH -> InstallMethod.PATCH
                 InstallViewModel.METHOD_DIRECT -> InstallMethod.DIRECT
                 InstallViewModel.METHOD_INACTIVE_SLOT -> InstallMethod.INACTIVE_SLOT
+                InstallViewModel.METHOD_DOWNLOAD -> InstallMethod.DOWNLOAD
                 else -> null
             }
         )
@@ -227,12 +235,15 @@ fun InstallScreen(
                     isRooted = isRooted,
                     noSecondSlot = noSecondSlot,
                     dataUri = dataUri,
+                    downloadUrl = viewModel.downloadUrl,
+                    onDownloadUrlChange = { viewModel.downloadUrl = it },
                     onMethodChange = { newMethod ->
                         selectedMethod = newMethod
                         viewModel.method = when (newMethod) {
                             InstallMethod.PATCH -> InstallViewModel.METHOD_PATCH
                             InstallMethod.DIRECT -> InstallViewModel.METHOD_DIRECT
                             InstallMethod.INACTIVE_SLOT -> InstallViewModel.METHOD_INACTIVE_SLOT
+                            InstallMethod.DOWNLOAD -> InstallViewModel.METHOD_DOWNLOAD
                             null -> -1
                         }
                         // 如果选择了修补文件方法，立即触发文件选择器
@@ -402,13 +413,18 @@ private fun MethodCard(
     isRooted: Boolean,
     noSecondSlot: Boolean,
     dataUri: Uri?,
+    downloadUrl: String,
+    onDownloadUrlChange: (String) -> Unit,
     onMethodChange: (InstallMethod?) -> Unit,
     onInstallClick: () -> Unit
 ) {
     val context = LocalContext.current
 
     val isMethodPatch = selectedMethod == InstallMethod.PATCH
-    val isMethodSelected = if (isMethodPatch) dataUri != null else selectedMethod != null
+    val isMethodDownload = selectedMethod == InstallMethod.DOWNLOAD
+    val isMethodSelected = if (isMethodPatch) dataUri != null
+                           else if (isMethodDownload) downloadUrl.startsWith("https://")
+                           else selectedMethod != null
     val startContentColor = if (isMethodSelected) {
         MiuixTheme.colorScheme.onPrimary
     } else {
@@ -485,6 +501,44 @@ private fun MethodCard(
                         Text(
                             text = context.getString(CoreR.string.select_patch_file),
                             style = MiuixTheme.textStyles.body1
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = { onMethodChange(InstallMethod.DOWNLOAD) }
+                            )
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            state = if (selectedMethod == InstallMethod.DOWNLOAD) ToggleableState.On else ToggleableState.Off,
+                            onClick = { onMethodChange(InstallMethod.DOWNLOAD) }
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = context.getString(CoreR.string.download_patch_file),
+                            style = MiuixTheme.textStyles.body1
+                        )
+                    }
+
+                    AnimatedVisibility(
+                        visible = isMethodDownload,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        TextField(
+                            value = downloadUrl,
+                            onValueChange = onDownloadUrlChange,
+                            modifier = Modifier.fillMaxWidth(),
+                            label = context.getString(CoreR.string.download_dialog_msg),
+                            useLabelAsPlaceholder = true,
+                            singleLine = true
                         )
                     }
 

@@ -147,6 +147,16 @@ class FlashViewModel : BaseViewModel() {
                             MagiskInstaller.Patch(uri, outItems, logItems).exec()
                         }
                     }
+                    Const.Value.DOWNLOAD -> {
+                        val url = uris.singleOrNull()?.toString()
+                        if (url.isNullOrEmpty()) {
+                            console.add("Error: No URL provided")
+                            false
+                        } else {
+                            showReboot = false
+                            MagiskInstaller.Download(url, outItems, logItems).exec()
+                        }
+                    }
                     else -> {
                         console.add("Error: Unknown action: $action")
                         false

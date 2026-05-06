@@ -147,7 +147,7 @@ internal fun ModuleItem(
 
         if (module.showNotice) {
             Text(
-                text = module.noticeText.getText(context.resources).toString(),
+                text = module.noticeText.getText(context.resources),
                 fontSize = 14.sp,
                 modifier = Modifier.padding(top = 8.dp),
                 color = MiuixTheme.colorScheme.error,

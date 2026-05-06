@@ -83,7 +83,7 @@ class SnackbarEvent(
     ) : this(msg.asText(), duration)
 
     fun resolveMessage(activity: AppCompatActivity): String =
-        msg.getText(activity.resources).toString()
+        msg.getText(activity.resources)
 
     fun resolveDuration(): SnackbarDuration = duration
 

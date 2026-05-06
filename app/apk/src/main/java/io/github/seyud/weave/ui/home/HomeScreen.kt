@@ -160,7 +160,7 @@ fun HomeScreen(
                 if (isWeavskHome) {
                     weavskHomeContent(
                         viewModel = viewModel,
-                        magiskInstalledVersion = viewModel.magiskInstalledVersion.getText(context.resources).toString(),
+                        magiskInstalledVersion = viewModel.magiskInstalledVersion.getText(context.resources),
                         isMagiskCardExpanded = isMagiskCardExpanded,
                         onMagiskExpandedChange = { isMagiskCardExpanded = it },
                         isSupportCardExpanded = isSupportCardExpanded,
@@ -173,8 +173,8 @@ fun HomeScreen(
                 } else {
                     classicHomeContent(
                         viewModel = viewModel,
-                        magiskInstalledVersion = viewModel.magiskInstalledVersion.getText(context.resources).toString(),
-                        managerRemoteVersion = viewModel.managerRemoteVersion.getText(context.resources).toString(),
+                        magiskInstalledVersion = viewModel.magiskInstalledVersion.getText(context.resources),
+                        managerRemoteVersion = viewModel.managerRemoteVersion.getText(context.resources),
                         isMagiskCardExpanded = isMagiskCardExpanded,
                         onMagiskExpandedChange = { isMagiskCardExpanded = it },
                         isManagerCardExpanded = isManagerCardExpanded,

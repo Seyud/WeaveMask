@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 import io.github.seyud.weave.core.Const
 import io.github.seyud.weave.ui.MainActivity
 import io.github.seyud.weave.ui.navigation3.Route
@@ -47,6 +48,11 @@ data class FlashRequest(
         fun patch(uri: Uri) = FlashRequest(
             action = Const.Value.PATCH_FILE,
             dataUris = listOf(uri),
+        )
+
+        fun download(url: String) = FlashRequest(
+            action = Const.Value.DOWNLOAD,
+            dataUris = listOf(url.toUri()),
         )
 
         fun uninstall() = FlashRequest(action = Const.Value.UNINSTALL)

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.os.Parcelable
 import android.text.Spanned
 import android.text.SpannedString
+import androidx.core.net.toUri
 import androidx.core.os.BundleCompat
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -41,6 +42,7 @@ class InstallViewModel(svc: NetworkService, markwon: Markwon) : BaseViewModel() 
         const val METHOD_PATCH = 1
         const val METHOD_DIRECT = 2
         const val METHOD_INACTIVE_SLOT = 3
+        const val METHOD_DOWNLOAD = 4
     }
 
     val isRooted get() = Info.isRooted
@@ -74,6 +76,17 @@ class InstallViewModel(svc: NetworkService, markwon: Markwon) : BaseViewModel() 
 
     fun setPatchFile(localUri: Uri) {
         uri.value = localUri
+    }
+
+    var downloadUrl by mutableStateOf("")
+        internal set
+
+    private fun isValidUrl(url: String): Boolean {
+        if (url.isEmpty()) return false
+        val uri = url.toUri()
+        return uri.scheme.equals("https", ignoreCase = true) &&
+            !uri.host.isNullOrEmpty() &&
+            !uri.path.isNullOrEmpty()
     }
 
     var notes by mutableStateOf<Spanned>(SpannedString(""))
@@ -121,6 +134,14 @@ class InstallViewModel(svc: NetworkService, markwon: Markwon) : BaseViewModel() 
             METHOD_INACTIVE_SLOT -> ComposeFlashRequest(
                 request = FlashRequest.flash(isSecondSlot = true),
             )
+
+            METHOD_DOWNLOAD -> {
+                if (isValidUrl(downloadUrl)) {
+                    ComposeFlashRequest(
+                        request = FlashRequest.download(downloadUrl),
+                    )
+                } else null
+            }
 
             else -> null
         }
