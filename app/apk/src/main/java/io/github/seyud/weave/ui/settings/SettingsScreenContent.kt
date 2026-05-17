@@ -37,6 +37,7 @@ internal fun SettingsScreenContent(
     contentBottomPadding: Dp,
     nestedScrollConnection: NestedScrollConnection,
     onNavigateToAppLanguage: () -> Unit,
+    onNavigateToColorPalette: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -71,6 +72,7 @@ internal fun SettingsScreenContent(
             viewModel = viewModel,
             visibility = visibility,
             onNavigateToAppLanguage = onNavigateToAppLanguage,
+            onNavigateToColorPalette = onNavigateToColorPalette,
             onAddShortcut = viewModel::addShortcut,
         )
         AppSettingsSection(

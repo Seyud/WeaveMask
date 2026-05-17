@@ -36,6 +36,7 @@ fun SettingsScreen(
     onNavigateToAppLanguage: () -> Unit,
     onNavigateToDenyListConfig: () -> Unit,
     onSuperuserModeChanged: () -> Unit,
+    onNavigateToColorPalette: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -88,6 +89,7 @@ fun SettingsScreen(
                 contentBottomPadding = contentBottomPadding,
                 nestedScrollConnection = scrollBehavior.nestedScrollConnection,
                 onNavigateToAppLanguage = onNavigateToAppLanguage,
+                onNavigateToColorPalette = onNavigateToColorPalette,
             )
         }
     }

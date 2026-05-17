@@ -53,6 +53,11 @@ sealed interface Route : NavKey, Parcelable {
     @Serializable
     data object Deny : Route
 
+    /** 主题设置页面 */
+    @Parcelize
+    @Serializable
+    data object ColorPalette : Route
+
     /** 关于页面 */
     @Parcelize
     @Serializable

@@ -114,6 +114,7 @@ import io.github.seyud.weave.ui.settings.SettingsScreen
 import io.github.seyud.weave.ui.settings.SettingsViewModel
 import io.github.seyud.weave.ui.superuser.SuperuserScreen
 import io.github.seyud.weave.ui.superuser.SuperuserViewModel
+import io.github.seyud.weave.ui.colorpalette.ColorPaletteScreen
 import io.github.seyud.weave.ui.deny.DenyListScreen
 import io.github.seyud.weave.ui.util.rememberContentReady
 import top.yukonga.miuix.kmp.basic.Icon
@@ -379,6 +380,11 @@ fun MainScreen(
                         }
                         entry<Route.AppLanguage> {
                             AppLanguageScreen(
+                                onNavigateBack = { navigator.pop() }
+                            )
+                        }
+                        entry<Route.ColorPalette> {
+                            ColorPaletteScreen(
                                 onNavigateBack = { navigator.pop() }
                             )
                         }
@@ -727,6 +733,9 @@ private fun MainTabScreen(
                         onSuperuserModeChanged = {
                             moduleViewModel.refresh()
                         },
+                        onNavigateToColorPalette = {
+                            navigator.push(Route.ColorPalette)
+                        }
                     )
                 }
             }
