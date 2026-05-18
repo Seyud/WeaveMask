@@ -1,8 +1,6 @@
 package io.github.seyud.weave.ui.home
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -26,10 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -108,7 +103,7 @@ internal fun NoticeCard(
 
 @Composable
 internal fun InlineCardActionButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     text: String,
     accentColor: Color,
     onPressed: () -> Unit,
@@ -287,20 +282,23 @@ internal fun UninstallButton(
 }
 
 @Composable
-internal fun ZygiskCard(
-    isEnabled: Boolean,
+internal fun StatusIndicatorCard(
+    icon: ImageVector,
+    label: String,
+    statusText: String,
+    isPositive: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val statusColor = if (isEnabled) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurfaceContainer
-    val cardModifier = modifier
-        .pressable(
+    val statusColor = if (isPositive) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurfaceContainer
+
+    Card(
+        modifier = modifier.pressable(
             interactionSource = null,
             indication = TiltFeedback(),
             delay = null
-        )
-
-    Card(modifier = cardModifier, pressFeedbackType = PressFeedbackType.None) {
+        ),
+        pressFeedbackType = PressFeedbackType.None
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -309,22 +307,20 @@ internal fun ZygiskCard(
             horizontalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = MiuixIcons.Pin,
+                imageVector = icon,
                 contentDescription = null,
                 tint = statusColor,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = context.getString(CoreR.string.zygisk),
+                text = label,
                 style = MiuixTheme.textStyles.body2,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = context.getString(
-                    if (isEnabled) CoreR.string.home_status_enabled else CoreR.string.home_status_disabled
-                ),
+                text = statusText,
                 style = MiuixTheme.textStyles.body2,
                 color = statusColor,
                 fontWeight = FontWeight.Medium
@@ -334,50 +330,37 @@ internal fun ZygiskCard(
 }
 
 @Composable
+internal fun ZygiskCard(
+    isEnabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    StatusIndicatorCard(
+        icon = MiuixIcons.Pin,
+        label = context.getString(CoreR.string.zygisk),
+        statusText = context.getString(
+            if (isEnabled) CoreR.string.home_status_enabled else CoreR.string.home_status_disabled
+        ),
+        isPositive = isEnabled,
+        modifier = modifier
+    )
+}
+
+@Composable
 internal fun RamdiskCard(
     isAvailable: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val statusColor = if (isAvailable) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.onSurfaceContainer
-    val cardModifier = modifier
-        .pressable(
-            interactionSource = null,
-            indication = TiltFeedback(),
-            delay = null
-        )
-
-    Card(modifier = cardModifier, pressFeedbackType = PressFeedbackType.None) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = MiuixIcons.Backup,
-                contentDescription = null,
-                tint = statusColor,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Ramdisk",
-                style = MiuixTheme.textStyles.body2,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = context.getString(
-                    if (isAvailable) CoreR.string.home_status_supported else CoreR.string.home_status_unsupported
-                ),
-                style = MiuixTheme.textStyles.body2,
-                color = statusColor,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
+    StatusIndicatorCard(
+        icon = MiuixIcons.Backup,
+        label = "Ramdisk",
+        statusText = context.getString(
+            if (isAvailable) CoreR.string.home_status_supported else CoreR.string.home_status_unsupported
+        ),
+        isPositive = isAvailable,
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -569,5 +552,74 @@ private fun HomeItemRow(
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.End
         )
+    }
+}
+
+@Composable
+internal fun WeaveCardIcon(
+    isMonetTheme: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    if (!isMonetTheme) {
+        Image(
+            painter = painterResource(id = CoreR.drawable.ic_weave_card),
+            contentDescription = null,
+            modifier = modifier
+        )
+        return
+    }
+
+    Box(modifier = modifier) {
+        Image(
+            painter = painterResource(id = CoreR.drawable.ic_weave_card),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(MiuixTheme.colorScheme.primary),
+            modifier = Modifier.fillMaxSize()
+        )
+        Image(
+            painter = painterResource(id = CoreR.drawable.ic_weave_card_monet_detail),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(lerp(MiuixTheme.colorScheme.primary, Color.White, 0.28f)),
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+internal data class MagiskCardState(
+    val isInteractive: Boolean,
+    val actionText: String,
+    val actionIcon: ImageVector,
+    val chevronRotation: Float,
+) {
+    companion object {
+        @Composable
+        fun remember(
+            magiskState: HomeViewModel.State,
+            expanded: Boolean,
+        ): MagiskCardState {
+            val context = LocalContext.current
+            val isInteractive = magiskState != HomeViewModel.State.LOADING
+            val actionText = if (magiskState == HomeViewModel.State.OUTDATED) {
+                context.getString(CoreR.string.update)
+            } else {
+                context.getString(CoreR.string.install)
+            }
+            val actionIcon = if (magiskState == HomeViewModel.State.OUTDATED) {
+                MiuixIcons.Update
+            } else {
+                MiuixIcons.Download
+            }
+            val chevronRotation by animateFloatAsState(
+                targetValue = if (expanded) 90f else 0f,
+                animationSpec = tween(durationMillis = 260),
+                label = "magiskCardChevronRotation"
+            )
+            return MagiskCardState(
+                isInteractive = isInteractive,
+                actionText = actionText,
+                actionIcon = actionIcon,
+                chevronRotation = chevronRotation
+            )
+        }
     }
 }

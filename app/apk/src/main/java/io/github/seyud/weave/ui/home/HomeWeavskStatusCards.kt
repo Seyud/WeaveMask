@@ -1,9 +1,6 @@
 package io.github.seyud.weave.ui.home
 
 import android.os.Build
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,20 +10,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,8 +33,6 @@ import top.yukonga.miuix.kmp.basic.LinearProgressIndicator
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.ChevronForward
-import top.yukonga.miuix.kmp.icon.extended.Download
-import top.yukonga.miuix.kmp.icon.extended.Update
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import top.yukonga.miuix.kmp.utils.TiltFeedback
@@ -57,9 +46,8 @@ internal fun WeavskMagiskCard(
     onCardClick: () -> Unit,
     onInstallClick: () -> Unit,
 ) {
-    val context = LocalContext.current
     val isMonetTheme = LocalIsMonetTheme.current
-    val isInteractive = magiskState != HomeViewModel.State.LOADING
+    val cardState = MagiskCardState.remember(magiskState, expanded)
     val containerColor = when {
         isMonetTheme -> MiuixTheme.colorScheme.secondaryContainer
         else -> MiuixTheme.colorScheme.tertiaryContainer
@@ -68,21 +56,6 @@ internal fun WeavskMagiskCard(
         isMonetTheme -> MiuixTheme.colorScheme.onSecondaryContainer
         else -> MiuixTheme.colorScheme.onTertiaryContainer
     }
-    val actionText = if (magiskState == HomeViewModel.State.OUTDATED) {
-        context.getString(CoreR.string.update)
-    } else {
-        context.getString(CoreR.string.install)
-    }
-    val actionIcon = if (magiskState == HomeViewModel.State.OUTDATED) {
-        MiuixIcons.Update
-    } else {
-        MiuixIcons.Download
-    }
-    val chevronRotation by animateFloatAsState(
-        targetValue = if (expanded) 90f else 0f,
-        animationSpec = tween(durationMillis = 260),
-        label = "weavskMagiskCardChevronRotation"
-    )
 
     Card(
         modifier = Modifier
@@ -103,8 +76,8 @@ internal fun WeavskMagiskCard(
             color = containerColor,
             contentColor = contentColor
         ),
-        pressFeedbackType = if (isInteractive) PressFeedbackType.Tilt else PressFeedbackType.None,
-        onClick = if (isInteractive) onCardClick else null
+        pressFeedbackType = if (cardState.isInteractive) PressFeedbackType.Tilt else PressFeedbackType.None,
+        onClick = if (cardState.isInteractive) onCardClick else null
     ) {
         Box(
             modifier = Modifier
@@ -116,7 +89,7 @@ internal fun WeavskMagiskCard(
                 modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                WeavskWeaveCardIcon(
+                WeaveCardIcon(
                     isMonetTheme = isMonetTheme,
                     modifier = Modifier.size(56.dp)
                 )
@@ -154,12 +127,12 @@ internal fun WeavskMagiskCard(
                             horizontalArrangement = Arrangement.End
                         ) {
                             InlineCardActionButton(
-                                icon = actionIcon,
-                                text = actionText,
+                                icon = cardState.actionIcon,
+                                text = cardState.actionText,
                                 accentColor = contentColor,
                                 onPressed = onInstallClick
                             )
-                            if (isInteractive) {
+                            if (cardState.isInteractive) {
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Icon(
                                     imageVector = MiuixIcons.ChevronForward,
@@ -168,7 +141,7 @@ internal fun WeavskMagiskCard(
                                     modifier = Modifier
                                         .size(16.dp)
                                         .graphicsLayer {
-                                            rotationZ = chevronRotation
+                                            rotationZ = cardState.chevronRotation
                                         }
                                 )
                             }
@@ -254,36 +227,6 @@ internal fun WeavskStatusCard(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun WeavskWeaveCardIcon(
-    isMonetTheme: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    if (!isMonetTheme) {
-        Image(
-            painter = painterResource(id = CoreR.drawable.ic_weave_card),
-            contentDescription = null,
-            modifier = modifier
-        )
-        return
-    }
-
-    Box(modifier = modifier) {
-        Image(
-            painter = painterResource(id = CoreR.drawable.ic_weave_card),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(MiuixTheme.colorScheme.primary),
-            modifier = Modifier.fillMaxSize()
-        )
-        Image(
-            painter = painterResource(id = CoreR.drawable.ic_weave_card_monet_detail),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(lerp(MiuixTheme.colorScheme.primary, Color.White, 0.28f)),
-            modifier = Modifier.fillMaxSize()
-        )
     }
 }
 
