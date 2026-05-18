@@ -94,13 +94,23 @@ def ensure_cargo():
         os.environ["PATH"] = (
             f"{paths().rust_sysroot / "bin"}{os.pathsep}{os.environ["PATH"]}"
         )
-        # Cargo calls executables in $RUSTROOT/lib/rustlib/$TRIPLE/bin, we need
-        # to make sure the runtime linker also search $RUSTROOT/lib for libraries.
-        # This is only required on Unix, as Windows search dlls from PATH.
-        if os_name == "darwin":
-            os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = str(paths().rust_sysroot / "lib")
-        elif os_name == "linux":
-            os.environ["LD_LIBRARY_PATH"] = str(paths().rust_sysroot / "lib")
+
+    # On Windows, the rustup proxy launches ONDK cargo.exe from a different
+    # working directory, causing DLLs like libLLVM-21.dll and libc++.dll in
+    # the ONDK bin directory to not be found. Always add the ONDK bin to PATH
+    # so the runtime linker can locate these DLLs.
+    if is_windows:
+        os.environ["PATH"] = (
+            f"{paths().rust_sysroot / "bin"}{os.pathsep}{os.environ["PATH"]}"
+        )
+
+    # Cargo calls executables in $RUSTROOT/lib/rustlib/$TRIPLE/bin, we need
+    # to make sure the runtime linker also search $RUSTROOT/lib for libraries.
+    # This is only required on Unix, as Windows search dlls from PATH.
+    if os_name == "darwin":
+        os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = str(paths().rust_sysroot / "lib")
+    elif os_name == "linux":
+        os.environ["LD_LIBRARY_PATH"] = str(paths().rust_sysroot / "lib")
 
 
 @run_once
