@@ -30,7 +30,8 @@ android {
         release {
             if (canary) buildConfigField("String", "APK_URL", "\"${canaryUrl}app-release.apk\"")
             proguardFiles("proguard-rules.pro")
-            isMinifyEnabled = true
+            optimization.enable = true
+            isShrinkResources = false
         }
         debug {
             if (canary) buildConfigField("String", "APK_URL", "\"${canaryUrl}app-debug.apk\"")
