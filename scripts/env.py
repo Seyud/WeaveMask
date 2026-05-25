@@ -92,7 +92,7 @@ def ensure_cargo():
         os.environ["RUSTUP_TOOLCHAIN"] = str(paths().rust_sysroot)
     else:
         os.environ["PATH"] = (
-            f"{paths().rust_sysroot / "bin"}{os.pathsep}{os.environ["PATH"]}"
+            f"{paths().rust_sysroot / 'bin'}{os.pathsep}{os.environ['PATH']}"
         )
 
     # On Windows, the rustup proxy launches ONDK cargo.exe from a different
@@ -101,7 +101,7 @@ def ensure_cargo():
     # so the runtime linker can locate these DLLs.
     if is_windows:
         os.environ["PATH"] = (
-            f"{paths().rust_sysroot / "bin"}{os.pathsep}{os.environ["PATH"]}"
+            f"{paths().rust_sysroot / 'bin'}{os.pathsep}{os.environ['PATH']}"
         )
 
     # Cargo calls executables in $RUSTROOT/lib/rustlib/$TRIPLE/bin, we need
