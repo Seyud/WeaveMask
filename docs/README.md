@@ -2,7 +2,7 @@
 
 - [Installation Instructions](install.md)
 - [Frequently Asked Questions](faq.md)
-- [Magisk Changelog](changes.md)
+- [WeaveMask Changelog](changes.md)
 
 The following sections are for developers
 

@@ -1,4 +1,37 @@
-# Magisk Changelog
+# WeaveMask Changelog
+
+### v30.7.5 (2026.5.25)
+
+- [App] Complete UI rewrite from Views/XML/Fragments to Jetpack Compose with Miuix component library
+- [App] Migrate navigation system from Fragment Navigation Component to Navigation3 with custom type-safe `Navigator`
+- [App] Introduce 6 theme color modes (System, Light, Dark, Monet System, Monet Light, Monet Dark) with 16 key color presets
+- [App] Add dual home screen layouts switchable between Classic and Weavsk modes
+- [App] Redesign About page with dynamic shader background, parallax scroll animation, and Miuix blur blend effects
+- [App] Add Liquid Glass visual effects with blur backdrop, inner shadow, and vibrancy compositing
+- [App] Add floating bottom bar with Liquid Glass blur toggle
+- [App] Add page scale slider (80%–110%) for display size customization
+- [App] Add dedicated app language picker screen
+- [App] Add app icon switcher with Current, Legacy Weave, and Legacy Mask variants
+- [App] Add predictive back gesture toggle for Android 14+
+- [App] Integrate WebUI theme injection — module WebUIs now follow the app's Monet color scheme via CSS custom properties
+- [Superuser] Add whitelist/blacklist mode system, syncing with Zygisk Next's whitelist mode
+- [Superuser] Add smart mode toggle as master switch for superuser list mode
+- [Superuser] Auto-sync newly installed apps to DenyList in whitelist mode
+- [Superuser] Add DenyList snapshot/restore when switching between whitelist and blacklist modes
+- [Superuser] Add policy backup/restore with FBE device persistence support
+- [Superuser] Show all installed apps in superuser list with icon action menu in whitelist mode
+- [Modules] Add module repository browser compatible with KernelSU module repo format
+- [Modules] Add home screen shortcuts for module actions and module WebUI with custom icon support
+- [Modules] Support batch local module installation (multiple ZIPs at once)
+- [Modules] Add per-module action screen accessible from module list
+- [Install] Add download-and-patch method for boot image patching
+- [Install] Support opening `.zip` files from external apps via intent filter
+- [General] Rebrand to WeaveMask with custom package name `io.github.seyud.weave`
+- [General] Add Telegram and QQ community links
+- [Build] Migrate `buildSrc` to `build-logic` composite build
+- [Build] Extract stub resources to separate `stub-res` module
+- [Build] Migrate to R8 gradual support DSL
+- [Build] Replace KAPT with Kotlin Serialization and Compose compiler plugins
 
 ### v30.7 (2026.2.23)
 

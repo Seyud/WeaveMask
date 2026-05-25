@@ -3,7 +3,7 @@
 # Removing or leaving them blank will keep default values
 ##########################################################
 
-# The version name of Magisk. Default: git HEAD short SHA1
+# The version name of WeaveMask. Default: git HEAD short SHA1
 version=string
 
 # Output path. Default: out

@@ -39,17 +39,17 @@ disable_version_config() {
 # $1 = ver
 set_version() {
   local ver=$1
-  local code=$(echo - | awk "{ print $ver * 1000 }")
+  local code=$(echo $ver | awk -F. '{ printf "%d\n", ($1 + $2/10 + ($3 ? $3/100 : 0)) * 1000 }')
   local tag="v$ver"
 
   sed -i "s:versionCode=.*:versionCode=${code}:g" $GCONFIG
   sed -i "s:version=.*:version=${ver}:g" $CONFIG
-  sed -i "1s:.*:## $(date +'%Y.%-m.%-d') Magisk v$ver:" $NOTES
+  sed -i "1s:.*:## $(date +'%Y.%-m.%-d') WeaveMask v$ver:" $NOTES
 
   # Commit version code changes
   git add -u .
   git status
-  git commit -m "Release Magisk v$ver" -m "[skip ci]"
+  git commit -m "Release WeaveMask v$ver" -m "[skip ci]"
 }
 
 # $1 = ver
@@ -67,9 +67,9 @@ upload() {
   gh auth status
 
   local code=$(grep_prop magisk.versionCode $GCONFIG)
-  local ver=$(echo - | awk "{ print $code / 1000 }")
+  local ver=$(awk "BEGIN{ c=$code*10; printf \"%d.%d.%d\", c/10000, c/1000%10, c/100%10 }")
   local tag="v$ver"
-  local title="Magisk v$ver"
+  local title="WeaveMask v$ver"
 
   local out=$(grep_prop outdir $CONFIG)
   if [ -z $out ]; then
@@ -84,7 +84,7 @@ upload() {
   tail -n +3 $NOTES > release.md
 
   # Publish release
-  local release_apk="Magisk-v${ver}.apk"
+  local release_apk="WeaveMask-v${ver}.apk"
   cp $out/app-release.apk $release_apk
   gh release create --verify-tag $tag -p -t "$title" -F release.md $release_apk $out/app-debug.apk $NOTES
 
