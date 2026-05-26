@@ -62,6 +62,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.blur.Backdrop
+import top.yukonga.miuix.kmp.blur.isRuntimeShaderSupported
 import top.yukonga.miuix.kmp.blur.blur
 import top.yukonga.miuix.kmp.blur.drawBackdrop
 import top.yukonga.miuix.kmp.blur.highlight.BloomStroke
@@ -186,7 +187,8 @@ fun FloatingBottomBar(
     val accentColor = MiuixTheme.colorScheme.primary
     val surfaceContainer = MiuixTheme.colorScheme.surfaceContainer
     val effectsEnabled = isBackdropBlurEnabled || isLiquidGlassEnabled
-    val containerColor = if (isBackdropBlurEnabled) {
+    val effectsRenderable = effectsEnabled && isRuntimeShaderSupported()
+    val containerColor = if (effectsRenderable) {
         surfaceContainer.copy(0.4f)
     } else {
         surfaceContainer
@@ -276,17 +278,21 @@ fun FloatingBottomBar(
         }
     }
 
-    val interactiveHighlight = remember(animationScope, tabWidthPx) {
-        InteractiveHighlight(
-            animationScope = animationScope,
-            position = { size, _ ->
-                Offset(
-                    if (isLtr) (dampedDragAnimation.value + 0.5f) * tabWidthPx + panelOffset
-                    else size.width - (dampedDragAnimation.value + 0.5f) * tabWidthPx + panelOffset,
-                    size.height / 2f
-                )
-            }
-        )
+    val interactiveHighlight = if (isLiquidGlassEnabled) {
+        remember(animationScope, tabWidthPx) {
+            InteractiveHighlight(
+                animationScope = animationScope,
+                position = { size, _ ->
+                    Offset(
+                        if (isLtr) (dampedDragAnimation.value + 0.5f) * tabWidthPx + panelOffset
+                        else size.width - (dampedDragAnimation.value + 0.5f) * tabWidthPx + panelOffset,
+                        size.height / 2f
+                    )
+                }
+            )
+        }
+    } else {
+        null
     }
 
     val baseHighlight = rememberGravityRotatedHighlight(iosIndicatorSpecular, extraDegrees = -45f)
@@ -319,7 +325,7 @@ fun FloatingBottomBar(
                     onClick = {}
                 )
                 .then(
-                    if (effectsEnabled) {
+                    if (effectsRenderable) {
                         Modifier.drawBackdrop(
                             backdrop = backdrop,
                             shape = { pillShape },
@@ -354,7 +360,7 @@ fun FloatingBottomBar(
                         Modifier.background(containerColor, pillShape)
                     }
                 )
-                .then(if (isLiquidGlassEnabled) interactiveHighlight.modifier else Modifier)
+                .then(interactiveHighlight?.modifier ?: Modifier)
                 .height(64.dp)
                 .padding(4.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -386,7 +392,7 @@ fun FloatingBottomBar(
                             },
                             onDrawSurface = { drawRect(containerColor) },
                         )
-                        .then(interactiveHighlight.modifier)
+                        .then(interactiveHighlight?.modifier ?: Modifier)
                         .height(56.dp)
                         .padding(horizontal = 4.dp)
                         .graphicsLayer(colorFilter = ColorFilter.tint(accentColor)),
@@ -406,7 +412,7 @@ fun FloatingBottomBar(
                             val progressOffset = dampedDragAnimation.value * tabWidthPx
                             translationX = if (isLtr) progressOffset + panelOffset else -progressOffset + panelOffset
                         }
-                        .then(if (isLiquidGlassEnabled) interactiveHighlight.gestureModifier else Modifier)
+                        .then(interactiveHighlight?.gestureModifier ?: Modifier)
                         .then(dampedDragAnimation.modifier)
                         .drawBackdrop(
                             backdrop = combinedBackdrop,

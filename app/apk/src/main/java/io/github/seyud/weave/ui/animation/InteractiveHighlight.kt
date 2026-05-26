@@ -41,20 +41,21 @@ class InteractiveHighlight(
     val offset: Offset get() = positionAnimation.value - startPosition
 
     @Language("AGSL")
-    private val shader =
+    private val shader = lazy {
         RuntimeShader(
             """
     uniform float2 size;
     layout(color) uniform half4 color;
     uniform float radius;
     uniform float2 position;
-    
+
     half4 main(float2 coord) {
         float dist = distance(coord, position);
         float intensity = smoothstep(radius, radius * 0.5, dist);
         return color * intensity;
     }"""
         )
+    }
 
     val modifier: Modifier =
         Modifier.drawWithContent {
@@ -64,7 +65,7 @@ class InteractiveHighlight(
                     Color.White.copy(0.06f * progress),
                     blendMode = BlendMode.Plus
                 )
-                shader.apply {
+                shader.value.apply {
                     val position = position(size, positionAnimation.value)
                     setFloatUniform("size", size.width, size.height)
                     setColorUniform("color", Color.White.copy(0.12f * progress).toArgb())
@@ -76,7 +77,7 @@ class InteractiveHighlight(
                     )
                 }
                 drawRect(
-                    ShaderBrush(shader),
+                    ShaderBrush(shader.value),
                     blendMode = BlendMode.Plus
                 )
             }
