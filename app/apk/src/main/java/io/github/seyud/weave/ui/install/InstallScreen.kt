@@ -39,9 +39,7 @@ import io.github.seyud.weave.core.Info
 import io.github.seyud.weave.core.R as CoreR
 import io.github.seyud.weave.ui.component.MarkdownText
 import io.github.seyud.weave.ui.component.MiuixTextInputDialog
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
@@ -57,8 +55,6 @@ import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.extended.ChevronForward
 import top.yukonga.miuix.kmp.icon.extended.Ok
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import java.io.File
-import java.io.IOException
 
 /**
  * 安装方法枚举
@@ -121,66 +117,34 @@ fun InstallScreen(
 
     // 观察 viewModel.data (uri) 的变化
     var dataUri by remember { mutableStateOf(viewModel.data.value) }
+    var deferredPatch by remember { mutableStateOf(viewModel.pendingPatch.value) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(viewModel) {
-        val observer = Observer<Uri?> {
-            dataUri = it
-        }
-        viewModel.data.observe(lifecycleOwner, observer)
+        val uriObserver = Observer<Uri?> { dataUri = it }
+        val patchObserver = Observer<Pair<Uri, String>?> { deferredPatch = it }
+        viewModel.data.observe(lifecycleOwner, uriObserver)
+        viewModel.pendingPatch.observe(lifecycleOwner, patchObserver)
         onDispose {
-            viewModel.data.removeObserver(observer)
+            viewModel.data.removeObserver(uriObserver)
+            viewModel.pendingPatch.removeObserver(patchObserver)
         }
     }
 
-    // 文件选择器 - 使用 OpenDocument 并立即复制到缓存
+    // 文件选择器 - 选择后立即记录 URI，延迟复制到点击"开始"时
     val patchFilePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri?.let {
-            scope.launch {
-                val result = runCatching {
-                    withContext(Dispatchers.IO) {
-                        // 获取原始文件名
-                        val originalName = context.contentResolver.query(
-                            it, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null
-                        )?.use { cursor ->
-                            if (cursor.moveToFirst()) {
-                                cursor.getString(
-                                    cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
-                                )
-                            } else null
-                        } ?: "boot.img"
-
-                        // 创建缓存目录
-                        val cacheDir = File(context.cacheDir, "patch_boot").apply {
-                            deleteRecursively()
-                            mkdirs()
-                        }
-
-                        // 复制文件到缓存
-                        val target = File(cacheDir, originalName)
-                        val input = context.contentResolver.openInputStream(it)
-                            ?: throw IOException("Cannot read selected file")
-                        input.use { source ->
-                            target.outputStream().use { sink ->
-                                source.copyTo(sink)
-                            }
-                        }
-                        target.toUri()
-                    }
-                }
-                result
-                    .onSuccess { localUri ->
-                        viewModel.setPatchFile(localUri)
-                    }
-                    .onFailure { error ->
-                        Toast.makeText(
-                            context,
-                            error.message ?: context.getString(CoreR.string.failure),
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-            }
+            val fileName = context.contentResolver.query(
+                it, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    cursor.getString(
+                        cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
+                    )
+                } else null
+            } ?: "boot.img"
+            viewModel.setDeferredPatch(it, fileName)
         }
     }
 
@@ -269,6 +233,7 @@ fun InstallScreen(
                     isRooted = isRooted,
                     noSecondSlot = noSecondSlot,
                     dataUri = dataUri,
+                    deferredPatch = deferredPatch,
                     downloadUrl = viewModel.downloadUrl,
                     isDownloadUrlValid = isValidDownloadUrl(viewModel.downloadUrl),
                     onRequestDownloadUrl = openDownloadDialog,
@@ -290,8 +255,21 @@ fun InstallScreen(
                         }
                     },
                     onInstallClick = {
-                        viewModel.composeFlashRequest()?.let {
-                            onNavigateToFlash(it.request.action, it.request.dataUri)
+                        scope.launch {
+                            if (deferredPatch != null && dataUri == null) {
+                                runCatching { viewModel.copyDeferredPatch(context) }
+                                    .onFailure { error ->
+                                        Toast.makeText(
+                                            context,
+                                            error.message ?: context.getString(CoreR.string.failure),
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        return@launch
+                                    }
+                            }
+                            viewModel.composeFlashRequest()?.let {
+                                onNavigateToFlash(it.request.action, it.request.dataUri)
+                            }
                         }
                     }
                 )
@@ -451,6 +429,7 @@ private fun MethodCard(
     isRooted: Boolean,
     noSecondSlot: Boolean,
     dataUri: Uri?,
+    deferredPatch: Pair<Uri, String>?,
     downloadUrl: String,
     isDownloadUrlValid: Boolean,
     onRequestDownloadUrl: () -> Unit,
@@ -461,7 +440,7 @@ private fun MethodCard(
 
     val isMethodPatch = selectedMethod == InstallMethod.PATCH
     val isMethodDownload = selectedMethod == InstallMethod.DOWNLOAD
-    val isMethodSelected = if (isMethodPatch) dataUri != null
+    val isMethodSelected = if (isMethodPatch) (dataUri != null || deferredPatch != null)
                            else if (isMethodDownload) isDownloadUrlValid
                            else selectedMethod != null
     val startContentColor = if (isMethodSelected) {

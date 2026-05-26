@@ -1,5 +1,6 @@
 package io.github.seyud.weave.ui.install
 
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
@@ -37,7 +38,8 @@ class InstallViewModel(svc: NetworkService, markwon: Markwon) : BaseViewModel() 
     companion object {
         private const val INSTALL_STATE_KEY = "install_state"
         private val uri = MutableLiveData<Uri?>()
-        
+        private val deferredPatch = MutableLiveData<Pair<Uri, String>?>()
+
         // 方法ID常量（替代已删除的R.id引用）
         const val METHOD_PATCH = 1
         const val METHOD_DIRECT = 2
@@ -73,8 +75,36 @@ class InstallViewModel(svc: NetworkService, markwon: Markwon) : BaseViewModel() 
     }
 
     val data: LiveData<Uri?> get() = uri
+    val pendingPatch: LiveData<Pair<Uri, String>?> get() = deferredPatch
+
+    fun setDeferredPatch(contentUri: Uri, fileName: String) {
+        deferredPatch.value = Pair(contentUri, fileName)
+    }
+
+    suspend fun copyDeferredPatch(context: Context): Uri {
+        val (contentUri, fileName) = deferredPatch.value
+            ?: throw IllegalStateException("No deferred patch URI")
+        return withContext(Dispatchers.IO) {
+            val cacheDir = File(context.cacheDir, "patch_boot").apply {
+                deleteRecursively()
+                mkdirs()
+            }
+            val target = File(cacheDir, fileName)
+            val input = context.contentResolver.openInputStream(contentUri)
+                ?: throw IOException("Cannot read selected file")
+            input.use { source ->
+                target.outputStream().use { sink ->
+                    source.copyTo(sink)
+                }
+            }
+            target.toUri()
+        }.also { localUri ->
+            setPatchFile(localUri)
+        }
+    }
 
     fun setPatchFile(localUri: Uri) {
+        deferredPatch.value = null
         uri.value = localUri
     }
 
