@@ -65,7 +65,11 @@ data class Release(
 ) {
     val versionCode: Int get() {
         return if (tag[0] == 'v') {
-            (tag.drop(1).toFloat() * 1000).toInt()
+            val parts = tag.drop(1).split('.')
+            val major = parts.getOrElse(0) { "0" }.toInt()
+            val minor = parts.getOrElse(1) { "0" }.toInt()
+            val patch = parts.getOrElse(2) { "0" }.toInt()
+            ((major + minor / 10.0 + patch / 100.0) * 1000).toInt()
         } else {
             tag.drop(7).toInt()
         }
