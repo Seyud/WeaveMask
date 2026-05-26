@@ -15,7 +15,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -106,7 +106,7 @@ class MainViewModel : BaseViewModel()
  * 使用 Jetpack Compose 构建用户界面
  * 实现 IActivityExtension 接口以支持权限请求等功能
  */
-class MainActivity : AppCompatActivity(), IActivityExtension, ViewModelHolder, WeaveDialogHost {
+class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, WeaveDialogHost {
 
     companion object {
         const val EXTRA_START_MAIN_TAB = "start_main_tab"
@@ -180,13 +180,53 @@ class MainActivity : AppCompatActivity(), IActivityExtension, ViewModelHolder, W
         Config.init(intent.getBundleExtra(Const.Key.PREV_CONFIG))
         val splashThemeRes = resolveSplashThemeRes()
         setTheme(splashThemeRes)
-        val splashScreen = installSplashScreen()
+
+        // On Android 11 (API 30), skip the compat splash screen library because its
+        // backward-compatible LinearLayout adds 66px cutout padding that prevents
+        // edge-to-edge display. On Android 12+, use the native SplashScreen API.
+        val splashScreen = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            installSplashScreen()
+        } else {
+            null
+        }
+
         super.onCreate(savedInstanceState)
         extension.onCreate(savedInstanceState)
 
+        // The core-splashscreen library injects a LinearLayout with fitsSystemWindows="true"
+        // into the DecorView even when installSplashScreen() is not called (via theme attrs).
+        // fitSystemWindows() re-adds padding on every layout pass, so setPadding doesn't help.
+        // Fix: reparent the content FrameLayout directly to DecorView, removing the LinearLayout.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            (window.decorView as? android.view.ViewGroup)?.let { decor ->
+                // Find the splash screen library's LinearLayout
+                var splashLinearLayout: android.widget.LinearLayout? = null
+                for (i in 0 until decor.childCount) {
+                    val child = decor.getChildAt(i)
+                    if (child is android.widget.LinearLayout) {
+                        splashLinearLayout = child
+                        break
+                    }
+                }
+                splashLinearLayout?.let { ll ->
+                    val contentFrame = ll.findViewById<android.view.View>(android.R.id.content)
+                    if (contentFrame != null && contentFrame.parent === ll) {
+                        // Remove content from LinearLayout, reparent to DecorView
+                        ll.removeView(contentFrame)
+                        contentFrame.setPadding(0, 0, 0, 0)
+                        decor.addView(contentFrame, 0)
+                        // Remove the orphaned LinearLayout
+                        decor.removeView(ll)
+                        // Clear any padding the splash screen library set on DecorView
+                        decor.setPadding(0, 0, 0, 0)
+                    }
+                }
+            }
+        }
+
         syncPlatformSplashTheme(splashThemeRes)
         applySystemBarStyle(resolveDarkForSplash())
-        splashScreen.setKeepOnScreenCondition { !appInitialized }
+        splashScreen?.setKeepOnScreenCondition { !appInitialized }
 
         ensureAppInitialized(savedInstanceState)
     }
@@ -460,6 +500,16 @@ class MainActivity : AppCompatActivity(), IActivityExtension, ViewModelHolder, W
                 android.graphics.Color.TRANSPARENT
             ) { darkMode }
         )
+        // Workaround: On API 30, enableEdgeToEdge() only sets SYSTEM_UI_FLAG_LAYOUT_STABLE
+        // and calls setDecorFitsSystemWindows(false). The LAYOUT_FULLSCREEN and
+        // LAYOUT_HIDE_NAVIGATION flags are needed for the splash screen library's
+        // LinearLayout (which has fitsSystemWindows="true") to not add system bar padding.
+        if (Build.VERSION.SDK_INT == Build.VERSION_CODES.R) {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = window.decorView.systemUiVisibility or
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+        }
         val controller = WindowInsetsControllerCompat(window, window.decorView)
         controller.isAppearanceLightStatusBars = !darkMode
         controller.isAppearanceLightNavigationBars = !darkMode

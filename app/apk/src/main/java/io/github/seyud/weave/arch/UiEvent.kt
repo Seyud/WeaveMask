@@ -1,7 +1,7 @@
 package io.github.seyud.weave.arch
 
 import android.content.Context
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 
 /**
  * Class for passing transient UI events from ViewModels to activities.
@@ -14,5 +14,5 @@ interface ContextExecutor {
 }
 
 interface ActivityExecutor {
-    operator fun invoke(activity: AppCompatActivity)
+    operator fun invoke(activity: ComponentActivity)
 }

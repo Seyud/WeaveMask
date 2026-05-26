@@ -2,7 +2,7 @@ package io.github.seyud.weave.events
 
 import android.content.Context
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import io.github.seyud.weave.arch.ActivityExecutor
 import io.github.seyud.weave.arch.ContextExecutor
 import io.github.seyud.weave.arch.UiEvent
@@ -21,24 +21,24 @@ class PermissionEvent(
     private val callback: (Boolean) -> Unit
 ) : UiEvent(), ActivityExecutor {
 
-    override fun invoke(activity: AppCompatActivity) =
+    override fun invoke(activity: ComponentActivity) =
         (activity as? IActivityExtension)?.withPermission(permission, callback) ?: callback(false)
 }
 
 class BackPressEvent : UiEvent(), ActivityExecutor {
-    override fun invoke(activity: AppCompatActivity) {
+    override fun invoke(activity: ComponentActivity) {
         activity.onBackPressedDispatcher.onBackPressed()
     }
 }
 
 class DieEvent : UiEvent(), ActivityExecutor {
-    override fun invoke(activity: AppCompatActivity) {
+    override fun invoke(activity: ComponentActivity) {
         activity.finish()
     }
 }
 
 class RecreateEvent : UiEvent(), ActivityExecutor {
-    override fun invoke(activity: AppCompatActivity) {
+    override fun invoke(activity: ComponentActivity) {
         activity.relaunch()
     }
 }
@@ -47,7 +47,7 @@ class AuthEvent(
     private val callback: () -> Unit
 ) : UiEvent(), ActivityExecutor {
 
-    override fun invoke(activity: AppCompatActivity) {
+    override fun invoke(activity: ComponentActivity) {
         (activity as? IActivityExtension)?.withAuthentication { if (it) callback() }
     }
 }
@@ -56,7 +56,7 @@ class GetContentEvent(
     private val type: String,
     private val callback: ContentResultCallback
 ) : UiEvent(), ActivityExecutor {
-    override fun invoke(activity: AppCompatActivity) {
+    override fun invoke(activity: ComponentActivity) {
         (activity as? IActivityExtension)?.getContent(type, callback)
     }
 }
@@ -82,12 +82,12 @@ class SnackbarEvent(
         duration: SnackbarDuration = SnackbarDuration.Short,
     ) : this(msg.asText(), duration)
 
-    fun resolveMessage(activity: AppCompatActivity): String =
+    fun resolveMessage(activity: ComponentActivity): String =
         msg.getText(activity.resources)
 
     fun resolveDuration(): SnackbarDuration = duration
 
-    override fun invoke(activity: AppCompatActivity) {
+    override fun invoke(activity: ComponentActivity) {
         (activity as? MainActivity)?.showSnackbar(this)
     }
 }
@@ -95,7 +95,7 @@ class SnackbarEvent(
 class DialogEvent(
     private val builder: DialogBuilder
 ) : UiEvent(), ActivityExecutor {
-    override fun invoke(activity: AppCompatActivity) {
+    override fun invoke(activity: ComponentActivity) {
         WeaveDialog(activity).apply(builder::build).show()
     }
 }

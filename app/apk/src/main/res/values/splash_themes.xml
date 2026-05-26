@@ -6,11 +6,17 @@
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
     <style name="Theme.WeaveMagisk.Host.Dark" parent="Theme.MaterialComponents.NoActionBar">
         <item name="android:windowBackground">@color/splash_window_background_night</item>
         <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
     <style name="Theme.WeaveMagisk.Splash.LightBase" parent="Theme.WeaveMagisk.Host.Light">
