@@ -4,7 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -275,7 +275,7 @@ class HomeViewModel(
 
     val showTest = false
     fun onTestPressed() = object : UiEvent(), ActivityExecutor {
-        override fun invoke(activity: AppCompatActivity) {
+        override fun invoke(activity: ComponentActivity) {
             /* Entry point to trigger test events within the app */
         }
     }.publish()
