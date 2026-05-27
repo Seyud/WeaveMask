@@ -103,7 +103,6 @@
     <string name="supp_group">المجموعة الإضافية: %s</string>
 
     <!--MagiskHide-->
-    <string name="hide_system_app_action">إخفاء تطبيقات النظام</string>
     <string name="show_system_app">إظهار تطبيقات النظام</string>
     <string name="show_os_app">إظهار تطبيقات نظام التشغيل</string>
     <string name="hide_filter_hint">البحث بالاسم</string>

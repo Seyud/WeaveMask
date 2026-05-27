@@ -95,7 +95,6 @@
     <!--SafetyNet-->
 
     <!-- MagiskHide -->
-    <string name="hide_system_app_action">隱藏系統應用程式</string>
     <string name="show_system_app">顯示系統應用程式</string>
     <string name="show_os_app">顯示作業系统</string>
     <string name="hide_filter_hint">過濾名稱</string>

@@ -113,7 +113,6 @@
     <string name="supp_group">补充组: %s</string>
 
     <!--MagiskHide-->
-    <string name="hide_system_app_action">隐藏系统应用</string>
     <string name="show_system_app">显示系统应用</string>
     <string name="show_os_app">显示操作系统</string>
     <string name="hide_filter_hint">按名称过滤</string>

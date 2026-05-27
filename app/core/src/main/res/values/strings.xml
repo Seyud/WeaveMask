@@ -117,7 +117,6 @@
     <string name="denied">Denied</string>
 
     <!--MagiskHide-->
-    <string name="hide_system_app_action">Hide system apps</string>
     <string name="show_system_app">Show system apps</string>
     <string name="show_os_app">Show OS apps</string>
     <string name="hide_filter_hint">Filter by name</string>

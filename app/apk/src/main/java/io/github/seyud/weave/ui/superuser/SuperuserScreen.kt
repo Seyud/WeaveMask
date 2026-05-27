@@ -298,11 +298,7 @@ fun SuperuserScreen(
                             ) {
                                 ListPopupColumn {
                                     DropdownImpl(
-                                        text = if (uiState.showSystemApps) {
-                                            stringResource(CoreR.string.hide_system_app_action)
-                                        } else {
-                                            stringResource(CoreR.string.show_system_app)
-                                        },
+                                        text = stringResource(CoreR.string.show_system_app),
                                         isSelected = uiState.showSystemApps,
                                         optionSize = 1,
                                         onSelectedIndexChange = {
