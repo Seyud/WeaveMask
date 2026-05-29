@@ -11,6 +11,7 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
+import io.github.seyud.weave.core.cmp
 import io.github.seyud.weave.core.integration.AppIconManager
 import io.github.seyud.weave.core.ktx.toast
 import io.github.seyud.weave.core.utils.RootUtils
@@ -49,7 +50,8 @@ suspend fun createModuleShortcut(
 ): Boolean {
     val (shortcutId, shortcutIntent) = when (type) {
         ShortcutType.Action -> {
-            "module_action_$moduleId" to Intent(context, MainActivity::class.java).apply {
+            "module_action_$moduleId" to Intent().apply {
+                component = MainActivity::class.java.cmp(context.packageName)
                 action = Intent.ACTION_VIEW
                 putExtra(ModuleShortcutContract.EXTRA_SHORTCUT_TYPE, ModuleShortcutContract.TYPE_ACTION)
                 putExtra(ModuleShortcutContract.EXTRA_MODULE_ID, moduleId)
@@ -59,7 +61,8 @@ suspend fun createModuleShortcut(
         }
 
         ShortcutType.WebUI -> {
-            "module_webui_$moduleId" to Intent(context, WebUIActivity::class.java).apply {
+            "module_webui_$moduleId" to Intent().apply {
+                component = WebUIActivity::class.java.cmp(context.packageName)
                 action = Intent.ACTION_VIEW
                 putExtra("id", moduleId)
                 putExtra("name", name)

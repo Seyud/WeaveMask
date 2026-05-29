@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.core.net.toUri
 import io.github.seyud.weave.core.Const
+import io.github.seyud.weave.core.cmp
 import io.github.seyud.weave.ui.MainActivity
 import io.github.seyud.weave.ui.navigation3.Route
 
@@ -19,7 +20,8 @@ data class FlashRequest(
     fun toRoute(): Route.Flash = Route.Flash(action, dataUris.map(Uri::toString))
 
     fun toPendingIntent(context: Context): PendingIntent {
-        val intent = Intent(context, MainActivity::class.java).apply {
+        val intent = Intent().apply {
+            component = MainActivity::class.java.cmp(context.packageName)
             action = INTENT_FLASH
             putExtra(MainActivity.EXTRA_FLASH_ACTION, this@FlashRequest.action)
             if (dataUris.isNotEmpty()) {

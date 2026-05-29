@@ -28,6 +28,7 @@ import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.lang.ref.WeakReference
+import java.util.Locale
 import kotlin.system.exitProcess
 
 lateinit var AppApkPath: String
@@ -79,6 +80,32 @@ object AppContext : ContextWrapper(null),
         application = app
         val base = app.baseContext
         attachBaseContext(base)
+        // Apply locale override at context level for stub mode on API 24-34.
+        // On these versions, LocaleManager is not available and Resources.updateConfiguration()
+        // doesn't persist across activity recreations. We use HiddenApiBypass to call
+        // applyOverrideConfiguration on the base context (ContextImpl), which merges the
+        // locale into the context's configuration so new Resources inherit it.
+        if (SDK_INT in 24..34 && isRunningAsStub) {
+            val dpCtx = if (SDK_INT >= Build.VERSION_CODES.N) {
+                base.createDeviceProtectedStorageContext()
+            } else {
+                base
+            }
+            val localeTag = dpCtx.getSharedPreferences(
+                "${base.packageName}_preferences", Context.MODE_PRIVATE
+            ).getString("locale", "") ?: ""
+            if (localeTag.isNotEmpty()) {
+                val locale = Locale.forLanguageTag(localeTag)
+                val config = Configuration()
+                config.setLocale(locale)
+                runCatching {
+                    org.lsposed.hiddenapibypass.HiddenApiBypass.invoke(
+                        Context::class.java, base,
+                        "applyOverrideConfiguration", config
+                    )
+                }
+            }
+        }
         app.registerActivityLifecycleCallbacks(this)
         app.registerComponentCallbacks(this)
 

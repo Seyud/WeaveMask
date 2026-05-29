@@ -131,7 +131,15 @@ object AppMigration {
                 val generator = classNameGenerator()
                 val p = xml.patchStrings {
                     when {
-                        it.contains(APP_PACKAGE_NAME) -> it.replace(APP_PACKAGE_NAME, pkg)
+                        // Exact package name match (the package="..." attribute)
+                        it == APP_PACKAGE_NAME -> pkg
+                        // Component name: package followed by ".<lowercase>" (Java convention)
+                        // e.g. "io.github.seyud.weave.ui.MainActivity"
+                        // Preserves intent actions like "io.github.seyud.weave.LAUNCH"
+                        it.startsWith("$APP_PACKAGE_NAME.") &&
+                            it.length > APP_PACKAGE_NAME.length + 1 &&
+                            it[APP_PACKAGE_NAME.length + 1].isLowerCase() ->
+                            it.replace(APP_PACKAGE_NAME, pkg)
                         it.contains(PLACEHOLDER) -> generator.next()
                         it == origLabel -> label.toString()
                         else -> it

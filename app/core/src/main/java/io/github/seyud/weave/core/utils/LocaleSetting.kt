@@ -86,6 +86,7 @@ interface LocaleSetting {
 
         @Suppress("DEPRECATION")
         override fun updateResource(res: Resources) {
+            Locale.setDefault(currentLocale)
             val config = res.configuration
             config.setLocales(currentLocaleList)
             res.updateConfiguration(config, null)
