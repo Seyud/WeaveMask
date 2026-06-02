@@ -39,7 +39,7 @@ object Config : PreferenceConfig, DBConfig {
         const val SU_TAPJACK = "su_tapjack"
         const val SU_LIST_MODE = "su_list_mode"
         const val SU_RESTRICT = "su_restrict"
-        const val SU_SMART_MODE = "su_smart_mode"
+        const val SU_PROFESSIONAL_MODE = "su_professional_mode"
         const val SU_LIST_MODE_DENYLIST_SNAPSHOT = "su_list_mode_denylist_snapshot"
         const val SU_LIST_MODE_DENYLIST_SNAPSHOT_ENABLED = "su_list_mode_denylist_snapshot_enabled"
         const val SU_LIST_MODE_DENYLIST_SNAPSHOT_VALID = "su_list_mode_denylist_snapshot_valid"
@@ -229,7 +229,7 @@ object Config : PreferenceConfig, DBConfig {
     var suTapjack by preference(Key.SU_TAPJACK, true)
     var suListMode by preference(Key.SU_LIST_MODE, Value.SU_MODE_WHITELIST)
     var suRestrict by preference(Key.SU_RESTRICT, false)
-    var suSmartMode by preference(Key.SU_SMART_MODE, false)
+    var suProfessionalMode by preference(Key.SU_PROFESSIONAL_MODE, false)
     var suListModeDenyListSnapshot by preference(Key.SU_LIST_MODE_DENYLIST_SNAPSHOT, "")
     var suListModeDenyListSnapshotEnabled by preference(Key.SU_LIST_MODE_DENYLIST_SNAPSHOT_ENABLED, false)
     var suListModeDenyListSnapshotValid by preference(Key.SU_LIST_MODE_DENYLIST_SNAPSHOT_VALID, false)
@@ -297,6 +297,12 @@ object Config : PreferenceConfig, DBConfig {
                 putInt(Key.RELEASE_CHANNEL, channel)
             }
             remove(UPDATE_CHANNEL)
+
+            // Migrate su_smart_mode → su_professional_mode
+            if (prefs.contains("su_smart_mode")) {
+                putBoolean(Key.SU_PROFESSIONAL_MODE, prefs.getBoolean("su_smart_mode", false))
+                remove("su_smart_mode")
+            }
         }
     }
 

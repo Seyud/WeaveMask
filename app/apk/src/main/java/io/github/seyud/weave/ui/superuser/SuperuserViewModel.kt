@@ -236,6 +236,9 @@ class SuperuserViewModel internal constructor(
 
     private suspend fun resolveListMode(): Int {
         val currentMode = currentSuperuserListMode()
+        if (!Config.suProfessionalMode) {
+            return currentMode
+        }
         val resolvedMode = modeSync.resolveMode(currentMode)
         if (resolvedMode != currentMode) {
             Config.suListMode = resolvedMode

@@ -110,6 +110,12 @@ class SettingsViewModel internal constructor(
             val pendingRequest = pendingLocalDenyListSyncRequest()
             val zygiskNextActive = superuserModeSync.isZygiskNextActive()
             if (pendingRequest != null) {
+                if (!Config.suProfessionalMode && superuserModeUsesWhitelist(pendingRequest.targetMode)) {
+                    Config.suListMode = Config.Value.SU_MODE_BLACKLIST
+                    _superuserListMode.value = Config.Value.SU_MODE_BLACKLIST
+                    setPendingLocalDenyListSyncRequest(null)
+                    return@launch
+                }
                 if (!zygiskNextActive) {
                     if (normalizeSuperuserListMode(Config.suListMode) != pendingRequest.targetMode) {
                         Config.suListMode = pendingRequest.targetMode
@@ -253,6 +259,11 @@ class SettingsViewModel internal constructor(
     fun refreshSuperuserListMode(onComplete: (Int) -> Unit = {}) {
         viewModelScope.launch {
             val currentMode = normalizeSuperuserListMode(Config.suListMode)
+            if (!Config.suProfessionalMode) {
+                _superuserListMode.value = currentMode
+                onComplete(currentMode)
+                return@launch
+            }
             val resolvedMode = superuserModeSync.resolveMode(currentMode)
             if (resolvedMode != currentMode) {
                 setPendingLocalDenyListSyncRequest(

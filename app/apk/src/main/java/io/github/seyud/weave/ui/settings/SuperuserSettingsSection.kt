@@ -21,6 +21,7 @@ import androidx.compose.material.icons.rounded.Security
 import androidx.compose.ui.unit.dp
 import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.Info
+import io.github.seyud.weave.ui.superuser.normalizeSuperuserListMode
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.SmallTitle
@@ -43,14 +44,17 @@ internal fun SuperuserSettingsSection(
 
     SmallTitle(text = stringResource(CoreR.string.superuser))
     Card(modifier = Modifier.fillMaxWidth()) {
-        var smartModeEnabled by rememberSaveable { mutableStateOf(Config.suSmartMode) }
+        var professionalModeEnabled by rememberSaveable { mutableStateOf(Config.suProfessionalMode) }
         SwitchPreference(
-            title = stringResource(CoreR.string.settings_su_smart_mode_title),
-            summary = stringResource(CoreR.string.settings_su_smart_mode_summary),
-            checked = smartModeEnabled,
-            onCheckedChange = {
-                Config.suSmartMode = it
-                smartModeEnabled = it
+            title = stringResource(CoreR.string.settings_su_professional_mode_title),
+            summary = stringResource(CoreR.string.settings_su_professional_mode_summary),
+            checked = professionalModeEnabled,
+            onCheckedChange = { enabled ->
+                Config.suProfessionalMode = enabled
+                professionalModeEnabled = enabled
+                if (!enabled && normalizeSuperuserListMode(Config.suListMode) == Config.Value.SU_MODE_WHITELIST) {
+                    viewModel.setSuperuserListMode(Config.Value.SU_MODE_BLACKLIST) { _ -> }
+                }
             },
             startAction = {
                 Icon(
@@ -62,7 +66,7 @@ internal fun SuperuserSettingsSection(
             },
         )
 
-        AnimatedVisibility(visible = smartModeEnabled) {
+        AnimatedVisibility(visible = professionalModeEnabled) {
             SuperuserModeSelectorItem(
                 res = res,
                 viewModel = viewModel,

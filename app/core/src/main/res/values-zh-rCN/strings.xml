@@ -242,8 +242,8 @@
     <string name="settings_su_request_60">60 秒</string>
     <string name="superuser_access">超级用户访问权限</string>
     <string name="settings_su_mode_title">超级用户模式</string>
-    <string name="settings_su_smart_mode_title">聪明模式</string>
-    <string name="settings_su_smart_mode_summary">显示拥有智慧才能妥善使用的功能</string>
+    <string name="settings_su_professional_mode_title">专业模式</string>
+    <string name="settings_su_professional_mode_summary">展示可能不稳定或存在风险的高级功能</string>
     <string name="settings_su_mode_blacklist">黑名单模式</string>
     <string name="settings_su_mode_whitelist">白名单模式</string>
     <string name="settings_su_mode_summary_blacklist">仅显示已保存超级用户策略的应用。撤销后会从列表中移除。可用时会同步到 Zygisk Next 黑名单模式。</string>

@@ -242,8 +242,8 @@
     <string name="settings_su_request_60">60 seconds</string>
     <string name="superuser_access">Superuser access</string>
     <string name="settings_su_mode_title">Superuser mode</string>
-    <string name="settings_su_smart_mode_title">Smart Mode</string>
-    <string name="settings_su_smart_mode_summary">Show features that require wisdom to use properly</string>
+    <string name="settings_su_professional_mode_title">Professional Mode</string>
+    <string name="settings_su_professional_mode_summary">Show advanced features that may be unstable or risky</string>
     <string name="settings_su_mode_blacklist">Blacklist mode</string>
     <string name="settings_su_mode_whitelist">Whitelist mode</string>
     <string name="settings_su_mode_summary_blacklist">Only apps with saved Superuser policies are shown. Revoking removes them from the list. Syncs with Zygisk Next blacklist mode when available.</string>
