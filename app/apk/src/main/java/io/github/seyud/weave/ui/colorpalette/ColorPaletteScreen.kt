@@ -249,7 +249,7 @@ fun ColorPaletteScreen(
                             .padding(top = 12.dp)
                             .fillMaxWidth(),
                     ) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             SwitchPreference(
                                 title = stringResource(id = CoreR.string.settings_enable_blur),
                                 summary = stringResource(id = CoreR.string.settings_enable_blur_summary),
