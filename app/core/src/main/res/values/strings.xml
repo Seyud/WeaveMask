@@ -91,6 +91,9 @@
     <string name="su_snack_notif_off">Notifications of %1$s are disabled</string>
     <string name="su_snack_log_on">Logging of %1$s is enabled</string>
     <string name="su_snack_log_off">Logging of %1$s is disabled</string>
+    <string name="su_verify_success">Root verification of %1$s succeeded</string>
+    <string name="su_verify_failed">Root verification of %1$s failed</string>
+    <string name="su_verify_retry">Retry</string>
     <string name="su_revoke_title">Revoke?</string>
     <string name="su_revoke_msg">Confirm to revoke %1$s Superuser rights</string>
     <string name="toast">Toast</string>

@@ -89,6 +89,9 @@
     <string name="su_snack_notif_off">已禁用 %1$s 的通知</string>
     <string name="su_snack_log_on">已启用对 %1$s 的日志记录</string>
     <string name="su_snack_log_off">已禁用对 %1$s 的日志记录</string>
+    <string name="su_verify_success">%1$s 的 Root 验证成功</string>
+    <string name="su_verify_failed">%1$s 的 Root 验证失败</string>
+    <string name="su_verify_retry">重试</string>
     <string name="su_revoke_title">撤销</string>
     <string name="su_revoke_msg">确认撤销授予 %1$s 的权限？</string>
     <string name="toast">消息提示</string>

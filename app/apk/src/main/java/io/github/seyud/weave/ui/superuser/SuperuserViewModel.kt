@@ -13,6 +13,7 @@ import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.Info
 import io.github.seyud.weave.core.R
 import io.github.seyud.weave.core.data.magiskdb.PolicyDao
+import io.github.seyud.weave.core.ktx.await
 import io.github.seyud.weave.core.ktx.getLabel
 import io.github.seyud.weave.core.model.su.SuPolicy
 import io.github.seyud.weave.core.utils.InstalledItemLoadResult
@@ -551,6 +552,17 @@ class SuperuserViewModel internal constructor(
         }
     }
 
+    private suspend fun verifyGrant(uid: Int): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val result = com.topjohnwu.superuser.Shell.cmd("su $uid -c id").await()
+                result.isSuccess && result.out.any { it.contains("uid=$uid") }
+            } catch (_: Exception) {
+                false
+            }
+        }
+    }
+
     private fun updatePolicy(entry: PolicyEntry, policy: Int) {
         if (entry.item.policy == policy) return
 
@@ -572,6 +584,31 @@ class SuperuserViewModel internal constructor(
                     else -> R.string.su_snack_deny
                 }
                 SnackbarEvent(res.asText(entry.appName)).publish()
+
+                // 授权后验证 Root 是否生效
+                if (policy == SuPolicy.ALLOW) {
+                    val uid = entry.item.uid
+                    val appName = entry.appName
+                    val verified = verifyGrant(uid)
+                    if (verified) {
+                        SnackbarEvent(R.string.su_verify_success.asText(appName)).publish()
+                    } else {
+                        SnackbarEvent(
+                            msg = R.string.su_verify_failed.asText(appName),
+                            duration = top.yukonga.miuix.kmp.basic.SnackbarDuration.Long,
+                            actionLabel = AppContext.getString(R.string.su_verify_retry),
+                            onActionPerformed = {
+                                viewModelScope.launch {
+                                    db.update(entry.item)
+                                    val retryResult = verifyGrant(uid)
+                                    val retryMsg = if (retryResult)
+                                        R.string.su_verify_success else R.string.su_verify_failed
+                                    SnackbarEvent(retryMsg.asText(appName)).publish()
+                                }
+                            }
+                        ).publish()
+                    }
+                }
             }
         }
 

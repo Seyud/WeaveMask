@@ -91,6 +91,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SnackbarHostState
+import top.yukonga.miuix.kmp.basic.SnackbarResult
 import java.io.File
 import java.io.IOException
 import io.github.seyud.weave.core.R as CoreR
@@ -589,10 +590,14 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
                 val current = snackbarHostState.newestSnackbarData() ?: break
                 current.dismiss()
             }
-            snackbarHostState.showSnackbar(
+            val result = snackbarHostState.showSnackbar(
                 message = event.resolveMessage(this@MainActivity),
+                actionLabel = event.actionLabel,
                 duration = event.resolveDuration(),
             )
+            if (result == SnackbarResult.ActionPerformed) {
+                event.onActionPerformed?.invoke()
+            }
         }
     }
 

@@ -70,17 +70,23 @@ class AddHomeIconEvent : UiEvent(), ContextExecutor {
 class SnackbarEvent(
     private val msg: TextHolder,
     private val duration: SnackbarDuration = SnackbarDuration.Short,
+    val actionLabel: String? = null,
+    val onActionPerformed: (() -> Unit)? = null,
 ) : UiEvent(), ActivityExecutor {
 
     constructor(
         @StringRes res: Int,
         duration: SnackbarDuration = SnackbarDuration.Short,
-    ) : this(res.asText(), duration)
+        actionLabel: String? = null,
+        onActionPerformed: (() -> Unit)? = null,
+    ) : this(res.asText(), duration, actionLabel, onActionPerformed)
 
     constructor(
         msg: String,
         duration: SnackbarDuration = SnackbarDuration.Short,
-    ) : this(msg.asText(), duration)
+        actionLabel: String? = null,
+        onActionPerformed: (() -> Unit)? = null,
+    ) : this(msg.asText(), duration, actionLabel, onActionPerformed)
 
     fun resolveMessage(activity: ComponentActivity): String =
         msg.getText(activity.resources)
