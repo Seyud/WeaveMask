@@ -2,7 +2,6 @@
 
 ### General
 
-- Prefix every shell command with `scripts/env.py` to ensure that commands are executed with the correct environment.
 - WeaveMask is a fork of Magisk. When syncing with upstream, carefully resolve conflicts and preserve WeaveMask-specific customizations.
 
 ### App

@@ -42,7 +42,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -78,6 +77,7 @@ import io.github.seyud.weave.ui.MainActivity
 import io.github.seyud.weave.ui.component.HtmlText
 import io.github.seyud.weave.ui.component.MiuixConfirmDialog
 import io.github.seyud.weave.ui.component.MarkdownText
+import io.github.seyud.weave.ui.component.deferredTopPadding
 import io.github.seyud.weave.ui.flash.FlashRequest
 import io.github.seyud.weave.ui.theme.LocalEnableBlur
 import io.github.seyud.weave.ui.util.attachBarBlurBackdrop
@@ -130,7 +130,9 @@ fun ModuleRepoScreen(viewModel: ModuleRepoViewModel, onNavigateBack: () -> Unit,
     val blurBackdrop = rememberBarBlurBackdrop(LocalEnableBlur.current, MiuixTheme.colorScheme.surface)
     val pull = rememberPullToRefreshState()
     val layoutDirection = LocalLayoutDirection.current
-    val dynamicTopPadding by remember { derivedStateOf { 12.dp * (1f - scrollBehavior.state.collapsedFraction) } }
+    val dynamicTopPadding = remember(scrollBehavior) {
+        { 12.dp * (1f - scrollBehavior.state.collapsedFraction) }
+    }
     var showSortPopup by remember { mutableStateOf(false) }
     var showSourcePopup by remember { mutableStateOf(false) }
     LaunchedEffect(Unit, Config.moduleRepoBaseUrl) { viewModel.ensureLoaded() }
@@ -196,7 +198,8 @@ fun ModuleRepoScreen(viewModel: ModuleRepoViewModel, onNavigateBack: () -> Unit,
                     Column(
                         modifier = Modifier
                             .padding(horizontal = 12.dp)
-                            .padding(top = dynamicTopPadding, bottom = 6.dp)
+                            .padding(bottom = 6.dp)
+                            .deferredTopPadding(dynamicTopPadding)
                     ) {
                         InputField(
                             query = state.query,
@@ -288,7 +291,9 @@ fun ModuleRepoDetailScreen(moduleId: String, onNavigateBack: () -> Unit, modifie
     val baseUrl = Config.moduleRepoBaseUrl
     val webUrl = remember(moduleId, baseUrl) { buildRepoModulePageUrl(baseUrl, moduleId) }
     val blurEnabled = blurBackdrop != null
-    val dynamicTopPadding by remember { derivedStateOf { 12.dp * (1f - scrollBehavior.state.collapsedFraction) } }
+    val dynamicTopPadding = remember(scrollBehavior) {
+        { 12.dp * (1f - scrollBehavior.state.collapsedFraction) }
+    }
     var refreshKey by remember(moduleId, baseUrl) { mutableStateOf(0) }
     var showDownloadConfirm by remember { mutableStateOf(false) }
     var downloadConfirmMessage by remember { mutableStateOf("") }
@@ -355,7 +360,8 @@ fun ModuleRepoDetailScreen(moduleId: String, onNavigateBack: () -> Unit, modifie
                     Column(
                         modifier = Modifier
                             .padding(horizontal = 12.dp)
-                            .padding(top = dynamicTopPadding, bottom = 6.dp)
+                            .padding(bottom = 6.dp)
+                            .deferredTopPadding(dynamicTopPadding)
                     ) {
                         TabRow(
                             tabs = tabs,

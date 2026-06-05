@@ -323,7 +323,7 @@ class SuperuserViewModel internal constructor(
         val source: InstalledItemSource
         val shouldRefreshFromRoot: Boolean
         if (useCache) {
-            packageInfos = cached!!.items
+            packageInfos = cached.items
             source = cached.source
             shouldRefreshFromRoot = cached.shouldRefreshFromRoot
         } else {
