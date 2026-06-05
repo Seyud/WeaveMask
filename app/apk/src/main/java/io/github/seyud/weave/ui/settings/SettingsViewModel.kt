@@ -14,6 +14,7 @@ import io.github.seyud.weave.core.utils.RootUtils
 import io.github.seyud.weave.events.AddHomeIconEvent
 import io.github.seyud.weave.events.AuthEvent
 import io.github.seyud.weave.events.SnackbarEvent
+import io.github.seyud.weave.ui.superuser.SuperuserModeState
 import io.github.seyud.weave.ui.superuser.SuperuserModeSyncCoordinator
 import io.github.seyud.weave.ui.superuser.normalizeSuperuserListMode
 import io.github.seyud.weave.ui.superuser.superuserModeUsesWhitelist
@@ -230,6 +231,9 @@ class SettingsViewModel internal constructor(
             onComplete(normalizedMode)
             return
         }
+
+        // 立即广播新模式，Superuser 页面可即时感知
+        SuperuserModeState.update(normalizedMode)
 
         viewModelScope.launch {
             val currentMode = normalizeSuperuserListMode(Config.suListMode)

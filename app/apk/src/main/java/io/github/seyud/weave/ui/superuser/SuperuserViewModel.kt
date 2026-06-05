@@ -132,9 +132,35 @@ class SuperuserViewModel internal constructor(
     )
     val uiState: StateFlow<SuperuserUiState> = _uiState.asStateFlow()
 
+    private val _listMode = MutableStateFlow(currentSuperuserListMode())
+    val listMode: StateFlow<Int> = _listMode.asStateFlow()
+
+    init {
+        // 监听 SettingsViewModel 广播的模式变化，即时同步到 _listMode
+        viewModelScope.launch {
+            SuperuserModeState.mode.collect { mode ->
+                if (mode != _listMode.value) {
+                    _listMode.value = mode
+                }
+            }
+        }
+    }
+
     private var allPolicies: List<PolicyEntry> = emptyList()
     private var loadedListMode = currentSuperuserListMode()
     private var rootRefreshJob: Job? = null
+
+    // 包列表内存缓存，避免每次 refresh 都执行昂贵的 loadPackages() IPC
+    private data class CachedPackageList(
+        val items: List<PackageInfo>,
+        val source: InstalledItemSource,
+        val shouldRefreshFromRoot: Boolean,
+        val timestamp: Long,
+    )
+    private var cachedPackageList: CachedPackageList? = null
+    private companion object {
+        const val PACKAGE_CACHE_TTL_MS = 30_000L // 30 秒
+    }
 
     internal fun policyKey(uid: Int, packageName: String) = "$uid:$packageName"
 
@@ -167,10 +193,17 @@ class SuperuserViewModel internal constructor(
         publishFilteredPolicies()
     }
 
-    fun refresh() {
+    fun refresh(force: Boolean = false) {
         viewModelScope.launch {
+            if (force) cachedPackageList = null
             loadPolicies(isInitialLoad = false)
         }
+    }
+
+    /** 模式切换时立即清空列表并显示加载状态，避免短暂闪现旧模式数据 */
+    fun clearPolicies() {
+        allPolicies = emptyList()
+        _uiState.update { it.copy(isLoading = true, policies = emptyList(), errorMessage = null) }
     }
 
     @SuppressLint("InlinedApi")
@@ -236,14 +269,18 @@ class SuperuserViewModel internal constructor(
     }
 
     private suspend fun resolveListMode(): Int {
-        val currentMode = currentSuperuserListMode()
+        // 优先使用共享状态（SettingsViewModel 已即时广播），避免 Config 异步写入的时序问题
+        val currentMode = SuperuserModeState.mode.value
         if (!Config.suProfessionalMode) {
+            _listMode.value = currentMode
             return currentMode
         }
         val resolvedMode = modeSync.resolveMode(currentMode)
         if (resolvedMode != currentMode) {
             Config.suListMode = resolvedMode
+            SuperuserModeState.update(resolvedMode)
         }
+        _listMode.value = resolvedMode
         return resolvedMode
     }
 
@@ -252,6 +289,7 @@ class SuperuserViewModel internal constructor(
             return listMode
         }
         loadedListMode = listMode
+        _listMode.value = listMode
         rootRefreshJob?.cancel()
         rootRefreshJob = null
         _uiState.update {
@@ -276,13 +314,35 @@ class SuperuserViewModel internal constructor(
         db.delete(myUid)
 
         val allDbPolicies = db.fetchAll().associateBy { it.uid }.toMutableMap()
-        val loadResult = loadConfig.loadPackages(MATCH_UNINSTALLED_PACKAGES)
-        val packageInfos = loadResult.items.filter { info ->
-            val appInfo = info.applicationInfo ?: return@filter false
-            appInfo.uid != myUid && isInstalledPackage(appInfo)
+
+        // 使用内存缓存的包列表，避免重复的 PackageManager IPC
+        val now = System.currentTimeMillis()
+        val cached = cachedPackageList
+        val useCache = cached != null && (now - cached.timestamp) < PACKAGE_CACHE_TTL_MS
+        val packageInfos: List<PackageInfo>
+        val source: InstalledItemSource
+        val shouldRefreshFromRoot: Boolean
+        if (useCache) {
+            packageInfos = cached!!.items
+            source = cached.source
+            shouldRefreshFromRoot = cached.shouldRefreshFromRoot
+        } else {
+            val loadResult = loadConfig.loadPackages(MATCH_UNINSTALLED_PACKAGES)
+            packageInfos = loadResult.items.filter { info ->
+                val appInfo = info.applicationInfo ?: return@filter false
+                appInfo.uid != myUid && isInstalledPackage(appInfo)
+            }
+            source = loadResult.source
+            shouldRefreshFromRoot = loadResult.shouldRefreshFromRoot
+            cachedPackageList = CachedPackageList(
+                items = packageInfos,
+                source = source,
+                shouldRefreshFromRoot = shouldRefreshFromRoot,
+                timestamp = now,
+            )
         }
 
-        if (loadResult.source == InstalledItemSource.ROOT) {
+        if (source == InstalledItemSource.ROOT && !useCache) {
             val installedUids = packageInfos.mapNotNull { it.applicationInfo?.uid }.toSet()
             allDbPolicies.keys
                 .filter { it !in installedUids && it != Process.SYSTEM_UID }
@@ -313,8 +373,8 @@ class SuperuserViewModel internal constructor(
 
         return LoadedPolicies(
             policies = policies,
-            source = loadResult.source,
-            shouldRefreshFromRoot = loadResult.shouldRefreshFromRoot,
+            source = source,
+            shouldRefreshFromRoot = shouldRefreshFromRoot,
         )
     }
 

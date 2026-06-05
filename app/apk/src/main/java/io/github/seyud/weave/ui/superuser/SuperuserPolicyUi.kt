@@ -4,7 +4,24 @@ import android.content.pm.ApplicationInfo
 import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.R as CoreR
 import io.github.seyud.weave.core.model.su.SuPolicy
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlin.math.roundToInt
+
+/**
+ * 共享的超级用户列表模式状态。
+ * SettingsViewModel 写入，SuperuserViewModel 读取，
+ * 保证模式切换后 Superuser 页面能即时感知，无需等待 Config 持久化。
+ */
+object SuperuserModeState {
+    private val _mode = MutableStateFlow(normalizeSuperuserListMode(Config.suListMode))
+    val mode: StateFlow<Int> = _mode.asStateFlow()
+
+    fun update(mode: Int) {
+        _mode.value = normalizeSuperuserListMode(mode)
+    }
+}
 
 internal fun normalizeSuperuserListMode(mode: Int): Int {
     return when (mode) {
