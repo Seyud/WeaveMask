@@ -3,8 +3,8 @@ package io.github.seyud.weave.ui.about.effect
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Brush
-import top.yukonga.miuix.kmp.blur.RuntimeShader
-import top.yukonga.miuix.kmp.blur.asBrush
+import top.yukonga.miuix.kmp.shader.RuntimeShader
+import top.yukonga.miuix.kmp.shader.asBrush
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 class BgEffectPainter(
