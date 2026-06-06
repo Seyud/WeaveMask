@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.spring
@@ -51,6 +52,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,6 +82,7 @@ import io.github.seyud.weave.dialog.OnlineModuleInstallDialog
 import io.github.seyud.weave.ui.MainActivity
 import io.github.seyud.weave.ui.component.HtmlText
 import io.github.seyud.weave.ui.component.MiuixConfirmDialog
+import io.github.seyud.weave.ui.component.ScrollToTopOnChange
 import io.github.seyud.weave.ui.component.MarkdownText
 import io.github.seyud.weave.ui.component.deferredTopPadding
 import io.github.seyud.weave.ui.flash.FlashRequest
@@ -139,6 +142,7 @@ fun ModuleRepoScreen(viewModel: ModuleRepoViewModel, onNavigateBack: () -> Unit,
     }
     var showSortPopup by remember { mutableStateOf(false) }
     var showSourcePopup by remember { mutableStateOf(false) }
+    val refreshTick = remember { mutableStateOf(0) }
     LaunchedEffect(Unit, Config.moduleRepoBaseUrl) { viewModel.ensureLoaded() }
     val modules = remember(state.modules, state.sortByName, locale) {
         val collator = Collator.getInstance(locale)
@@ -227,12 +231,26 @@ fun ModuleRepoScreen(viewModel: ModuleRepoViewModel, onNavigateBack: () -> Unit,
             contentPadding = PaddingValues(top = innerPadding.calculateTopPadding()),
             topAppBarScrollBehavior = scrollBehavior,
             refreshTexts = listOf(context.getString(CoreR.string.pull_down_to_refresh), context.getString(CoreR.string.release_to_refresh), context.getString(CoreR.string.refreshing), context.getString(CoreR.string.refreshed_successfully)),
-            onRefresh = { viewModel.refresh(forceLoading = state.modules.isEmpty()) },
+            onRefresh = {
+                viewModel.refresh(forceLoading = state.modules.isEmpty())
+                refreshTick.value++
+            },
         ) {
             if (state.isLoading && state.modules.isEmpty()) {
                 RepoCenterState(title = state.errorMessage, loading = state.errorMessage.isNullOrBlank(), actionLabel = if (state.errorMessage.isNullOrBlank()) null else context.getString(CoreR.string.network_retry), onActionClick = if (state.errorMessage.isNullOrBlank()) null else ({ viewModel.refresh(forceLoading = true) }), modifier = Modifier.padding(top = innerPadding.calculateTopPadding(), start = innerPadding.calculateStartPadding(layoutDirection), end = innerPadding.calculateEndPadding(layoutDirection)))
             } else {
+                val listState = rememberLazyListState()
+                val latestModules = rememberUpdatedState(modules)
+                val latestRefreshing = rememberUpdatedState(state.isRefreshing)
+                ScrollToTopOnChange(
+                    listState,
+                    state.sortByName,
+                    state.query,
+                    refreshTick.value,
+                    isBusy = { latestRefreshing.value },
+                ) { latestModules.value }
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 12.dp)

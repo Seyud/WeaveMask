@@ -1,7 +1,11 @@
 package io.github.seyud.weave.ui.module.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -11,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.seyud.weave.core.R as CoreR
+import io.github.seyud.weave.ui.component.ScrollToTopOnChange
 import io.github.seyud.weave.ui.component.SearchBox
 import io.github.seyud.weave.ui.component.SearchStatus
 import io.github.seyud.weave.ui.module.ModuleInfo
@@ -50,6 +55,8 @@ internal fun ModuleScreenContent(
     val context = LocalContext.current
     val layoutDirection = LocalLayoutDirection.current
     val pullToRefreshState = rememberPullToRefreshState()
+    val listState = rememberLazyListState()
+    val refreshTick = remember { mutableStateOf(0) }
 
     uiSearchStatus.SearchBox(
         onSearchStatusChange = onSearchStatusChange,
@@ -80,6 +87,7 @@ internal fun ModuleScreenContent(
             onRefresh = {
                 if (!uiState.isRefreshing) {
                     onRefresh()
+                    refreshTick.value++
                 }
             },
         ) {
@@ -108,6 +116,16 @@ internal fun ModuleScreenContent(
                 }
 
                 else -> {
+                    val latestModules = rememberUpdatedState(uiState.modules)
+                    val latestRefreshing = rememberUpdatedState(uiState.isRefreshing)
+                    ScrollToTopOnChange(
+                        listState,
+                        uiState.sortEnabledFirst,
+                        uiState.sortUpdateFirst,
+                        uiState.sortExecutableFirst,
+                        refreshTick.value,
+                        isBusy = { latestRefreshing.value },
+                    ) { latestModules.value }
                     ModuleList(
                         modules = uiState.modules,
                         blurBackdrop = blurBackdrop,
@@ -121,6 +139,7 @@ internal fun ModuleScreenContent(
                         topContentPadding = innerPadding.calculateTopPadding() + boxHeight.value + 6.dp,
                         contentBottomPadding = contentBottomPadding,
                         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+                        listState = listState,
                     )
                 }
             }

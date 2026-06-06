@@ -2,6 +2,7 @@ package io.github.seyud.weave.ui.superuser
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -36,6 +37,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.Lifecycle
@@ -110,6 +112,7 @@ import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import io.github.seyud.weave.arch.BaseViewModel.BaseEvent
 import io.github.seyud.weave.ui.component.ObserveAsEvents
+import io.github.seyud.weave.ui.component.ScrollToTopOnChange
 import io.github.seyud.weave.ui.component.showSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -145,6 +148,8 @@ fun SuperuserScreen(
     var expandedPolicyKeys by rememberSaveable { mutableStateOf(emptyList<String>()) }
     val showTopPopup = remember { mutableStateOf(false) }
     val pullToRefreshState = rememberPullToRefreshState()
+    val refreshTick = remember { mutableStateOf(0) }
+    val listState = rememberLazyListState()
     val scrollBehavior = MiuixScrollBehavior()
     val enableBlur = LocalEnableBlur.current
     val density = LocalDensity.current
@@ -380,6 +385,7 @@ fun SuperuserScreen(
                         onRefresh = {
                             if (!uiState.isRefreshing) {
                                 viewModel.refresh(force = true)
+                                refreshTick.value++
                             }
                         }
                     ) {
@@ -405,6 +411,14 @@ fun SuperuserScreen(
                                 )
                             }
                             else -> {
+                                val latestPolicies = rememberUpdatedState(uiState.policies)
+                                val latestRefreshing = rememberUpdatedState(uiState.isRefreshing)
+                                ScrollToTopOnChange(
+                                    listState,
+                                    uiState.showSystemApps,
+                                    refreshTick.value,
+                                    isBusy = { latestRefreshing.value },
+                                ) { latestPolicies.value }
                                 PolicyList(
                                     policies = uiState.policies,
                                     viewModel = viewModel,
@@ -423,7 +437,8 @@ fun SuperuserScreen(
                                         pendingRevokeKey = key
                                         viewModel.onRevokePressed(key)
                                     },
-                                    nestedScrollConnection = scrollBehavior.nestedScrollConnection
+                                    nestedScrollConnection = scrollBehavior.nestedScrollConnection,
+                                    listState = listState,
                                 )
                             }
                         }
@@ -503,9 +518,9 @@ private fun PolicyList(
     expandedPolicyKeys: List<String>,
     onToggleExpanded: (String) -> Unit,
     onDelete: (String) -> Unit,
-    nestedScrollConnection: NestedScrollConnection
+    nestedScrollConnection: NestedScrollConnection,
+    listState: LazyListState = rememberLazyListState(),
 ) {
-    val listState = rememberLazyListState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(

@@ -145,9 +145,9 @@ class ModuleViewModel : AsyncLoadViewModel() {
     /**
      * 刷新模块列表
      */
-    fun refresh() {
+    fun refresh(resort: Boolean = true) {
         viewModelScope.launch {
-            loadModules(isInitialLoad = false)
+            loadModules(isInitialLoad = false, resort = resort)
         }
     }
 
@@ -157,7 +157,7 @@ class ModuleViewModel : AsyncLoadViewModel() {
 
     override fun onNetworkChanged(network: Boolean) = startLoading()
 
-    private suspend fun loadModules(isInitialLoad: Boolean) {
+    private suspend fun loadModules(isInitialLoad: Boolean, resort: Boolean = true) {
         updateInfoJob?.cancel()
         val previousModules = currentModuleSnapshot()
 
@@ -187,7 +187,7 @@ class ModuleViewModel : AsyncLoadViewModel() {
 
             allModules = installed
             val snapshotVersion = ++moduleSnapshotVersion
-            publishFilteredModules(errorMessage = null)
+            publishFilteredModules(errorMessage = null, resort = resort)
 
             if (moduleLoaded) {
                 startUpdateInfoRefresh(installedModules, snapshotVersion)
@@ -246,7 +246,7 @@ class ModuleViewModel : AsyncLoadViewModel() {
                 .toMap()
         }
 
-    private fun publishFilteredModules(errorMessage: String? = _uiState.value.errorMessage) {
+    private fun publishFilteredModules(errorMessage: String? = _uiState.value.errorMessage, resort: Boolean = true) {
         val state = _uiState.value
         val query = state.query.trim()
         var modules = if (query.isEmpty()) {
@@ -259,15 +259,22 @@ class ModuleViewModel : AsyncLoadViewModel() {
             }
         }
 
-        modules = modules.sortedWith(
-            compareBy<ModuleInfo> {
-                if (state.sortEnabledFirst) !it.enabled else false
-            }.thenBy {
-                if (state.sortUpdateFirst) !it.showUpdate else false
-            }.thenBy {
-                if (state.sortExecutableFirst) it.executablePriority else 0
-            }.thenBy { it.name.lowercase() }
-        )
+        modules = if (resort || state.modules.isEmpty()) {
+            modules.sortedWith(
+                compareBy<ModuleInfo> {
+                    if (state.sortEnabledFirst) !it.enabled else false
+                }.thenBy {
+                    if (state.sortUpdateFirst) !it.showUpdate else false
+                }.thenBy {
+                    if (state.sortExecutableFirst) it.executablePriority else 0
+                }.thenBy { it.name.lowercase() }
+            )
+        } else {
+            // Order-preserving reload: keep order, refresh data, drop removed, append new
+            val byId = modules.associateBy { it.id }
+            val existingIds = state.modules.mapTo(HashSet()) { it.id }
+            state.modules.mapNotNull { byId[it.id] } + modules.filter { it.id !in existingIds }
+        }
 
         _uiState.value = _uiState.value.copy(
             modules = modules,
@@ -302,7 +309,7 @@ class ModuleViewModel : AsyncLoadViewModel() {
                     }
                 }
             }
-            publishFilteredModules()
+            publishFilteredModules(resort = false)
         }
     }
 
@@ -325,7 +332,7 @@ class ModuleViewModel : AsyncLoadViewModel() {
                     }
                 }
             }
-            publishFilteredModules()
+            publishFilteredModules(resort = false)
         }
     }
 
