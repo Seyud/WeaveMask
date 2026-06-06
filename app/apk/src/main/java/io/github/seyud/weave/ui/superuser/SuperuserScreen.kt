@@ -550,7 +550,16 @@ private fun LazyListScope.policyItems(
             onUpdateNotify = { onUpdateNotify(policyKey) },
             onUpdateLogging = { onUpdateLogging(policyKey) },
             onUpdatePolicy = { policy -> onUpdatePolicy(policyKey, policy) },
-            modifier = Modifier.zIndex(-index.toFloat())
+            modifier = Modifier
+                .zIndex(-index.toFloat())
+                .animateItem(
+                    fadeInSpec = null,
+                    fadeOutSpec = null,
+                    placementSpec = spring(
+                        stiffness = Spring.StiffnessMediumLow,
+                        visibilityThreshold = IntOffset.VisibilityThreshold
+                    )
+                )
         )
     }
 }

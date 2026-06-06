@@ -37,7 +37,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -243,7 +247,20 @@ fun ModuleRepoScreen(viewModel: ModuleRepoViewModel, onNavigateBack: () -> Unit,
                     overscrollEffect = null,
                 ) {
                     if (modules.isEmpty()) item { RepoCenterState(title = context.getString(CoreR.string.module_repo_empty), modifier = Modifier.fillMaxWidth()) }
-                    items(modules, key = { it.moduleId }, contentType = { "module" }) { module -> RepoModuleSummaryCard(module = module, onClick = { onOpenModuleDetail(module.moduleId) }) }
+                    items(modules, key = { it.moduleId }, contentType = { "module" }) { module ->
+                        RepoModuleSummaryCard(
+                            module = module,
+                            onClick = { onOpenModuleDetail(module.moduleId) },
+                            modifier = Modifier.animateItem(
+                                fadeInSpec = null,
+                                fadeOutSpec = null,
+                                placementSpec = spring(
+                                    stiffness = Spring.StiffnessMediumLow,
+                                    visibilityThreshold = IntOffset.VisibilityThreshold
+                                )
+                            ),
+                        )
+                    }
                 }
             }
         }
@@ -251,10 +268,10 @@ fun ModuleRepoScreen(viewModel: ModuleRepoViewModel, onNavigateBack: () -> Unit,
 }
 
 @Composable
-private fun RepoModuleSummaryCard(module: RepoModuleSummary, onClick: () -> Unit) {
+private fun RepoModuleSummaryCard(module: RepoModuleSummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val metaBg = MiuixTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
     val metaTint = MiuixTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
-    Card(modifier = Modifier.fillMaxWidth(), cornerRadius = 18.dp) {
+    Card(modifier = modifier.fillMaxWidth(), cornerRadius = 18.dp) {
         Column(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = module.displayName, fontSize = 17.sp, fontWeight = FontWeight(550), modifier = Modifier.weight(1f))

@@ -8,7 +8,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.lazy.items
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -101,6 +105,14 @@ internal fun LazyListScope.moduleItems(
             onAddShortcut = { onAddShortcut(module) },
             onDownloadUpdate = { onDownloadUpdate(module) },
             onToggleRemoved = { onToggleModuleRemove(module) },
+            modifier = Modifier.animateItem(
+                fadeInSpec = null,
+                fadeOutSpec = null,
+                placementSpec = spring(
+                    stiffness = Spring.StiffnessMediumLow,
+                    visibilityThreshold = IntOffset.VisibilityThreshold
+                )
+            ),
         )
     }
 }
