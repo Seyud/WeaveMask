@@ -128,7 +128,18 @@ class SettingsViewModel internal constructor(
             }
 
             val currentMode = normalizeSuperuserListMode(Config.suListMode)
-            if (shouldQueuePassiveWhitelistReconcile(
+            if (zygiskNextActive) {
+                val resolvedMode = superuserModeSync.resolveMode(currentMode)
+                val effectiveMode = if (!Config.suProfessionalMode && superuserModeUsesWhitelist(resolvedMode)) {
+                    Config.Value.SU_MODE_BLACKLIST
+                } else {
+                    resolvedMode
+                }
+                if (effectiveMode != currentMode) {
+                    Config.suListMode = effectiveMode
+                }
+                _superuserListMode.value = effectiveMode
+            } else if (shouldQueuePassiveWhitelistReconcile(
                     hasPendingLocalSync = false,
                     currentMode = currentMode,
                     zygiskNextActive = zygiskNextActive,

@@ -227,7 +227,7 @@ object Config : PreferenceConfig, DBConfig {
         }
     var suReAuth by preference(Key.SU_REAUTH, false)
     var suTapjack by preference(Key.SU_TAPJACK, true)
-    var suListMode by preference(Key.SU_LIST_MODE, Value.SU_MODE_WHITELIST)
+    var suListMode by preference(Key.SU_LIST_MODE, Value.SU_MODE_BLACKLIST)
     var suRestrict by preference(Key.SU_RESTRICT, false)
     var suProfessionalMode by preference(Key.SU_PROFESSIONAL_MODE, false)
     var suListModeDenyListSnapshot by preference(Key.SU_LIST_MODE_DENYLIST_SNAPSHOT, "")
