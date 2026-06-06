@@ -27,9 +27,15 @@ import io.github.seyud.weave.ui.module.state.rememberModuleSortPreferences
 import io.github.seyud.weave.ui.module.state.rememberShortcutIconPicker
 import io.github.seyud.weave.ui.theme.LocalEnableBlur
 import io.github.seyud.weave.ui.util.rememberBarBlurBackdrop
+import io.github.seyud.weave.arch.BaseViewModel.BaseEvent
+import io.github.seyud.weave.ui.component.ObserveAsEvents
+import io.github.seyud.weave.ui.component.showSnackbarEvent
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
+import top.yukonga.miuix.kmp.basic.SnackbarHostState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @Composable
 fun ModuleScreen(
@@ -39,6 +45,7 @@ fun ModuleScreen(
     onOpenRepo: () -> Unit,
     onRunAction: (String, String) -> Unit,
     onOpenWebUi: (String, String) -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -107,6 +114,28 @@ fun ModuleScreen(
         uiState.sortExecutableFirst,
     ) {
         sortPreferences.persist(uiState)
+    }
+
+    val scope = rememberCoroutineScope()
+    ObserveAsEvents(viewModel.event) { event ->
+        when (event) {
+            is ModuleViewModel.ModuleEvent.ShowSnackbar -> scope.launch {
+                snackbarHostState.showSnackbarEvent(
+                    message = event.message.getText(context.resources),
+                    duration = event.duration,
+                )
+            }
+        }
+    }
+    ObserveAsEvents(viewModel.baseEvent) { event ->
+        when (event) {
+            is BaseEvent.ShowSnackbar -> scope.launch {
+                snackbarHostState.showSnackbarEvent(
+                    message = event.message.getText(context.resources),
+                    duration = event.duration,
+                )
+            }
+        }
     }
 
     MiuixTheme {

@@ -82,13 +82,18 @@ import top.yukonga.miuix.kmp.icon.extended.Delete
 import top.yukonga.miuix.kmp.interfaces.ExperimentalScrollBarApi
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
+import io.github.seyud.weave.arch.BaseViewModel.BaseEvent
+import io.github.seyud.weave.ui.component.ObserveAsEvents
+import io.github.seyud.weave.ui.component.showSnackbarEvent
 import kotlinx.coroutines.launch
+import top.yukonga.miuix.kmp.basic.SnackbarHostState
 import io.github.seyud.weave.core.R as CoreR
 
 @Composable
 fun LogScreen(
     viewModel: LogViewModel,
     onNavigateBack: () -> Unit = {},
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -118,6 +123,27 @@ fun LogScreen(
 
     LaunchedEffect(pagerState.currentPage) {
         selectedTab = pagerState.currentPage
+    }
+
+    ObserveAsEvents(viewModel.event) { event ->
+        when (event) {
+            is LogViewModel.LogEvent.ShowSnackbar -> coroutineScope.launch {
+                snackbarHostState.showSnackbarEvent(
+                    message = event.message.getText(context.resources),
+                    duration = event.duration,
+                )
+            }
+        }
+    }
+    ObserveAsEvents(viewModel.baseEvent) { event ->
+        when (event) {
+            is BaseEvent.ShowSnackbar -> coroutineScope.launch {
+                snackbarHostState.showSnackbarEvent(
+                    message = event.message.getText(context.resources),
+                    duration = event.duration,
+                )
+            }
+        }
     }
 
     Scaffold(

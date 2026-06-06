@@ -16,15 +16,30 @@ import io.github.seyud.weave.core.model.su.SuLog
 import io.github.seyud.weave.core.repository.LogRepository
 import io.github.seyud.weave.core.utils.MediaStoreUtils
 import io.github.seyud.weave.core.utils.MediaStoreUtils.outputStream
-import io.github.seyud.weave.events.SnackbarEvent
+import io.github.seyud.weave.utils.TextHolder
+import io.github.seyud.weave.utils.asText
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import top.yukonga.miuix.kmp.basic.SnackbarDuration
 import java.io.FileInputStream
 
 class LogViewModel(
     private val repo: LogRepository
 ) : AsyncLoadViewModel() {
+
+    sealed interface LogEvent {
+        data class ShowSnackbar(
+            val message: TextHolder,
+            val duration: SnackbarDuration = SnackbarDuration.Short,
+        ) : LogEvent
+    }
+
+    private val _event = Channel<LogEvent>(Channel.BUFFERED)
+    val event: Flow<LogEvent> = _event.receiveAsFlow()
 
     private data class LoadResult(
         val magiskEntries: List<MagiskLogEntry>,
@@ -69,7 +84,7 @@ class LogViewModel(
             itemsState.addAll(result.suItems)
             hasLoadedOnce = true
         } catch (e: Throwable) {
-            SnackbarEvent(R.string.failure).publish()
+            _event.trySend(LogEvent.ShowSnackbar(R.string.failure.asText()))
         } finally {
             loadingState = false
         }
@@ -107,18 +122,18 @@ class LogViewModel(
                 ProcessBuilder("logcat", "-d").start()
                     .inputStream.reader().use { it.copyTo(file) }
             }
-            SnackbarEvent(logFile.toString()).publish()
+            _event.trySend(LogEvent.ShowSnackbar(logFile.toString().asText()))
         }
     }
 
     fun clearMagiskLog() = repo.clearMagiskLogs {
-        SnackbarEvent(R.string.logs_cleared).publish()
+        _event.trySend(LogEvent.ShowSnackbar(R.string.logs_cleared.asText()))
         startLoading()
     }
 
     fun clearLog() = viewModelScope.launch {
         repo.clearLogs()
-        SnackbarEvent(R.string.logs_cleared).publish()
+        _event.trySend(LogEvent.ShowSnackbar(R.string.logs_cleared.asText()))
         startLoading()
     }
 }

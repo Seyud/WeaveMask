@@ -65,7 +65,6 @@ import io.github.seyud.weave.core.ktx.toast
 import io.github.seyud.weave.core.ktx.writeTo
 import io.github.seyud.weave.core.tasks.AppMigration
 import io.github.seyud.weave.core.utils.RootUtils
-import io.github.seyud.weave.events.SnackbarEvent
 import io.github.seyud.weave.ui.component.MiuixConfirmDialog
 import io.github.seyud.weave.ui.dialog.WeaveDialog
 import io.github.seyud.weave.ui.dialog.WeaveDialogHost
@@ -91,7 +90,6 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SnackbarHostState
-import top.yukonga.miuix.kmp.basic.SnackbarResult
 import java.io.File
 import java.io.IOException
 import io.github.seyud.weave.core.R as CoreR
@@ -579,31 +577,8 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
         }
     }
 
-    /**
-     * 处理 UI 事件
-     *
-     * @param event 要处理的事件
-     */
-    fun showSnackbar(event: SnackbarEvent) {
-        lifecycleScope.launch {
-            while (true) {
-                val current = snackbarHostState.newestSnackbarData() ?: break
-                current.dismiss()
-            }
-            val result = snackbarHostState.showSnackbar(
-                message = event.resolveMessage(this@MainActivity),
-                actionLabel = event.actionLabel,
-                duration = event.resolveDuration(),
-            )
-            if (result == SnackbarResult.ActionPerformed) {
-                event.onActionPerformed?.invoke()
-            }
-        }
-    }
-
     override fun onUiEventDispatched(event: UiEvent) {
         when (event) {
-            is SnackbarEvent -> showSnackbar(event)
             is ContextExecutor -> event(this)
             is ActivityExecutor -> event(this)
             else -> Unit

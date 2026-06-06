@@ -21,10 +21,16 @@ import io.github.seyud.weave.ui.util.attachBarBlurBackdrop
 import io.github.seyud.weave.ui.util.barBlurContainerColor
 import io.github.seyud.weave.ui.util.defaultBarBlur
 import io.github.seyud.weave.ui.util.rememberBarBlurBackdrop
+import io.github.seyud.weave.arch.BaseViewModel.BaseEvent
+import io.github.seyud.weave.ui.component.ObserveAsEvents
+import io.github.seyud.weave.ui.component.showSnackbarEvent
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
+import top.yukonga.miuix.kmp.basic.SnackbarHostState
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import io.github.seyud.weave.core.R as CoreR
 
 @Composable
@@ -37,6 +43,7 @@ fun SettingsScreen(
     onNavigateToDenyListConfig: () -> Unit,
     onSuperuserModeChanged: () -> Unit,
     onNavigateToColorPalette: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -56,6 +63,28 @@ fun SettingsScreen(
             viewModel.onNavigateToLog = null
             viewModel.onNavigateToDenyListConfig = null
             viewModel.onSuperuserModeChanged = null
+        }
+    }
+
+    val scope = rememberCoroutineScope()
+    ObserveAsEvents(viewModel.event) { event ->
+        when (event) {
+            is SettingsViewModel.SettingsEvent.ShowSnackbar -> scope.launch {
+                snackbarHostState.showSnackbarEvent(
+                    message = event.message.getText(context.resources),
+                    duration = event.duration,
+                )
+            }
+        }
+    }
+    ObserveAsEvents(viewModel.baseEvent) { event ->
+        when (event) {
+            is BaseEvent.ShowSnackbar -> scope.launch {
+                snackbarHostState.showSnackbarEvent(
+                    message = event.message.getText(context.resources),
+                    duration = event.duration,
+                )
+            }
         }
     }
 

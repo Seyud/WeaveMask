@@ -319,7 +319,8 @@ fun MainScreen(
                                 logViewModel = logViewModel,
                                 initialMainTab = rememberedMainTab,
                                 onCurrentTabChanged = { rememberedMainTab = it },
-                                onSnackbarBottomPaddingChanged = { snackbarBottomPadding = it }
+                                onSnackbarBottomPaddingChanged = { snackbarBottomPadding = it },
+                                snackbarHostState = snackbarHostState
                             )
                         }
                         entry<Route.Install> {
@@ -354,13 +355,15 @@ fun MainScreen(
                                 viewModel = flashViewModel,
                                 action = key.action,
                                 additionalData = uriArgs,
-                                onNavigateBack = { navigator.pop() }
+                                onNavigateBack = { navigator.pop() },
+                                snackbarHostState = snackbarHostState
                             )
                         }
                         entry<Route.Log> {
                             LogScreen(
                                 viewModel = logViewModel,
-                                onNavigateBack = { navigator.pop() }
+                                onNavigateBack = { navigator.pop() },
+                                snackbarHostState = snackbarHostState
                             )
                         }
                         entry<Route.ModuleRepoList> {
@@ -485,6 +488,7 @@ private fun MainTabScreen(
     initialMainTab: Int,
     onCurrentTabChanged: (Int) -> Unit,
     onSnackbarBottomPaddingChanged: (androidx.compose.ui.unit.Dp) -> Unit,
+    snackbarHostState: SnackbarHostState,
 ) {
     val context = LocalContext.current
     val enableBlur = LocalEnableBlur.current
@@ -687,12 +691,14 @@ private fun MainTabScreen(
                         },
                         onNavigateToAbout = {
                             navigator.push(Route.About)
-                        }
+                        },
+                        snackbarHostState = snackbarHostState
                     )
                     1 -> if (isCurrentPage || contentReady) SuperuserScreen(
                         viewModel = superuserViewModel,
                         contentBottomPadding = contentBottomPadding,
                         isActive = isCurrentPage,
+                        snackbarHostState = snackbarHostState
                     )
                     2 -> if (isCurrentPage || contentReady) ModuleScreen(
                         viewModel = moduleViewModel,
@@ -714,7 +720,8 @@ private fun MainTabScreen(
                                     .putExtra("id", id)
                                     .putExtra("name", name)
                             )
-                        }
+                        },
+                        snackbarHostState = snackbarHostState
                     )
                     3 -> if (isCurrentPage || contentReady) SettingsScreen(
                         viewModel = settingsViewModel,
@@ -735,7 +742,8 @@ private fun MainTabScreen(
                         },
                         onNavigateToColorPalette = {
                             navigator.push(Route.ColorPalette)
-                        }
+                        },
+                        snackbarHostState = snackbarHostState
                     )
                 }
             }

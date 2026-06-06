@@ -21,16 +21,32 @@ import io.github.seyud.weave.core.tasks.MagiskInstaller
 import io.github.seyud.weave.core.utils.MediaStoreUtils
 import io.github.seyud.weave.core.utils.MediaStoreUtils.displayName
 import io.github.seyud.weave.core.utils.MediaStoreUtils.outputStream
-import io.github.seyud.weave.events.SnackbarEvent
+import io.github.seyud.weave.utils.TextHolder
+import io.github.seyud.weave.utils.asText
 import com.topjohnwu.superuser.CallbackList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import top.yukonga.miuix.kmp.basic.SnackbarDuration
 
 class FlashViewModel : BaseViewModel() {
+
+    sealed interface FlashEvent {
+        data class ShowSnackbar(
+            val message: TextHolder,
+            val duration: SnackbarDuration = SnackbarDuration.Short,
+        ) : FlashEvent
+    }
+
+    private val _event = Channel<FlashEvent>(Channel.BUFFERED)
+    val event: Flow<FlashEvent> = _event.receiveAsFlow()
+
     companion object {
         private const val MODULE_INSTALL_BANNER = """
             __        __                    __  __           _
@@ -202,7 +218,7 @@ class FlashViewModel : BaseViewModel() {
                     }
                 }
             }
-            SnackbarEvent(file.toString()).publish()
+            _event.trySend(FlashEvent.ShowSnackbar(file.toString().asText()))
         }
     }
 

@@ -13,16 +13,20 @@ import io.github.seyud.weave.core.tasks.AppMigration
 import io.github.seyud.weave.core.utils.RootUtils
 import io.github.seyud.weave.events.AddHomeIconEvent
 import io.github.seyud.weave.events.AuthEvent
-import io.github.seyud.weave.events.SnackbarEvent
 import io.github.seyud.weave.ui.superuser.SuperuserModeState
 import io.github.seyud.weave.ui.superuser.SuperuserModeSyncCoordinator
 import io.github.seyud.weave.ui.superuser.normalizeSuperuserListMode
 import io.github.seyud.weave.ui.superuser.superuserModeUsesWhitelist
+import io.github.seyud.weave.utils.TextHolder
+import io.github.seyud.weave.utils.asText
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import top.yukonga.miuix.kmp.basic.SnackbarDuration
 import io.github.seyud.weave.core.R as CoreR
 
 /**
@@ -33,6 +37,16 @@ class SettingsViewModel internal constructor(
     private val superuserModeSync: SuperuserModeSyncCoordinator = SuperuserModeSyncCoordinator(),
     private val whitelistModeDenyListCoordinator: WhitelistModeDenyListCoordinator = WhitelistModeDenyListCoordinator(),
 ) : BaseViewModel() {
+
+    sealed interface SettingsEvent {
+        data class ShowSnackbar(
+            val message: TextHolder,
+            val duration: SnackbarDuration = SnackbarDuration.Short,
+        ) : SettingsEvent
+    }
+
+    private val _event = Channel<SettingsEvent>(Channel.BUFFERED)
+    val event: Flow<SettingsEvent> = _event.receiveAsFlow()
 
     private data class LocalDenyListSyncRequest(
         val serial: Int,
@@ -167,7 +181,7 @@ class SettingsViewModel internal constructor(
                         Config.suListMode = request.fallbackMode
                         _superuserListMode.value = request.fallbackMode
                         onSuperuserModeChanged?.invoke()
-                        SnackbarEvent("Superuser mode sync failed").publish()
+                        _event.trySend(SettingsEvent.ShowSnackbar("Superuser mode sync failed".asText()))
                     }
                     setPendingLocalDenyListSyncRequest(null)
                 }

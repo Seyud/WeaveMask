@@ -25,15 +25,28 @@ import io.github.seyud.weave.core.ktx.toast
 import io.github.seyud.weave.core.repository.NetworkService
 import io.github.seyud.weave.dialog.EnvFixDialog
 import io.github.seyud.weave.dialog.UninstallDialog
-import io.github.seyud.weave.events.SnackbarEvent
 import io.github.seyud.weave.utils.TextHolder
 import io.github.seyud.weave.utils.asText
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
+import top.yukonga.miuix.kmp.basic.SnackbarDuration
 import kotlin.math.roundToInt
 import io.github.seyud.weave.core.R as CoreR
 
 class HomeViewModel(
     private val svc: NetworkService
 ) : AsyncLoadViewModel() {
+
+    sealed interface HomeEvent {
+        data class ShowSnackbar(
+            val message: TextHolder,
+            val duration: SnackbarDuration = SnackbarDuration.Short,
+        ) : HomeEvent
+    }
+
+    private val _event = Channel<HomeEvent>(Channel.BUFFERED)
+    val event: Flow<HomeEvent> = _event.receiveAsFlow()
 
     enum class State {
         LOADING, INVALID, OUTDATED, UP_TO_DATE
@@ -193,13 +206,13 @@ class HomeViewModel(
     fun onDeletePressed() = showUninstallDialog()
 
     fun onManagerPressed() = when (appState) {
-        State.LOADING -> SnackbarEvent(CoreR.string.loading).publish()
-        State.INVALID -> SnackbarEvent(CoreR.string.no_connection).publish()
+        State.LOADING -> _event.trySend(HomeEvent.ShowSnackbar(CoreR.string.loading.asText()))
+        State.INVALID -> _event.trySend(HomeEvent.ShowSnackbar(CoreR.string.no_connection.asText()))
         else -> withExternalRW {
             withInstallPermission {
                 val updateInfo = managerUpdateSnapshot.takeIf { it.hasValidDownload }
                 if (updateInfo == null) {
-                    SnackbarEvent(CoreR.string.no_connection).publish()
+                    _event.trySend(HomeEvent.ShowSnackbar(CoreR.string.no_connection.asText()))
                     return@withInstallPermission
                 }
                 managerInstallDialogState = ManagerInstallDialogState(

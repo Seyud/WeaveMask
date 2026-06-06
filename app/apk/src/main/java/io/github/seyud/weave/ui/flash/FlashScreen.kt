@@ -57,8 +57,14 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
+import io.github.seyud.weave.arch.BaseViewModel.BaseEvent
+import io.github.seyud.weave.ui.component.ObserveAsEvents
+import io.github.seyud.weave.ui.component.showSnackbarEvent
 import top.yukonga.miuix.kmp.icon.extended.Refresh
+import top.yukonga.miuix.kmp.basic.SnackbarHostState
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @Composable
 fun FlashScreen(
@@ -66,6 +72,7 @@ fun FlashScreen(
     action: String,
     additionalData: List<Uri>,
     onNavigateBack: () -> Unit = {},
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -90,6 +97,28 @@ fun FlashScreen(
     LaunchedEffect(Unit) {
         viewModel.prepareForCompose(action = action, uris = additionalData)
         viewModel.startFlashing()
+    }
+
+    val scope = rememberCoroutineScope()
+    ObserveAsEvents(viewModel.event) { event ->
+        when (event) {
+            is FlashViewModel.FlashEvent.ShowSnackbar -> scope.launch {
+                snackbarHostState.showSnackbarEvent(
+                    message = event.message.getText(context.resources),
+                    duration = event.duration,
+                )
+            }
+        }
+    }
+    ObserveAsEvents(viewModel.baseEvent) { event ->
+        when (event) {
+            is BaseEvent.ShowSnackbar -> scope.launch {
+                snackbarHostState.showSnackbarEvent(
+                    message = event.message.getText(context.resources),
+                    duration = event.duration,
+                )
+            }
+        }
     }
 
     Scaffold(

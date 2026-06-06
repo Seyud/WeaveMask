@@ -16,17 +16,22 @@ import io.github.seyud.weave.core.model.module.OnlineModule
 import io.github.seyud.weave.dialog.LocalModuleInstallDialog
 import io.github.seyud.weave.dialog.OnlineModuleInstallDialog
 import io.github.seyud.weave.events.GetContentEvent
-import io.github.seyud.weave.events.SnackbarEvent
+import io.github.seyud.weave.utils.TextHolder
+import io.github.seyud.weave.utils.asText
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
 import timber.log.Timber
+import top.yukonga.miuix.kmp.basic.SnackbarDuration
 import io.github.seyud.weave.core.R as CoreR
 
 /**
@@ -50,6 +55,16 @@ data class ModuleUiState(
  * 使用纯 Compose 状态管理驱动模块页状态
  */
 class ModuleViewModel : AsyncLoadViewModel() {
+
+    sealed interface ModuleEvent {
+        data class ShowSnackbar(
+            val message: TextHolder,
+            val duration: SnackbarDuration = SnackbarDuration.Short,
+        ) : ModuleEvent
+    }
+
+    private val _event = Channel<ModuleEvent>(Channel.BUFFERED)
+    val event: Flow<ModuleEvent> = _event.receiveAsFlow()
 
     val data get() = uri
 
@@ -330,7 +345,7 @@ class ModuleViewModel : AsyncLoadViewModel() {
                 loadChangelog(item)
             }
         } else {
-            SnackbarEvent(CoreR.string.no_connection).publish()
+            _event.trySend(ModuleEvent.ShowSnackbar(CoreR.string.no_connection.asText()))
         }
     }
 

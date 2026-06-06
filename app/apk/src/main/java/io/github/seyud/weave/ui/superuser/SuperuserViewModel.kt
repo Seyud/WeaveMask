@@ -20,21 +20,25 @@ import io.github.seyud.weave.core.utils.InstalledItemLoadResult
 import io.github.seyud.weave.core.utils.InstalledItemSource
 import io.github.seyud.weave.dialog.SuperuserRevokeDialog
 import io.github.seyud.weave.events.AuthEvent
-import io.github.seyud.weave.events.SnackbarEvent
 import io.github.seyud.weave.core.utils.InstalledPackageLoader
 import io.github.seyud.weave.core.utils.RootUtils
+import io.github.seyud.weave.utils.TextHolder
 import io.github.seyud.weave.utils.asText
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import top.yukonga.miuix.kmp.basic.SnackbarDuration
 import java.util.Locale
 
 @Stable
@@ -122,6 +126,18 @@ class SuperuserViewModel internal constructor(
     private val modeSync: SuperuserModeSyncCoordinator = SuperuserModeSyncCoordinator(),
     private val loadConfig: SuperuserLoadConfig = SuperuserLoadConfig(),
 ) : AsyncLoadViewModel() {
+
+    sealed interface SuperuserEvent {
+        data class ShowSnackbar(
+            val message: TextHolder,
+            val duration: SnackbarDuration = SnackbarDuration.Short,
+            val actionLabel: String? = null,
+            val onActionPerformed: (() -> Unit)? = null,
+        ) : SuperuserEvent
+    }
+
+    private val _event = Channel<SuperuserEvent>(Channel.BUFFERED)
+    val event: Flow<SuperuserEvent> = _event.receiveAsFlow()
 
     constructor(db: PolicyDao) : this(PolicyDaoSuperuserPolicyStore(db))
 
@@ -594,7 +610,7 @@ class SuperuserViewModel internal constructor(
                 R.string.su_snack_notif_off
             }
             publishFilteredPolicies()
-            SnackbarEvent(res.asText(entry.appName)).publish()
+            _event.trySend(SuperuserEvent.ShowSnackbar(res.asText(entry.appName)))
         }
     }
 
@@ -608,7 +624,7 @@ class SuperuserViewModel internal constructor(
                 R.string.su_snack_log_off
             }
             publishFilteredPolicies()
-            SnackbarEvent(res.asText(entry.appName)).publish()
+            _event.trySend(SuperuserEvent.ShowSnackbar(res.asText(entry.appName)))
         }
     }
 
@@ -643,7 +659,7 @@ class SuperuserViewModel internal constructor(
                     policy >= SuPolicy.ALLOW -> R.string.su_snack_grant
                     else -> R.string.su_snack_deny
                 }
-                SnackbarEvent(res.asText(entry.appName)).publish()
+                _event.trySend(SuperuserEvent.ShowSnackbar(res.asText(entry.appName)))
 
                 // 授权后验证 Root 是否生效
                 if (policy == SuPolicy.ALLOW) {
@@ -651,22 +667,24 @@ class SuperuserViewModel internal constructor(
                     val appName = entry.appName
                     val verified = verifyGrant(uid)
                     if (verified) {
-                        SnackbarEvent(R.string.su_verify_success.asText(appName)).publish()
+                        _event.trySend(SuperuserEvent.ShowSnackbar(R.string.su_verify_success.asText(appName)))
                     } else {
-                        SnackbarEvent(
-                            msg = R.string.su_verify_failed.asText(appName),
-                            duration = top.yukonga.miuix.kmp.basic.SnackbarDuration.Long,
-                            actionLabel = AppContext.getString(R.string.su_verify_retry),
-                            onActionPerformed = {
-                                viewModelScope.launch {
-                                    db.update(entry.item)
-                                    val retryResult = verifyGrant(uid)
-                                    val retryMsg = if (retryResult)
-                                        R.string.su_verify_success else R.string.su_verify_failed
-                                    SnackbarEvent(retryMsg.asText(appName)).publish()
+                        _event.trySend(
+                            SuperuserEvent.ShowSnackbar(
+                                message = R.string.su_verify_failed.asText(appName),
+                                duration = SnackbarDuration.Long,
+                                actionLabel = AppContext.getString(R.string.su_verify_retry),
+                                onActionPerformed = {
+                                    viewModelScope.launch {
+                                        db.update(entry.item)
+                                        val retryResult = verifyGrant(uid)
+                                        val retryMsg = if (retryResult)
+                                            R.string.su_verify_success else R.string.su_verify_failed
+                                        _event.trySend(SuperuserEvent.ShowSnackbar(retryMsg.asText(appName)))
+                                    }
                                 }
-                            }
-                        ).publish()
+                            )
+                        )
                     }
                 }
             }

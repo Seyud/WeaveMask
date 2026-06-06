@@ -1,20 +1,15 @@
 package io.github.seyud.weave.events
 
 import android.content.Context
-import androidx.annotation.StringRes
 import androidx.activity.ComponentActivity
 import io.github.seyud.weave.arch.ActivityExecutor
 import io.github.seyud.weave.arch.ContextExecutor
 import io.github.seyud.weave.arch.UiEvent
-import io.github.seyud.weave.ui.MainActivity
 import io.github.seyud.weave.core.base.ContentResultCallback
 import io.github.seyud.weave.core.base.IActivityExtension
 import io.github.seyud.weave.core.base.relaunch
 import io.github.seyud.weave.core.integration.AppShortcuts
 import io.github.seyud.weave.ui.dialog.WeaveDialog
-import io.github.seyud.weave.utils.TextHolder
-import io.github.seyud.weave.utils.asText
-import top.yukonga.miuix.kmp.basic.SnackbarDuration
 
 class PermissionEvent(
     private val permission: String,
@@ -64,37 +59,6 @@ class GetContentEvent(
 class AddHomeIconEvent : UiEvent(), ContextExecutor {
     override fun invoke(context: Context) {
         AppShortcuts.addHomeIcon(context)
-    }
-}
-
-class SnackbarEvent(
-    private val msg: TextHolder,
-    private val duration: SnackbarDuration = SnackbarDuration.Short,
-    val actionLabel: String? = null,
-    val onActionPerformed: (() -> Unit)? = null,
-) : UiEvent(), ActivityExecutor {
-
-    constructor(
-        @StringRes res: Int,
-        duration: SnackbarDuration = SnackbarDuration.Short,
-        actionLabel: String? = null,
-        onActionPerformed: (() -> Unit)? = null,
-    ) : this(res.asText(), duration, actionLabel, onActionPerformed)
-
-    constructor(
-        msg: String,
-        duration: SnackbarDuration = SnackbarDuration.Short,
-        actionLabel: String? = null,
-        onActionPerformed: (() -> Unit)? = null,
-    ) : this(msg.asText(), duration, actionLabel, onActionPerformed)
-
-    fun resolveMessage(activity: ComponentActivity): String =
-        msg.getText(activity.resources)
-
-    fun resolveDuration(): SnackbarDuration = duration
-
-    override fun invoke(activity: ComponentActivity) {
-        (activity as? MainActivity)?.showSnackbar(this)
     }
 }
 

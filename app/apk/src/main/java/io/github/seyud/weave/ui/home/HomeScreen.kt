@@ -47,8 +47,14 @@ import top.yukonga.miuix.kmp.basic.PopupPositionProvider
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import io.github.seyud.weave.arch.BaseViewModel.BaseEvent
+import io.github.seyud.weave.ui.component.ObserveAsEvents
+import io.github.seyud.weave.ui.component.showSnackbarEvent
+import top.yukonga.miuix.kmp.basic.SnackbarHostState
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @Composable
 fun HomeScreen(
@@ -57,6 +63,7 @@ fun HomeScreen(
     onNavigateToInstall: () -> Unit,
     onNavigateToUninstall: () -> Unit,
     onNavigateToAbout: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -100,6 +107,28 @@ fun HomeScreen(
         if (!hasStartedLoading) {
             hasStartedLoading = true
             viewModel.startLoading()
+        }
+    }
+
+    val scope = rememberCoroutineScope()
+    ObserveAsEvents(viewModel.event) { event ->
+        when (event) {
+            is HomeViewModel.HomeEvent.ShowSnackbar -> scope.launch {
+                snackbarHostState.showSnackbarEvent(
+                    message = event.message.getText(context.resources),
+                    duration = event.duration,
+                )
+            }
+        }
+    }
+    ObserveAsEvents(viewModel.baseEvent) { event ->
+        when (event) {
+            is BaseEvent.ShowSnackbar -> scope.launch {
+                snackbarHostState.showSnackbarEvent(
+                    message = event.message.getText(context.resources),
+                    duration = event.duration,
+                )
+            }
         }
     }
 

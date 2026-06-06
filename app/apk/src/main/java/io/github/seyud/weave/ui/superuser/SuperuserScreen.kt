@@ -108,9 +108,13 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import io.github.seyud.weave.arch.BaseViewModel.BaseEvent
+import io.github.seyud.weave.ui.component.ObserveAsEvents
+import io.github.seyud.weave.ui.component.showSnackbarEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import top.yukonga.miuix.kmp.basic.SnackbarHostState
 import kotlin.math.roundToInt
 
 /**
@@ -126,6 +130,7 @@ fun SuperuserScreen(
     viewModel: SuperuserViewModel,
     contentBottomPadding: Dp,
     isActive: Boolean,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -198,6 +203,32 @@ fun SuperuserScreen(
     LaunchedEffect(searchStatus.searchText) {
         if (uiState.query != searchStatus.searchText) {
             viewModel.setQuery(searchStatus.searchText)
+        }
+    }
+
+    val scope = rememberCoroutineScope()
+    ObserveAsEvents(viewModel.event) { event ->
+        when (event) {
+            is SuperuserViewModel.SuperuserEvent.ShowSnackbar -> scope.launch {
+                snackbarHostState.showSnackbarEvent(
+                    message = event.message.getText(context.resources),
+                    duration = event.duration,
+                    actionLabel = event.actionLabel,
+                    onActionPerformed = event.onActionPerformed,
+                )
+            }
+        }
+    }
+    ObserveAsEvents(viewModel.baseEvent) { event ->
+        when (event) {
+            is BaseEvent.ShowSnackbar -> scope.launch {
+                snackbarHostState.showSnackbarEvent(
+                    message = event.message.getText(context.resources),
+                    duration = event.duration,
+                    actionLabel = event.actionLabel,
+                    onActionPerformed = event.onActionPerformed,
+                )
+            }
         }
     }
 
