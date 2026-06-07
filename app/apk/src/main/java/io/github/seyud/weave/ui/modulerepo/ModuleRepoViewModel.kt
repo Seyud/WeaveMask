@@ -46,6 +46,7 @@ class ModuleRepoViewModel(
     }
 
     fun refresh(forceLoading: Boolean = false) {
+        if (uiState.isRefreshing) return
         val baseUrl = Config.moduleRepoBaseUrl
         viewModelScope.launch {
             uiState = uiState.copy(
