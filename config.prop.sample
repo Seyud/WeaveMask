@@ -9,6 +9,12 @@ version=string
 # Output path. Default: out
 outdir=string
 
+# sccache port. Default: 4226 (set if Hyper-V reserves it)
+sccachePort=number
+
+# sccache cache directory. Default: system default
+sccacheDir=path
+
 # List of ABIs to build, separated with ','
 # Default: armeabi-v7a,x86,arm64-v8a,x86_64
 abiList=[string]

@@ -23,3 +23,6 @@ app/gradle/gradle-daemon-jvm.properties
 website/node_modules
 website/docs/.vitepress/cache
 website/docs/.vitepress/dist
+
+# Python cache
+__pycache__/

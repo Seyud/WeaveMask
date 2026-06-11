@@ -65,6 +65,20 @@ def run_once(func):
     return wrapper
 
 
+def _read_config_prop():
+    props = {}
+    prop_file = Path(__file__).resolve().parent.parent / "config.prop"
+    if prop_file.exists():
+        for line in prop_file.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" in line:
+                key, _, value = line.partition("=")
+                props[key.strip()] = value.strip()
+    return props
+
+
 @run_once
 def ensure_toolchain():
     # Verify NDK install
@@ -78,8 +92,12 @@ def ensure_toolchain():
         os.environ["RUSTC_WRAPPER"] = sccache
         os.environ["NDK_CCACHE"] = sccache
         os.environ["CARGO_INCREMENTAL"] = "0"
-    if ccache := shutil.which("ccache"):
-        os.environ["NDK_CCACHE"] = ccache
+        if "SCCACHE_DIR" not in os.environ:
+            props = _read_config_prop()
+            if port := props.get("sccachePort", ""):
+                os.environ["SCCACHE_SERVER_PORT"] = port
+            if cache_dir := props.get("sccacheDir", ""):
+                os.environ["SCCACHE_DIR"] = cache_dir
 
 
 @run_once
