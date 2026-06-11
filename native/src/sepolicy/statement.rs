@@ -257,6 +257,7 @@ fn extract_token<'a>(s: &'a str, tokens: &mut Vec<Token<'a>>) {
         "type_member" => tokens.push(Token::TM),
         "genfscon" => tokens.push(Token::GF),
         "*" => tokens.push(Token::ST),
+        "-" => tokens.push(Token::HP),
         "" => {}
         _ => {
             if let Some(idx) = s.find('{') {
