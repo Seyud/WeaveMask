@@ -26,3 +26,6 @@ website/docs/.vitepress/dist
 
 # Python cache
 __pycache__/
+
+# Local development scripts (WSL2 AVD testing, etc.)
+scripts/local/

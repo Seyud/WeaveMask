@@ -4,6 +4,7 @@ import android.app.Instrumentation
 import android.app.UiAutomation
 import android.content.Context
 import android.content.Intent
+import androidx.annotation.Keep
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
@@ -13,6 +14,7 @@ import io.github.seyud.weave.core.utils.RootUtils
 import com.topjohnwu.superuser.Shell
 import org.junit.Assert.assertTrue
 
+@Keep
 interface BaseTest {
     val instrumentation: Instrumentation
         get() = InstrumentationRegistry.getInstrumentation()

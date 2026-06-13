@@ -283,16 +283,30 @@ class RootUtils(stub: Any?) : RootService() {
                 return false
             }
 
-            val task = bindTask ?: RootService.bindOrTask(
-                AppContext.intent<RootUtils>(),
-                UiThreadHandler.executor,
-                Connection,
-            )
-            bindTask = null
-            runCatching {
-                task?.let { shell.execTask(it) }
-            }.onFailure {
-                Timber.w(it, "Failed to execute RootService bind task")
+            if (ShellUtils.onMainThread()) {
+                val task = bindTask ?: RootService.bindOrTask(
+                    AppContext.intent<RootUtils>(),
+                    UiThreadHandler.executor,
+                    Connection,
+                )
+                bindTask = null
+                runCatching {
+                    task?.let { shell.execTask(it) }
+                }.onFailure {
+                    Timber.w(it, "Failed to execute RootService bind task")
+                }
+            } else {
+                UiThreadHandler.handler.post {
+                    runCatching {
+                        RootService.bindOrTask(
+                            AppContext.intent<RootUtils>(),
+                            UiThreadHandler.executor,
+                            Connection,
+                        )?.let { shell.execTask(it) }
+                    }.onFailure {
+                        Timber.w(it, "Failed to bind RootService from background thread")
+                    }
+                }
             }
 
             val deadline = SystemClock.elapsedRealtime() + timeoutMs

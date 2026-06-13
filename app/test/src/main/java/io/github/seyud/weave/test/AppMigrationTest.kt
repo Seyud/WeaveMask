@@ -88,7 +88,9 @@ class AppMigrationTest {
 
     private fun extractBundledStubApk(): File {
         val sourceDir = context.packageManager.getApplicationInfo(APP_PKG, 0).sourceDir
-        val output = File(context.cacheDir, "bundled-stub.apk")
+        val dataDir = File("/data/user/0/${context.packageName}").apply { mkdirs() }
+        val dir = File(dataDir, "files").apply { mkdirs() }
+        val output = File(dir, "bundled-stub.apk")
         val apk = java.util.zip.ZipFile(sourceDir)
         try {
             val entry = apk.getEntry("assets/stub.apk")
