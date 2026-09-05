@@ -11,24 +11,42 @@ from pathlib import Path
 from typing import NoReturn
 
 
+__all__ = [
+    "ondk_version",
+    "color_print",
+    "error",
+    "header",
+    "Paths",
+    "paths",
+    "run_once",
+    "ensure_toolchain",
+    "ensure_cargo",
+    "ensure_jdk",
+    "os_name",
+    "is_windows",
+    "EXE_EXT",
+    "no_color",
+    "cpu_count",
+]
+
 ondk_version = "r30.1"
 
 
-def color_print(code, str):
+def color_print(code, msg):
     if no_color:
-        print(str)
+        print(msg)
     else:
-        str = str.replace("\n", f"\033[0m\n{code}")
-        print(f"{code}{str}\033[0m")
+        msg = msg.replace("\n", f"\033[0m\n{code}")
+        print(f"{code}{msg}\033[0m")
 
 
-def error(str) -> NoReturn:
-    color_print("\033[41;39m", f"\n! {str}\n")
+def error(msg) -> NoReturn:
+    color_print("\033[41;39m", f"\n! {msg}\n")
     sys.exit(1)
 
 
-def header(str):
-    color_print("\033[44;39m", f"\n{str}\n")
+def header(msg):
+    color_print("\033[44;39m", f"\n{msg}\n")
 
 
 class Paths:
@@ -57,6 +75,7 @@ def paths() -> Paths:
 
 
 def run_once(func):
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if not wrapper.has_run:
             wrapper.has_run = True
@@ -89,6 +108,7 @@ def ensure_toolchain():
     except:
         error('Unmatched NDK. Please install/upgrade NDK with "build.py ndk"')
 
+    # Use sccache for both Rust and C/C++ by default
     if sccache := shutil.which("sccache"):
         os.environ["RUSTC_WRAPPER"] = sccache
         os.environ["NDK_CCACHE"] = sccache
@@ -110,6 +130,10 @@ def ensure_toolchain():
             if cache_dir := props.get("sccacheDir", ""):
                 os.environ["SCCACHE_DIR"] = cache_dir
 
+    # Prefer ccache over sccache for NDK builds when both are installed
+    if ccache := shutil.which("ccache"):
+        os.environ["NDK_CCACHE"] = ccache
+
 
 @run_once
 def ensure_cargo():
@@ -123,6 +147,20 @@ def ensure_cargo():
         os.environ["PATH"] = (
             f"{paths().rust_sysroot / 'bin'}{os.pathsep}{os.environ['PATH']}"
         )
+        # Cargo calls executables in $RUSTROOT/lib/rustlib/$TRIPLE/bin, we need
+        # to make sure the runtime linker also search $RUSTROOT/lib for libraries.
+        # This is only required on Unix, as Windows search dlls from PATH.
+        rust_lib = str(paths().rust_sysroot / "lib")
+        if os_name == "darwin":
+            cur = os.environ.get("DYLD_FALLBACK_LIBRARY_PATH")
+            os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = (
+                f"{rust_lib}{os.pathsep}{cur}" if cur else rust_lib
+            )
+        elif os_name == "linux":
+            cur = os.environ.get("LD_LIBRARY_PATH")
+            os.environ["LD_LIBRARY_PATH"] = (
+                f"{rust_lib}{os.pathsep}{cur}" if cur else rust_lib
+            )
 
     # On Windows, the rustup proxy launches ONDK cargo.exe from a different
     # working directory, causing DLLs like libLLVM-21.dll and libc++.dll in
@@ -132,14 +170,6 @@ def ensure_cargo():
         os.environ["PATH"] = (
             f"{paths().rust_sysroot / 'bin'}{os.pathsep}{os.environ['PATH']}"
         )
-
-    # Cargo calls executables in $RUSTROOT/lib/rustlib/$TRIPLE/bin, we need
-    # to make sure the runtime linker also search $RUSTROOT/lib for libraries.
-    # This is only required on Unix, as Windows search dlls from PATH.
-    if os_name == "darwin":
-        os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = str(paths().rust_sysroot / "lib")
-    elif os_name == "linux":
-        os.environ["LD_LIBRARY_PATH"] = str(paths().rust_sysroot / "lib")
 
 
 @run_once
@@ -183,8 +213,8 @@ if os_name != "linux" and os_name != "darwin":
     os_name = "windows"
 EXE_EXT = ".exe" if is_windows else ""
 
-no_color = False
-if is_windows:
+no_color = "NO_COLOR" in os.environ or not sys.stdout.isatty()
+if is_windows and not no_color:
     try:
         import colorama
 
@@ -201,6 +231,10 @@ cpu_count = multiprocessing.cpu_count()
 
 # When directly invoked, make it a command wrapper
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: env.py <command> [args...]")
+        sys.exit(1)
     ensure_cargo()
     ensure_jdk()
-    subprocess.run(sys.argv[1:])
+    proc = subprocess.run(sys.argv[1:])
+    sys.exit(proc.returncode)
