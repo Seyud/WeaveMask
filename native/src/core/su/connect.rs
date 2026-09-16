@@ -6,16 +6,36 @@ use crate::ffi::{SuPolicy, SuRequest, get_magisk_tmp};
 use crate::socket::IpcRead;
 use ExtraVal::{Bool, Int, IntList, Str};
 use base::{
-    BytesExt, FileAttr, LibcReturn, LoggedResult, ResultExt, Utf8CStrBuf, cstr, fork_dont_care,
+    BytesExt, FileAttr, LibcReturn, LoggedResult, ResultExt, Utf8CStrBuf, cstr, error, fork_dont_care,
 };
 use nix::fcntl::OFlag;
 use nix::poll::{PollFd, PollFlags, PollTimeout};
+use nix::sys::signal::SigSet;
 use num_traits::AsPrimitive;
 use std::fmt::Write;
 use std::fs::File;
 use std::os::fd::AsFd;
 use std::os::unix::net::UCred;
+use std::os::unix::process::CommandExt;
 use std::process::{Command, exit};
+
+fn app_process() -> Command {
+    let mut cmd = Command::new("/system/bin/app_process");
+    // daemon thread blocks all signals, unblock it before starting app_process
+    unsafe {
+        cmd.pre_exec(|| SigSet::empty().thread_set_mask().map_err(Into::into));
+    }
+    cmd
+}
+
+fn timeout_app_process() -> Command {
+    let mut cmd = Command::new("/system/bin/timeout");
+    // daemon thread blocks all signals, unblock it before starting app_process
+    unsafe {
+        cmd.pre_exec(|| SigSet::empty().thread_set_mask().map_err(Into::into));
+    }
+    cmd
+}
 
 struct Extra<'a> {
     key: &'static str,
@@ -110,7 +130,7 @@ impl SuAppContext<'_> {
             // arrives and `.output()` below would block forever, leaking one
             // ~150MB orphaned app_process per su session. Bound it hard:
             // SIGTERM at 20s, SIGKILL 5s later.
-            let mut cmd = Command::new("/system/bin/timeout");
+            let mut cmd = timeout_app_process();
             cmd.args([
                 "-k",
                 "5",
@@ -148,7 +168,7 @@ impl SuAppContext<'_> {
             return;
         }
 
-        let mut cmd = Command::new("/system/bin/app_process");
+        let mut cmd = app_process();
         cmd.args([
             "/system/bin",
             "com.android.commands.am.Am",
@@ -170,15 +190,11 @@ impl SuAppContext<'_> {
         extras.iter().for_each(|e| e.add_intent(&mut cmd));
         cmd.env("CLASSPATH", "/system/framework/am.jar");
 
-        // Sometimes `am start` will fail right after boot; retry a few times
-        // with backoff instead of looping forever.
-        for _ in 0..5 {
-            if let Ok(output) = cmd.output()
-                && !output.stdout.is_empty()
-            {
-                return;
-            }
-            std::thread::sleep(std::time::Duration::from_secs(2));
+        // Async start activity
+        if fork_dont_care() == 0 {
+            let err = cmd.exec();
+            error!("exec app_process: {err}");
+            exit(1);
         }
     }
 
