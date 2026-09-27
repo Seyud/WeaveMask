@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,7 +57,6 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Delete
 import top.yukonga.miuix.kmp.icon.extended.Hide
-import top.yukonga.miuix.kmp.icon.extended.Play
 import top.yukonga.miuix.kmp.icon.extended.Show
 import top.yukonga.miuix.kmp.icon.extended.Undo
 import top.yukonga.miuix.kmp.icon.extended.UploadCloud
@@ -337,7 +337,7 @@ internal fun ModuleItem(
                             if (compactActionButtons) {
                                 Icon(
                                     modifier = Modifier.size(18.dp),
-                                    imageVector = MiuixIcons.Play,
+                                    imageVector = Icons.Rounded.PlayArrow,
                                     tint = actionIconTint,
                                     contentDescription = stringResource(CoreR.string.module_action),
                                 )
@@ -349,7 +349,7 @@ internal fun ModuleItem(
                                 ) {
                                     Icon(
                                         modifier = Modifier.size(18.dp),
-                                        imageVector = MiuixIcons.Play,
+                                        imageVector = Icons.Rounded.PlayArrow,
                                         tint = actionIconTint,
                                         contentDescription = stringResource(CoreR.string.module_action),
                                     )
