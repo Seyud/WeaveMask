@@ -123,7 +123,15 @@ impl MagiskD {
     }
 
     fn app_notify(&self, cred: &UCred, info: &SuInfo, request: &SuRequest) {
-        let command = &request.command.join(" ");
+        let mut command = request.command.join(" ");
+        let mut legacy_cmd = false;
+        if request.command.len() >= 4
+            && request.command[1] == "-c"
+            && !request.command[2].contains(b" ")
+        {
+            command = format!("(Syntax Error) {}", command);
+            legacy_cmd = true;
+        }
         let extras = [
             Extra {
                 key: "from.uid",
@@ -155,7 +163,11 @@ impl MagiskD {
             },
             Extra {
                 key: "command",
-                value: Str(command),
+                value: Str(&command),
+            },
+            Extra {
+                key: "legacy_cmd",
+                value: Bool(legacy_cmd),
             },
             Extra {
                 key: "notify",
