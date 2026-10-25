@@ -369,8 +369,8 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
         showUnsupportedMessage()
         // 询问是否创建主屏幕快捷方式
 
-        // 请求通知权限（用于后台更新检查）
-        if (Config.checkUpdate) {
+        // 请求通知权限（用于后台更新检查）；仅在首次创建时请求，旋转等重建不重复打扰
+        if (savedInstanceState == null && Config.checkUpdate) {
             withPermission(Manifest.permission.POST_NOTIFICATIONS) {
                 Config.checkUpdate = it
             }

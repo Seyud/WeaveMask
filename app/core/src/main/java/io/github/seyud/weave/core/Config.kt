@@ -23,7 +23,6 @@ object Config : PreferenceConfig, DBConfig {
 
     object Key {
         // db configs
-        const val ROOT_ACCESS = "root_access"
         const val SU_MULTIUSER_MODE = "multiuser_mode"
         const val SU_MNT_NS = "mnt_ns"
         const val SU_BIOMETRIC = "su_biometric"
@@ -109,10 +108,6 @@ object Config : PreferenceConfig, DBConfig {
         const val CUSTOM_CHANNEL = 3
 
         // root access mode
-        const val ROOT_ACCESS_DISABLED = 0
-        const val ROOT_ACCESS_APPS_ONLY = 1
-        const val ROOT_ACCESS_ADB_ONLY = 2
-        const val ROOT_ACCESS_APPS_AND_ADB = 3
 
         // su multiuser
         const val MULTIUSER_MODE_OWNER_ONLY = 0
@@ -226,7 +221,6 @@ object Config : PreferenceConfig, DBConfig {
     var suDefaultTimeout by preferenceStrInt(Key.SU_REQUEST_TIMEOUT, 10)
     var suAutoResponse by preferenceStrInt(Key.SU_AUTO_RESPONSE, Value.SU_PROMPT)
     var suNotification by preferenceStrInt(Key.SU_NOTIFICATION, Value.NOTIFICATION_TOAST)
-    var rootMode by dbSettings(Key.ROOT_ACCESS, Value.ROOT_ACCESS_APPS_AND_ADB)
     var suMntNamespaceMode by dbSettings(Key.SU_MNT_NS, Value.NAMESPACE_MODE_REQUESTER)
     var suMultiuserMode by dbSettings(Key.SU_MULTIUSER_MODE, Value.MULTIUSER_MODE_OWNER_ONLY)
     private var suBiometric by dbSettings(Key.SU_BIOMETRIC, false)

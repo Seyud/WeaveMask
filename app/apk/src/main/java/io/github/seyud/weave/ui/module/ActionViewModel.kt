@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.topjohnwu.superuser.CallbackList
 import com.topjohnwu.superuser.Shell
 import io.github.seyud.weave.arch.BaseViewModel
+import io.github.seyud.weave.core.ktx.shellQuoted
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,9 +40,9 @@ class ActionViewModel : BaseViewModel() {
      * 启动模块 action。同一模块仍在运行时直接返回（保持既有输出流），
      * 其余情况清空旧状态后重新执行。
      */
-    fun startRunAction(moduleId: String) {
-        if (runningModuleId == moduleId && _actionState.value == ActionState.RUNNING) return
-        runningModuleId = moduleId
+    fun startRunAction(moduleDir: String) {
+        if (runningModuleId == moduleDir && _actionState.value == ActionState.RUNNING) return
+        runningModuleId = moduleDir
         _console.value = emptyList()
         synchronized(logItems) { logItems.clear() }
         _actionState.value = ActionState.RUNNING
@@ -57,7 +58,12 @@ class ActionViewModel : BaseViewModel() {
         viewModelScope.launch {
             try {
                 val success = withContext(Dispatchers.IO) {
-                    Shell.cmd("run_action '$moduleId'")
+                    // Run in BusyBox ash with standalone mode, like every other script in the
+                    // context of Magisk; the manager shell itself is /system/bin/sh.
+                    val cmd = "run_action ${moduleDir.shellQuoted()}"
+                    Shell.cmd(
+                        "ASH_STANDALONE=1 \$(magisk --path)/.magisk/busybox/busybox sh -c ${cmd.shellQuoted()}"
+                    )
                         .to(outItems, logItems)
                         .exec().isSuccess
                 }

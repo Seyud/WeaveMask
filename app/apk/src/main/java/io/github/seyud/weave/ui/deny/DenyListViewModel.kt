@@ -211,10 +211,24 @@ class DenyListViewModel : AsyncLoadViewModel() {
         }
     }
 
+    private fun removeCommand(process: ProcessInfo): String {
+        if (!process.isIsolated) return "magisk --denylist rm ${process.packageName} '${process.name}'"
+        // Isolated processes are matched by name prefix. Older versions of the app added one
+        // entry per isolated service (e.g. "com.foo:com.foo.Service") instead of the prefix
+        // itself, so remove every entry starting with the prefix.
+        return "magisk --denylist ls | while IFS='|' read -r pkg proc; do " +
+            "[ \"\$pkg\" = $ISOLATED_MAGIC ] && case \"\$proc\" in '${process.name}'*) " +
+            "magisk --denylist rm $ISOLATED_MAGIC \"\$proc\";; esac; done"
+    }
+
     fun toggleProcess(packageName: String, process: ProcessInfo, enabled: Boolean) {
         if (process.isEnabled == enabled) return
-        val arg = if (enabled) "add" else "rm"
-        Shell.cmd("magisk --denylist $arg ${process.packageName} '${process.name}'").submit()
+        val cmd = if (enabled) {
+            "magisk --denylist add ${process.packageName} '${process.name}'"
+        } else {
+            removeCommand(process)
+        }
+        Shell.cmd(cmd).submit()
         _processCache.update { cache ->
             cache + (packageName to cache[packageName].orEmpty().map {
                 if (it.name == process.name && it.packageName == process.packageName) {
@@ -263,7 +277,7 @@ class DenyListViewModel : AsyncLoadViewModel() {
     private fun disableApp(packageName: String, processes: List<ProcessInfo>) {
         Shell.cmd("magisk --denylist rm $packageName").submit()
         processes.filter { it.isIsolated && it.isEnabled }.forEach { process ->
-            Shell.cmd("magisk --denylist rm ${process.packageName} '${process.name}'").submit()
+            Shell.cmd(removeCommand(process)).submit()
         }
         _processCache.update { cache ->
             cache + (packageName to cache[packageName].orEmpty().map { it.copy(isEnabled = false) })

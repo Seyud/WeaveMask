@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AdminPanelSettings
 import androidx.compose.material.icons.rounded.FolderSpecial
 import androidx.compose.material.icons.rounded.Group
 import androidx.compose.material.icons.rounded.Notifications
@@ -54,29 +53,6 @@ internal fun UpdateChannelSelectorItem(
     )
 }
 
-@Composable
-internal fun AccessModeSelectorItem(res: Resources) {
-    val entries = remember(res) { res.getStringArray(CoreR.array.su_access) }
-    var selected by rememberSaveable { mutableIntStateOf(Config.rootMode) }
-
-    OverlayDropdownPreference(
-        title = stringResource(CoreR.string.superuser_access),
-        items = entries.toList(),
-        selectedIndex = selected.coerceIn(0, entries.size - 1),
-        onSelectedIndexChange = { index ->
-            Config.rootMode = index
-            selected = index
-        },
-        startAction = {
-            Icon(
-                Icons.Rounded.AdminPanelSettings,
-                modifier = Modifier.padding(end = 6.dp),
-                contentDescription = null,
-                tint = colorScheme.onBackground,
-            )
-        },
-    )
-}
 
 @Composable
 internal fun SuperuserModeSelectorItem(

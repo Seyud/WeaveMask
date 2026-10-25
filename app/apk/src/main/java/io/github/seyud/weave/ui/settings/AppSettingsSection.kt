@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import android.Manifest
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
@@ -20,6 +21,8 @@ import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.ui.unit.dp
 import io.github.seyud.weave.core.Config
+import io.github.seyud.weave.core.base.IActivityExtension
+import io.github.seyud.weave.core.ktx.unwrap
 import io.github.seyud.weave.core.Info
 import io.github.seyud.weave.core.utils.MediaStoreUtils
 import top.yukonga.miuix.kmp.basic.Card
@@ -95,9 +98,17 @@ internal fun AppSettingsSection(
             title = stringResource(CoreR.string.settings_check_update_title),
             summary = stringResource(CoreR.string.settings_check_update_summary),
             checked = checkUpdateEnabled,
-            onCheckedChange = {
-                Config.checkUpdate = it
-                checkUpdateEnabled = it
+            onCheckedChange = { enabled ->
+                if (enabled) {
+                    val extActivity = context.unwrap() as? IActivityExtension
+                    extActivity?.withPermission(Manifest.permission.POST_NOTIFICATIONS) { granted ->
+                        Config.checkUpdate = granted
+                        checkUpdateEnabled = granted
+                    }
+                } else {
+                    Config.checkUpdate = false
+                    checkUpdateEnabled = false
+                }
             },
             startAction = {
                 Icon(

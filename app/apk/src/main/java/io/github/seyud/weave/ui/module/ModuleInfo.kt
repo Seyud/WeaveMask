@@ -15,6 +15,8 @@ import io.github.seyud.weave.utils.asText
 @Immutable
 data class ModuleInfo(
     val id: String,
+    /** 模块目录名；模块 action 以目录而非 module.prop 的 id 定位（两者可能不同） */
+    val dirName: String,
     val name: String,
     val author: String,
     val version: String,
@@ -100,6 +102,7 @@ data class ModuleInfo(
         fun from(localModule: LocalModule): ModuleInfo {
             return ModuleInfo(
                 id = localModule.id,
+                dirName = localModule.base.name,
                 name = localModule.name,
                 author = localModule.author,
                 version = localModule.version,

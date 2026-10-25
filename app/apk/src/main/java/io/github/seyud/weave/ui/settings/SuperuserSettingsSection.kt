@@ -149,7 +149,6 @@ internal fun SuperuserSettingsSection(
             },
         )
 
-        AccessModeSelectorItem(res = res)
         MultiuserModeSelectorItem(res = res)
         MountNamespaceModeSelectorItem(res = res)
         AutomaticResponseSelectorItem(res = res, viewModel = viewModel)
