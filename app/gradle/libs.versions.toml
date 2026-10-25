@@ -1,17 +1,17 @@
 [versions]
-kotlin = "2.4.10"
-android = "9.3.1"
-android-tools = "32.3.1"
-ksp = "2.3.11"
+kotlin = "2.4.20"
+android = "9.4.1"
+android-tools = "32.4.1"
+ksp = "2.3.12"
 rikka = "1.3.0"
 parcelablelist = "2.0.1"
 navigation = "2.9.8"
-navigation3 = "1.1.6"
+navigation3 = "1.1.7"
 navigationevent = "1.1.2"
 libsu = "6.0.0"
 okhttp = "5.5.0"
 retrofit = "3.0.0"
-room = "2.8.4"
+room = "2.8.5"
 miuix = "0.9.3"
 hiddenapibypass = "6.1"
 composeBom = "2026.08.00"
@@ -43,7 +43,7 @@ navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-kt
 navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigation" }
 navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
 navigationevent-compose = { module = "androidx.navigationevent:navigationevent-compose", version.ref = "navigationevent" }
-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version = "2.10.0" }
+lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version = "2.11.0" }
 profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version = "1.4.1" }
 recyclerview = { module = "androidx.recyclerview:recyclerview", version = "1.4.0" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }

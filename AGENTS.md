@@ -32,7 +32,7 @@ CI uses `python build.py -v -c .github/ci.prop all` (arm64-v8a only).
 - The Gradle project root is **`app/`**, not the repo root. `gradlew`/`gradlew.bat` live in `app/` and must be run with `app/` as the working directory. Running from the repo root fails with: `Directory '<repo>' does not contain a Gradle build.`
 - The main app module was renamed to **`:apk`** (root project name is still `Magisk`, per `app/settings.gradle.kts`). Upstream Magisk's `:app:*` task names do **not** exist here — `:app:assembleRelease` fails with "project 'app' not found". Use `:apk:assembleRelease` / `:apk:assembleDebug`.
 - Verified full combo: `cd app && ./gradlew :apk:assembleRelease :apk:assembleDebug` (both variants; release runs R8).
-- Toolchain (after the Gradle 9.6.1 sync): Gradle 9.6.1, AGP 9.3.1, Kotlin 2.4.10, KSP 2.3.10 — declared in `app/gradle/libs.versions.toml` / `app/gradle/wrapper/gradle-wrapper.properties`.
+- Toolchain (after the v31.1 sync): Gradle 9.7.1, AGP 9.4.1, Kotlin 2.4.20, KSP 2.3.12 — declared in `app/gradle/libs.versions.toml` / `app/gradle/wrapper/gradle-wrapper.properties`.
 - Signing falls back to the debug keystore when `config.prop` has no `keyStore`, so `assembleRelease` works out of the box locally.
 
 ## Prerequisites
