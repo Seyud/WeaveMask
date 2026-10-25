@@ -23,7 +23,11 @@ class PolicyDao : MagiskDB() {
     }
 
     suspend fun fetch(uid: Int): SuPolicy? {
-        ensureBackupRestored()
+        // Deliberately NOT running ensureBackupRestored() here: fetch is on the
+        // su request path (SuRequestHandler.init), and a restore write at that
+        // point would flip an undetermined (Query) request into a stale policy
+        // while the interactive dialog is about to be shown. Restoration only
+        // happens via fetchAll() on the Superuser list load.
         val query = "$SELECT_QUERY FROM ${Table.POLICY} WHERE uid=$uid LIMIT 1"
         return exec(query, ::toPolicy).firstOrNull()
     }

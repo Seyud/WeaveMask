@@ -60,7 +60,15 @@ object PolicyBackupStore {
         val backed = load()
         if (backed.isEmpty()) return
         for (policy in backed) {
+            // Only permanent grants are worth resurrecting: an absent row already
+            // means "not granted", so restoring a DENY just turns the interactive
+            // Query flow into a hard deny the user never explicitly confirmed in
+            // this session, and restoring a temporary (remain > 0) grant would
+            // silently extend its expiry window on every restore.
+            if (policy.policy < SuPolicy.ALLOW || policy.remain > 0) continue
             if (policy.remain < 0) {
+                // Normalize so the restored row is a permanent (until=0) grant,
+                // not an until<0 row that deleteOutdated() would purge
                 policy.remain = 0
             }
             if (dao.fetch(policy.uid) == null) {
