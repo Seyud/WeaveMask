@@ -27,7 +27,6 @@ object Config {
 
     // Properties from gradle.properties, should always exist
     val versionCode: Int get() = get("magisk.versionCode")!!.toInt()
-    val stubVersion: String get() = get("magisk.stubVersion")!!
 }
 
 fun Project.rootFile(path: String): File {

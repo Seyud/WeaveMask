@@ -3,7 +3,6 @@ package io.github.seyud.weave.core
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Application
-import android.app.LocaleManager
 import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.ContextWrapper
@@ -13,7 +12,6 @@ import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
 import android.system.Os
 import androidx.profileinstaller.ProfileInstaller
-import io.github.seyud.weave.StubApk
 import io.github.seyud.weave.core.base.UntrackedActivity
 import io.github.seyud.weave.core.utils.LocaleSetting
 import io.github.seyud.weave.core.utils.NetworkObserver
@@ -29,7 +27,6 @@ import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.lang.ref.WeakReference
-import java.util.Locale
 
 lateinit var AppApkPath: String
     private set
@@ -88,45 +85,10 @@ object AppContext : ContextWrapper(null),
         application = app
         val base = app.baseContext
         attachBaseContext(base)
-        // Apply locale override at context level for stub mode on API 24-34.
-        // On these versions, LocaleManager is not available and Resources.updateConfiguration()
-        // doesn't persist across activity recreations. We use HiddenApiBypass to call
-        // applyOverrideConfiguration on the base context (ContextImpl), which merges the
-        // locale into the context's configuration so new Resources inherit it.
-        if (SDK_INT in 24..34 && isRunningAsStub) {
-            val dpCtx = base.createDeviceProtectedStorageContext()
-            val localeTag = dpCtx.getSharedPreferences(
-                "${base.packageName}_preferences", Context.MODE_PRIVATE
-            ).getString("locale", "") ?: ""
-            if (localeTag.isNotEmpty()) {
-                val locale = Locale.forLanguageTag(localeTag)
-                val config = Configuration()
-                config.setLocale(locale)
-                runCatching {
-                    if (SDK_INT >= Build.VERSION_CODES.P) {
-                        // Hidden API restrictions exist on 28+; bypass them
-                        org.lsposed.hiddenapibypass.HiddenApiBypass.invoke(
-                            Context::class.java, base,
-                            "applyOverrideConfiguration", config
-                        )
-                    } else {
-                        // Below 28 there is no hidden API enforcement, plain
-                        // reflection reaches ContextImpl's method directly
-                        Context::class.java
-                            .getMethod("applyOverrideConfiguration", Configuration::class.java)
-                            .invoke(base, config)
-                    }
-                }
-            }
-        }
         app.registerActivityLifecycleCallbacks(this)
         app.registerComponentCallbacks(this)
 
-        AppApkPath = if (isRunningAsStub) {
-            StubApk.current(base).path
-        } else {
-            base.packageResourcePath
-        }
+        AppApkPath = base.packageResourcePath
         resources.patch()
 
         val shellBuilder = Shell.Builder.create()
@@ -144,13 +106,8 @@ object AppContext : ContextWrapper(null),
         // Pre-heat the shell ASAP
         Shell.getShell(null) {}
 
-        if (SDK_INT >= 34 && isRunningAsStub) {
-            // Send over the locale config manually
-            val lm = getSystemService(LocaleManager::class.java)
-            lm.overrideLocaleConfig = LocaleSetting.localeConfig
-        }
         networkObserver = NetworkObserver.init(this)
-        if (!BuildConfig.DEBUG && !isRunningAsStub) {
+        if (!BuildConfig.DEBUG) {
             appScope.launch(Dispatchers.IO) {
                 ProfileInstaller.writeProfile(this@AppContext)
             }

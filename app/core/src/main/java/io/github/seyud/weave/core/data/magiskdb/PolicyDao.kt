@@ -73,4 +73,14 @@ class PolicyDao : MagiskDB() {
         return policy
     }
 
+
+    companion object {
+        private const val FIRST_APPLICATION_UID = 10000
+
+        // Revert user insertion for policies, to normalize the uid to app id
+        fun normalizeUid(uid: Int): Int {
+            val appId = uid % 100000
+            return if (appId < FIRST_APPLICATION_UID) appId else uid
+        }
+    }
 }

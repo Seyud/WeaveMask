@@ -5,14 +5,12 @@ import android.os.Process
 import android.system.Os
 import androidx.annotation.WorkerThread
 import androidx.core.os.postDelayed
-import io.github.seyud.weave.StubApk
 import io.github.seyud.weave.core.AppApkPath
 import io.github.seyud.weave.core.BuildConfig
 import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.Const
 import io.github.seyud.weave.core.Info
 import io.github.seyud.weave.core.di.ServiceLocator
-import io.github.seyud.weave.core.isRunningAsStub
 import io.github.seyud.weave.core.ktx.copyAll
 import io.github.seyud.weave.core.ktx.writeTo
 import io.github.seyud.weave.core.utils.DataSourceChannel
@@ -113,52 +111,29 @@ abstract class MagiskInstallImpl protected constructor(
 
         try {
             // Extract binaries
-            if (isRunningAsStub) {
-                org.apache.commons.compress.archivers.zip.ZipFile.builder().setFile(StubApk.current(context)).get().use { zf ->
-                    zf.entries.asSequence().filter {
-                        !it.isDirectory && it.name.startsWith("lib/${Const.CPU_ABI}/")
-                    }.forEach {
-                        val n = it.name.substring(it.name.lastIndexOf('/') + 1)
-                        val name = n.substring(3, n.length - 3)
-                        val dest = File(installDir, name)
-                        zf.getInputStream(it).writeTo(dest)
-                        dest.setExecutable(true)
-                    }
+            val info = context.applicationInfo
+            val libs = File(info.nativeLibraryDir).listFiles { _, name ->
+                name.startsWith("lib") && name.endsWith(".so")
+            } ?: emptyArray()
 
-                    val abi32 = Const.CPU_ABI_32
-                    if (Process.is64Bit() && abi32 != null) {
-                        val entry = zf.getEntry("lib/$abi32/libmagisk.so")
-                        if (entry != null) {
-                            val magisk32 = File(installDir, "magisk32")
-                            zf.getInputStream(entry).writeTo(magisk32)
-                        }
-                    }
-                }
-            } else {
-                val info = context.applicationInfo
-                val libs = File(info.nativeLibraryDir).listFiles { _, name ->
-                    name.startsWith("lib") && name.endsWith(".so")
-                } ?: emptyArray()
+            for (lib in libs) {
+                val name = lib.name.substring(3, lib.name.length - 3)
+                Os.symlink(lib.path, "$installDir/$name")
+            }
 
-                for (lib in libs) {
-                    val name = lib.name.substring(3, lib.name.length - 3)
-                    Os.symlink(lib.path, "$installDir/$name")
-                }
-
-                // Also extract magisk32 on 64-bit devices that supports 32-bit
-                val abi32 = Const.CPU_ABI_32
-                if (Process.is64Bit() && abi32 != null) {
-                    val name = "lib/$abi32/libmagisk.so"
-                    val entry = javaClass.classLoader!!.getResourceAsStream(name)
-                    if (entry != null) {
-                        val magisk32 = File(installDir, "magisk32")
-                        entry.writeTo(magisk32)
-                    }
+            // Also extract magisk32 on 64-bit devices that supports 32-bit
+            val abi32 = Const.CPU_ABI_32
+            if (Process.is64Bit() && abi32 != null) {
+                val name = "lib/$abi32/libmagisk.so"
+                val entry = javaClass.classLoader!!.getResourceAsStream(name)
+                if (entry != null) {
+                    val magisk32 = File(installDir, "magisk32")
+                    entry.writeTo(magisk32)
                 }
             }
 
             // Extract scripts
-            for (script in listOf("util_functions.sh", "boot_patch.sh", "addon.d.sh", "stub.apk")) {
+            for (script in listOf("util_functions.sh", "boot_patch.sh", "addon.d.sh")) {
                 val dest = File(installDir, script)
                 context.assets.open(script).writeTo(dest)
             }

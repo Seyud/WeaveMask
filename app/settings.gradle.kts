@@ -34,4 +34,4 @@ plugins {
 }
 
 rootProject.name = "Magisk"
-include(":apk", ":core", ":shared", ":stub", ":stub-res", ":test")
+include(":apk", ":core", ":test")

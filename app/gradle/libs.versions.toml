@@ -88,6 +88,5 @@ android-library = { id = "com.android.library", version.ref = "android" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-lsparanoid = { id = "org.lsposed.lsparanoid", version = "0.6.0" }
 moshi = { id = "dev.zacsweers.moshix", version = "0.37.0" }
 wire = { id = "com.squareup.wire", version.ref = "wire" }

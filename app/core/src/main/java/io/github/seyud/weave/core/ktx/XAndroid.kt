@@ -23,6 +23,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.core.content.getSystemService
 import androidx.core.graphics.createBitmap
+import io.github.seyud.weave.core.data.magiskdb.PolicyDao
 import io.github.seyud.weave.core.integration.AppIconManager
 import io.github.seyud.weave.core.utils.LocaleSetting
 import io.github.seyud.weave.core.utils.RootUtils

@@ -12,7 +12,6 @@ import io.github.seyud.weave.core.download.DownloadNotifier
 import io.github.seyud.weave.core.download.DownloadProcessor
 import io.github.seyud.weave.core.ktx.cachedFile
 import io.github.seyud.weave.core.model.module.LocalModule
-import io.github.seyud.weave.core.tasks.AppMigration
 import io.github.seyud.weave.core.tasks.FlashZip
 import io.github.seyud.weave.core.tasks.MagiskInstaller
 import io.github.seyud.weave.core.utils.RootUtils
@@ -271,29 +270,5 @@ class Environment : BaseTest {
         setupInvalidZygiskModule(update)
         setupRemoveModule(root)
         setupUpgradeModule(root, update)
-    }
-
-    @Test
-    fun setupAppHide() {
-        runBlocking {
-            assertTrue(
-                "App hiding failed",
-                AppMigration.patchAndHide(
-                    context = appContext,
-                    label = "Settings",
-                    pkg = "repackaged.$APP_PACKAGE_NAME"
-                )
-            )
-        }
-    }
-
-    @Test
-    fun setupAppRestore() {
-        runBlocking {
-            assertTrue(
-                "App restoration failed",
-                AppMigration.restoreApp(appContext)
-            )
-        }
     }
 }

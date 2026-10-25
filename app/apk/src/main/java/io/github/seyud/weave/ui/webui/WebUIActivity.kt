@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import io.github.seyud.weave.R
 import io.github.seyud.weave.core.Config
-import io.github.seyud.weave.core.isRunningAsStub
 import io.github.seyud.weave.ui.theme.WeaveMagiskTheme
 import top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator
 
@@ -74,7 +73,7 @@ private fun MainContent(activity: ComponentActivity, onFinish: () -> Unit) {
     val webUIState = remember { WebUIState() }
 
     LaunchedEffect(Unit) {
-        if (isRunningAsStub && !webUIState.isInsetsEnabled) {
+        if (!webUIState.isInsetsEnabled) {
             webUIState.isInsetsEnabled = true
             (activity as? WebUIActivity)?.enableEdgeToEdge(true)
         }

@@ -8,15 +8,10 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.content.res.Configuration
 import android.content.res.Resources
-import io.github.seyud.weave.StubApk
 import io.github.seyud.weave.core.ktx.unwrap
 import io.github.seyud.weave.core.utils.LocaleSetting
 
-fun Resources.addAssetPath(path: String) = StubApk.addAssetPath(this, path)
-
 fun Resources.patch(): Resources {
-    if (isRunningAsStub)
-        addAssetPath(AppApkPath)
     LocaleSetting.instance.updateResource(this)
     return this
 }
@@ -37,7 +32,7 @@ fun Context.wrap(): Context {
 }
 
 fun Class<*>.cmp(pkg: String) =
-    ComponentName(pkg, Info.stub?.classToComponent?.get(name) ?: name)
+    ComponentName(pkg, name)
 
 inline fun <reified T> Context.intent() = Intent().setComponent(T::class.java.cmp(packageName))
 

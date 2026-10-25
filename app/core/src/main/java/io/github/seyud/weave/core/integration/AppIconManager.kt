@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.R
-import io.github.seyud.weave.core.isRunningAsStub
 
 enum class AppIconVariant(
     val configValue: String,
@@ -31,7 +30,7 @@ enum class AppIconVariant(
 object AppIconManager {
     private const val MAIN_ACTIVITY_SUFFIX = ".ui.MainActivity"
 
-    fun isSupported(context: Context): Boolean = !isRunningAsStub
+    fun isSupported(@Suppress("UNUSED_PARAMETER") context: Context): Boolean = true
 
     fun currentVariant(): AppIconVariant = AppIconVariant.fromConfigValue(Config.appIconVariant)
 

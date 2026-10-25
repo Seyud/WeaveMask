@@ -4,9 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.os.Build
-import io.github.seyud.weave.StubApk
 import io.github.seyud.weave.core.integration.AppIconManager
-import io.github.seyud.weave.core.utils.RootUtils
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 
 open class App() : Application() {
@@ -23,15 +21,6 @@ open class App() : Application() {
                 method.invoke(appInfo, enable)
             }
         }
-    }
-
-    constructor(o: Any) : this() {
-        val data = StubApk.Data(o)
-        // Add the root service name mapping
-        data.classToComponent[RootUtils::class.java.name] = data.rootService.name
-        // Send back the actual root service class
-        data.rootService = RootUtils::class.java
-        Info.stub = data
     }
 
     override fun onCreate() {

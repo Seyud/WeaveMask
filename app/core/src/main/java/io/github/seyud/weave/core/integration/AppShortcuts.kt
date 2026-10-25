@@ -14,8 +14,6 @@ import androidx.core.graphics.drawable.IconCompat
 import io.github.seyud.weave.core.Const
 import io.github.seyud.weave.core.Info
 import io.github.seyud.weave.core.R
-import io.github.seyud.weave.core.isRunningAsStub
-import io.github.seyud.weave.core.ktx.getBitmap
 
 object AppShortcuts {
 
@@ -45,26 +43,11 @@ object AppShortcuts {
     }
 
     private fun Context.getIcon(id: Int): Icon {
-        return if (isRunningAsStub) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                Icon.createWithAdaptiveBitmap(getBitmap(id))
-            else
-                Icon.createWithBitmap(getBitmap(id))
-        } else {
-            Icon.createWithResource(this, id)
-        }
+        return Icon.createWithResource(this, id)
     }
 
     private fun Context.getIconCompat(id: Int): IconCompat {
-        return if (isRunningAsStub) {
-            val bitmap = getBitmap(id)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                IconCompat.createWithAdaptiveBitmap(bitmap)
-            else
-                IconCompat.createWithBitmap(bitmap)
-        } else {
-            IconCompat.createWithResource(this, id)
-        }
+        return IconCompat.createWithResource(this, id)
     }
 
     @RequiresApi(api = 25)

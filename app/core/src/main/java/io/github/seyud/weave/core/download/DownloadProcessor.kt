@@ -1,15 +1,12 @@
 package io.github.seyud.weave.core.download
 
 import android.net.Uri
-import io.github.seyud.weave.StubApk
 import io.github.seyud.weave.core.R
-import io.github.seyud.weave.core.isRunningAsStub
 import io.github.seyud.weave.core.ktx.cachedFile
 import io.github.seyud.weave.core.ktx.copyAll
 import io.github.seyud.weave.core.ktx.copyAndClose
 import io.github.seyud.weave.core.ktx.withInOut
 import io.github.seyud.weave.core.ktx.writeTo
-import io.github.seyud.weave.core.tasks.AppMigration
 import io.github.seyud.weave.core.utils.MediaStoreUtils.outputStream
 import io.github.seyud.weave.utils.APKInstall
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
@@ -31,41 +28,9 @@ class DownloadProcessor(notifier: DownloadNotifier) : DownloadNotifier by notifi
 
     suspend fun handleApp(stream: InputStream, subject: Subject.App) {
         val external = subject.file.outputStream()
-
-        if (isRunningAsStub) {
-            val updateApk = StubApk.update(context)
-            try {
-                // Download full APK to stub update path
-                stream.copyAndClose(TeeOutputStream(external, updateApk.outputStream()))
-
-                // Also upgrade stub
-                notifyUpdate(subject.notifyId) {
-                    it.setProgress(0, 0, true)
-                        .setContentTitle(context.getString(R.string.hide_app_title))
-                        .setContentText("")
-                }
-
-                // Extract stub
-                val apk = context.cachedFile("stub.apk")
-                ZipFile.Builder().setFile(updateApk).get().use { zf ->
-                    apk.delete()
-                    zf.getInputStream(zf.getEntry("assets/stub.apk")).writeTo(apk)
-                }
-
-                // Patch and install
-                subject.intent = AppMigration.upgradeStub(context, apk)
-                    ?: throw IOException("HideAPK patch error")
-                apk.delete()
-            } catch (e: Exception) {
-                // If any error occurred, do not let stub load the new APK
-                updateApk.delete()
-                throw e
-            }
-        } else {
-            val session = APKInstall.startSession(context)
-            stream.copyAndClose(TeeOutputStream(external, session.openStream(context)))
-            subject.intent = session.waitIntent()
-        }
+        val session = APKInstall.startSession(context)
+        stream.copyAndClose(TeeOutputStream(external, session.openStream(context)))
+        subject.intent = session.waitIntent()
     }
 
     suspend fun handleModule(src: InputStream, file: Uri) {

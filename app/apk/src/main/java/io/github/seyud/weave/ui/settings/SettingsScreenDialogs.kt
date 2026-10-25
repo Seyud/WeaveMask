@@ -9,7 +9,6 @@ import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.Info
 import io.github.seyud.weave.core.ktx.toast
 import io.github.seyud.weave.core.utils.MediaStoreUtils
-import io.github.seyud.weave.ui.component.MiuixConfirmDialog
 import io.github.seyud.weave.ui.component.MiuixTextInputDialog
 import kotlinx.coroutines.launch
 import io.github.seyud.weave.core.R as CoreR
@@ -22,66 +21,6 @@ internal fun SettingsScreenDialogs(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val settingsLabel = stringResource(CoreR.string.settings)
-
-    HideAppDialog(
-        show = state.showHideDialog,
-        appName = state.hideAppName,
-        onAppNameChange = { state.hideAppName = it },
-        onDismissRequest = {
-            if (!state.isHideInProgress) {
-                state.showHideDialog = false
-            }
-        },
-        onConfirm = {
-            val newName = state.hideAppName.text.ifBlank { settingsLabel }
-            coroutineScope.launch {
-                state.isHideInProgress = true
-                val success = viewModel.hideApp(context, newName)
-                state.isHideInProgress = false
-                if (success) {
-                    state.showHideDialog = false
-                } else {
-                    context.toast(CoreR.string.failure, Toast.LENGTH_LONG)
-                }
-            }
-        },
-    )
-
-    HideAppLoadingDialog(
-        show = state.isHideInProgress,
-        title = stringResource(CoreR.string.hide_app_title),
-    )
-
-    HideAppLoadingDialog(
-        show = state.isRestoreInProgress,
-        title = stringResource(CoreR.string.restore_img_msg),
-    )
-
-    MiuixConfirmDialog(
-        show = state.showRestoreConfirmDialog,
-        title = stringResource(CoreR.string.settings_restore_app_title),
-        summary = stringResource(CoreR.string.restore_app_confirmation),
-        confirmText = stringResource(android.R.string.ok),
-        dismissText = stringResource(android.R.string.cancel),
-        onDismissRequest = {
-            if (!state.isRestoreInProgress) {
-                state.showRestoreConfirmDialog = false
-            }
-        },
-        onConfirm = {
-            if (!state.isRestoreInProgress) {
-                state.showRestoreConfirmDialog = false
-                coroutineScope.launch {
-                    state.isRestoreInProgress = true
-                    val success = viewModel.restoreApp(context)
-                    state.isRestoreInProgress = false
-                    if (!success) {
-                        context.toast(CoreR.string.failure, Toast.LENGTH_LONG)
-                    }
-                }
-            }
-        },
-    )
 
     MiuixTextInputDialog(
         show = state.showCustomChannelDialog,

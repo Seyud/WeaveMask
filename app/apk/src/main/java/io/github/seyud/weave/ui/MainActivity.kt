@@ -40,7 +40,6 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.topjohnwu.superuser.Shell
-import io.github.seyud.weave.StubApk
 import io.github.seyud.weave.arch.BaseViewModel
 import io.github.seyud.weave.arch.ActivityExecutor
 import io.github.seyud.weave.arch.ContextExecutor
@@ -60,10 +59,8 @@ import io.github.seyud.weave.core.base.launchPackage
 import io.github.seyud.weave.core.di.ServiceLocator
 import io.github.seyud.weave.core.integration.AppNotifications
 import io.github.seyud.weave.core.integration.AppShortcuts
-import io.github.seyud.weave.core.isRunningAsStub
 import io.github.seyud.weave.core.ktx.toast
 import io.github.seyud.weave.core.ktx.writeTo
-import io.github.seyud.weave.core.tasks.AppMigration
 import io.github.seyud.weave.core.utils.RootUtils
 import io.github.seyud.weave.ui.component.MiuixConfirmDialog
 import io.github.seyud.weave.ui.dialog.WeaveDialog
@@ -371,7 +368,6 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
         // 显示不支持的消息对话框
         showUnsupportedMessage()
         // 询问是否创建主屏幕快捷方式
-        askForHomeShortcut()
 
         // 请求通知权限（用于后台更新检查）
         if (Config.checkUpdate) {
@@ -413,13 +409,8 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
 
         if (!shouldStartInitialization) return
 
-        Shell.getShell(Shell.EXECUTOR) { shell ->
-            val shouldCreateUi = if (isRunningAsStub && !shell.isRoot) {
-                showInvalidStateMessage()
-                false
-            } else {
-                initializeApp()
-            }
+        Shell.getShell(Shell.EXECUTOR) { _ ->
+            val shouldCreateUi = initializeApp()
             val callbacks = synchronized(startupLock) {
                 if (shouldCreateUi) {
                     appInitialized = true
@@ -432,57 +423,7 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
     }
 
     private fun initializeApp(): Boolean {
-        val prevPkg = intent.getStringExtra(Const.Key.PREV_PKG) ?: launchPackage
-        val prevConfig = intent.getBundleExtra(Const.Key.PREV_CONFIG)
-        val isPackageMigration = prevPkg != null && prevConfig != null
-
-        Config.init(prevConfig)
-
-        if (packageName != APP_PACKAGE_NAME) {
-            runCatching {
-                // Hidden, remove io.github.seyud.weave if exist as it could be malware
-                packageManager.getApplicationInfo(APP_PACKAGE_NAME, 0)
-                Shell.cmd("(pm uninstall $APP_PACKAGE_NAME)& >/dev/null 2>&1").exec()
-            }
-        } else {
-            if (Config.suManager.isNotEmpty()) {
-                Config.suManager = ""
-            }
-            if (isPackageMigration) {
-                Shell.cmd("(pm uninstall $prevPkg)& >/dev/null 2>&1").exec()
-            }
-        }
-
-        if (isPackageMigration) {
-            runOnUiThread {
-                StubApk.restartProcess(this)
-            }
-            return false
-        }
-
-        if (isRunningAsStub && (
-                Info.stub!!.version != BuildConfig.STUB_VERSION ||
-                    intent.component!!.className.contains(AppMigration.PLACEHOLDER))
-        ) {
-            runOnUiThread {
-                withPermission(REQUEST_INSTALL_PACKAGES) { granted ->
-                    if (granted) {
-                        lifecycleScope.launch {
-                            val apk = File(cacheDir, "stub.apk")
-                            try {
-                                assets.open("stub.apk").writeTo(apk)
-                                AppMigration.upgradeStub(this@MainActivity, apk)?.let {
-                                    startActivity(it)
-                                }
-                            } catch (e: IOException) {
-                                Timber.e(e)
-                            }
-                        }
-                    }
-                }
-            }
-            return false
-        }
+        Config.init(null)
 
         AppNotifications.setup()
         JobService.schedule(this)
@@ -607,33 +548,6 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
      * 显示无效状态消息
      * 当应用以 stub 模式运行但没有 root 权限时显示
      */
-    @SuppressLint("InlinedApi")
-    private fun showInvalidStateMessage(): Unit = runOnUiThread {
-        WeaveDialog(this).apply {
-            setTitle(CoreR.string.unsupport_nonroot_stub_title)
-            setMessage(CoreR.string.unsupport_nonroot_stub_msg)
-            setButton(WeaveDialog.ButtonType.POSITIVE) {
-                text = CoreR.string.install
-                onClick {
-                    withPermission(REQUEST_INSTALL_PACKAGES) {
-                        if (!it) {
-                            toast(CoreR.string.install_unknown_denied, Toast.LENGTH_SHORT)
-                            showInvalidStateMessage()
-                        } else {
-                            lifecycleScope.launch {
-                                if (!AppMigration.restoreApp(this@MainActivity)) {
-                                    toast(CoreR.string.failure, Toast.LENGTH_LONG)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            setCancelable(false)
-            show()
-        }
-    }
-
     /**
      * 显示不支持的消息
      * 检查运行环境并显示相应的警告对话框
@@ -680,19 +594,6 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
                 setButton(WeaveDialog.ButtonType.POSITIVE) { text = android.R.string.ok }
                 setCancelable(false)
             }.show()
-        }
-    }
-
-    /**
-     * 询问是否创建主屏幕快捷方式
-     * 仅在 stub 模式下且支持快捷方式时询问
-     */
-    private fun askForHomeShortcut() {
-        if (isRunningAsStub && !Config.askedHome &&
-            ShortcutManagerCompat.isRequestPinShortcutSupported(this)) {
-            // 标记已询问过
-            Config.askedHome = true
-            showAddShortcutDialog = true
         }
     }
 

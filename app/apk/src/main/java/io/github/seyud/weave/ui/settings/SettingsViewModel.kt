@@ -9,7 +9,6 @@ import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.integration.AppIconManager
 import io.github.seyud.weave.core.integration.AppIconVariant
 import io.github.seyud.weave.core.ktx.toast
-import io.github.seyud.weave.core.tasks.AppMigration
 import io.github.seyud.weave.core.utils.RootUtils
 import io.github.seyud.weave.events.AddHomeIconEvent
 import io.github.seyud.weave.events.AuthEvent
@@ -215,21 +214,6 @@ class SettingsViewModel internal constructor(
      */
     fun navigateToDenyListConfig() {
         onNavigateToDenyListConfig?.invoke()
-    }
-
-    /**
-     * 恢复应用
-     */
-    suspend fun restoreApp(context: Context): Boolean {
-        return AppMigration.restoreApp(context)
-    }
-
-    /**
-     * 隐藏应用
-     * @param newName 新的应用名称
-     */
-    suspend fun hideApp(context: Context, newName: String): Boolean {
-        return AppMigration.hideApp(context, newName)
     }
 
     /**

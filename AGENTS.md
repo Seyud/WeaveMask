@@ -15,7 +15,6 @@ Standalone tool invocations outside `build.py` must be prefixed with `scripts/en
 ./build.py all          # Build everything (native + app + test APK)
 ./build.py native       # Build native binaries only
 ./build.py app          # Build the Magisk app APK
-./build.py stub         # Build the stub app
 ./build.py test         # Build the test app
 ./build.py clean        # Clean all build artifacts
 ./build.py gen --abi arm64-v8a  # Generate IDE compilation database
@@ -74,9 +73,6 @@ Full native subproject guide: [`native/AGENTS.md`](native/AGENTS.md).
 Gradle composite build. Modules:
 - **apk** — Main application (Jetpack Compose + Miuix). Package: `io.github.seyud.weave` (renamed from upstream Magisk's `:app`)
 - **core** — Library module with business logic, Room DB, Retrofit, AIDL
-- **shared** — Pure Java/Android library (no Kotlin). Used by core and stub
-- **stub** — Lightweight stub APK for hidden mode. Obfuscated with lsparanoid
-- **stub-res** — Extracted stub string resources
 - **test** — UI test APK (UIAutomator). Always built as release
 - **build-logic** — Composite build with custom Gradle plugin (`MagiskPlugin`)
 
@@ -90,7 +86,7 @@ Build conventions defined in `app/build-logic/src/main/java/Setup.kt`:
 - JNI libs renamed: `magisk` → `libmagisk.so`, etc.
 - BusyBox downloaded at build time from GitHub releases
 
-Version config: `app/gradle.properties` (`magisk.versionCode`, `magisk.stubVersion`) and `config.prop` (overrides). `build.py` generates `app/build/flags.prop` with `version`, `versionCode`, `abiList`.
+Version config: `app/gradle.properties` (`magisk.versionCode`) and `config.prop` (overrides). `build.py` generates `app/build/flags.prop` with `version`, `versionCode`, `abiList`.
 
 #### Version catalog divergences from upstream
 
@@ -106,6 +102,7 @@ Version config: `app/gradle.properties` (`magisk.versionCode`, `magisk.stubVersi
 - 6 theme modes + Monet key colors
 - Dual home layouts: Classic and Weavsk, switchable in settings
 - Floating bottom bar, page scaling, app icon switcher
+- Hidden app mode removed (v31.1 sync): no app hiding/repackaging, no stub modules; su blacklist (default) keeps the interactive prompt, whitelist mode uses upstream's explicit-grant model
 - Whitelist mode: superuser list mode synced with Zygisk Next
 - Module repository browser (KernelSU repo format), batch local install, and a download-and-patch boot-image install method
 - WebUI theme injection: module WebUIs follow the app's Monet scheme via CSS custom properties
@@ -123,9 +120,8 @@ Version config: `app/gradle.properties` (`magisk.versionCode`, `magisk.stubVersi
 - Test APK: `./build.py test` — builds UIAutomator test APK, always as release
 - CI runs AVD tests on API 30-36 + 36.1 + 37.0 + CANARY (x86_64), API 30 (x86)
 - CI test jobs only run on `workflow_dispatch` (manual trigger), not on push
-- `test_common.sh` uses `$self` (TestRunner) for `testAppHide`/`testAppRestore`, `$app` (AppTestRunner) for others
+- `test_common.sh` uses `$self` (TestRunner) and `$app` (AppTestRunner) as instrumentation runners
 - `BaseTest.prerequisite()` must match upstream: `Shell.getShell().isRoot` + `Connection.await()`. No UI operations (launchTargetApp, grant prompts, UiDevice)
-- `AppMigrationTest` must stay in `app/test/` module (not `app/core/`) — `TestRunner` classloader can't find classes in core module after app repackaging
 - API 23-29 removed from CI matrix: API 23 < minSdk 24; API 24-29 have RootService compatibility issues
 
 ## Code Style
@@ -134,7 +130,7 @@ Version config: `app/gradle.properties` (`magisk.versionCode`, `magisk.stubVersi
 - Rust: `rustfmt.toml` enforces `imports_granularity = "Module"`, edition 2024
 - C++: C++23, `-Oz` optimization, `-Wall`
 - No `unwrap()` in Rust — clippy denies it
-- Translation strings go in `app/core/src/main/res/values/strings.xml` and `app/stub-res/src/main/res/values/strings.xml`
+- Translation strings go in `app/core/src/main/res/values/strings.xml`
 
 ## AI/Agent Guidelines
 

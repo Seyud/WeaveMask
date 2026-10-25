@@ -16,10 +16,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Link
-import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SystemUpdate
-import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.ui.unit.dp
 import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.Info
@@ -162,44 +160,5 @@ internal fun AppSettingsSection(
                 )
             },
         )
-
-        if (visibility.showHideRestore) {
-            if (visibility.hidden) {
-                ArrowPreference(
-                    title = stringResource(CoreR.string.settings_restore_app_title),
-                    summary = stringResource(CoreR.string.settings_restore_app_summary),
-                    startAction = {
-                        Icon(
-                            Icons.Rounded.Restore,
-                            modifier = Modifier.padding(end = 6.dp),
-                            contentDescription = null,
-                            tint = colorScheme.onBackground,
-                        )
-                    },
-                    onClick = {
-                        if (!state.isRestoreInProgress) {
-                            state.showRestoreConfirmDialog = true
-                        }
-                    },
-                )
-            } else {
-                ArrowPreference(
-                    title = stringResource(CoreR.string.settings_hide_app_title),
-                    summary = stringResource(CoreR.string.settings_hide_app_summary),
-                    startAction = {
-                        Icon(
-                            Icons.Rounded.VisibilityOff,
-                            modifier = Modifier.padding(end = 6.dp),
-                            contentDescription = null,
-                            tint = colorScheme.onBackground,
-                        )
-                    },
-                    onClick = {
-                        state.hideAppName = TextFieldValue(settingsLabel)
-                        state.showHideDialog = true
-                    },
-                )
-            }
-        }
     }
 }

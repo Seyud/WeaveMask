@@ -16,24 +16,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.core.content.pm.ShortcutManagerCompat
-import io.github.seyud.weave.core.BuildConfig
 import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.Const
 import io.github.seyud.weave.core.Info
-import io.github.seyud.weave.core.isRunningAsStub
 import io.github.seyud.weave.core.utils.LocaleSetting
 import io.github.seyud.weave.ui.superuser.isWhitelistMode
 import io.github.seyud.weave.core.R as CoreR
 
 internal data class SettingsVisibility(
-    val hidden: Boolean,
     val showAddShortcut: Boolean,
     val showMagiskSection: Boolean,
     val showZygisk: Boolean,
     val isWhitelistMode: Boolean,
     val showDenyListControls: Boolean,
     val showSuperuserSection: Boolean,
-    val showHideRestore: Boolean,
     val showTapjack: Boolean,
     val showReauthenticate: Boolean,
     val showRestrict: Boolean,
@@ -56,15 +52,12 @@ internal fun rememberSettingsVisibility(
         val showMagiskSection = Info.env.isActive
         val whitelistMode = isWhitelistMode(currentSuperuserListMode)
         SettingsVisibility(
-            hidden = context.packageName != BuildConfig.APP_PACKAGE_NAME,
-            showAddShortcut = isRunningAsStub &&
-                ShortcutManagerCompat.isRequestPinShortcutSupported(context),
+            showAddShortcut = ShortcutManagerCompat.isRequestPinShortcutSupported(context),
             showMagiskSection = showMagiskSection,
             showZygisk = showMagiskSection && Const.Version.atLeast_24_0(),
             isWhitelistMode = whitelistMode,
             showDenyListControls = showMagiskSection && !whitelistMode,
             showSuperuserSection = Info.showSuperUser,
-            showHideRestore = Info.env.isActive && Const.USER_ID == 0,
             showTapjack = Build.VERSION.SDK_INT < Build.VERSION_CODES.S,
             showReauthenticate = Build.VERSION.SDK_INT < Build.VERSION_CODES.O,
             showRestrict = Const.Version.atLeast_30_1(),
@@ -81,11 +74,6 @@ internal class SettingsScreenLocalState(
     private val moduleRepoBaseUrlInputState: MutableState<TextFieldValue>,
     private val showDownloadPathDialogState: MutableState<Boolean>,
     private val downloadPathInputState: MutableState<TextFieldValue>,
-    private val showHideDialogState: MutableState<Boolean>,
-    private val showRestoreConfirmDialogState: MutableState<Boolean>,
-    private val hideAppNameState: MutableState<TextFieldValue>,
-    private val isHideInProgressState: MutableState<Boolean>,
-    private val isRestoreInProgressState: MutableState<Boolean>,
 ) {
     var updateChannelIndex by updateChannelIndexState
     var showCustomChannelDialog by showCustomChannelDialogState
@@ -94,11 +82,6 @@ internal class SettingsScreenLocalState(
     var moduleRepoBaseUrlInput by moduleRepoBaseUrlInputState
     var showDownloadPathDialog by showDownloadPathDialogState
     var downloadPathInput by downloadPathInputState
-    var showHideDialog by showHideDialogState
-    var showRestoreConfirmDialog by showRestoreConfirmDialogState
-    var hideAppName by hideAppNameState
-    var isHideInProgress by isHideInProgressState
-    var isRestoreInProgress by isRestoreInProgressState
 }
 
 @Composable
@@ -116,14 +99,6 @@ internal fun rememberSettingsScreenLocalState(): SettingsScreenLocalState {
     val downloadPathInputState = rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(Config.downloadDir))
     }
-    val showHideDialogState = rememberSaveable { mutableStateOf(false) }
-    val showRestoreConfirmDialogState = rememberSaveable { mutableStateOf(false) }
-    val settingsLabel = stringResource(CoreR.string.settings)
-    val hideAppNameState = rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(settingsLabel))
-    }
-    val isHideInProgressState = rememberSaveable { mutableStateOf(false) }
-    val isRestoreInProgressState = rememberSaveable { mutableStateOf(false) }
 
     return remember(
         updateChannelIndexState,
@@ -133,11 +108,6 @@ internal fun rememberSettingsScreenLocalState(): SettingsScreenLocalState {
         moduleRepoBaseUrlInputState,
         showDownloadPathDialogState,
         downloadPathInputState,
-        showHideDialogState,
-        showRestoreConfirmDialogState,
-        hideAppNameState,
-        isHideInProgressState,
-        isRestoreInProgressState,
     ) {
         SettingsScreenLocalState(
             updateChannelIndexState = updateChannelIndexState,
@@ -147,11 +117,6 @@ internal fun rememberSettingsScreenLocalState(): SettingsScreenLocalState {
             moduleRepoBaseUrlInputState = moduleRepoBaseUrlInputState,
             showDownloadPathDialogState = showDownloadPathDialogState,
             downloadPathInputState = downloadPathInputState,
-            showHideDialogState = showHideDialogState,
-            showRestoreConfirmDialogState = showRestoreConfirmDialogState,
-            hideAppNameState = hideAppNameState,
-            isHideInProgressState = isHideInProgressState,
-            isRestoreInProgressState = isRestoreInProgressState,
         )
     }
 }
