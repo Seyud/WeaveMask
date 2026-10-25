@@ -149,7 +149,9 @@ internal fun SuperuserSettingsSection(
             },
         )
 
-        MultiuserModeSelectorItem(res = res)
+        if (!Info.isHeadlessSystemUser) {
+            MultiuserModeSelectorItem(res = res)
+        }
         MountNamespaceModeSelectorItem(res = res)
         AutomaticResponseSelectorItem(res = res, viewModel = viewModel)
         RequestTimeoutSelectorItem(res = res)

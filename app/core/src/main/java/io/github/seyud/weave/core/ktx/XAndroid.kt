@@ -104,7 +104,8 @@ fun getProperty(key: String, def: String): String {
 @Throws(PackageManager.NameNotFoundException::class)
 fun PackageManager.getPackageInfo(uid: Int, pid: Int): PackageInfo? {
     val flag = PackageManager.MATCH_UNINSTALLED_PACKAGES
-    val pkgs = getPackagesForUid(uid) ?: throw PackageManager.NameNotFoundException()
+    val pkgs = getPackagesForUid(PolicyDao.denormalizeUid(uid))
+        ?: throw PackageManager.NameNotFoundException()
     if (pkgs.size > 1) {
         if (pid <= 0) {
             return null

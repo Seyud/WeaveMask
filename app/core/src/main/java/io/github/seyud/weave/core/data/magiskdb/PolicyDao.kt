@@ -17,7 +17,7 @@ class PolicyDao : MagiskDB() {
     }
 
     suspend fun delete(uid: Int) {
-        val query = "DELETE FROM ${Table.POLICY} WHERE uid=$uid"
+        val query = "DELETE FROM ${Table.POLICY} WHERE uid=${normalizeUid(uid)}"
         exec(query)
         PolicyBackupStore.remove(uid)
     }
@@ -28,11 +28,12 @@ class PolicyDao : MagiskDB() {
         // point would flip an undetermined (Query) request into a stale policy
         // while the interactive dialog is about to be shown. Restoration only
         // happens via fetchAll() on the Superuser list load.
-        val query = "$SELECT_QUERY FROM ${Table.POLICY} WHERE uid=$uid LIMIT 1"
+        val query = "$SELECT_QUERY FROM ${Table.POLICY} WHERE uid=${normalizeUid(uid)} LIMIT 1"
         return exec(query, ::toPolicy).firstOrNull()
     }
 
     suspend fun update(policy: SuPolicy) {
+        policy.uid = normalizeUid(policy.uid)
         val map = policy.toMap()
         if (!Const.Version.atLeast_25_0()) {
             // Put in package_name for old database
@@ -45,7 +46,8 @@ class PolicyDao : MagiskDB() {
 
     suspend fun fetchAll(): List<SuPolicy> {
         ensureBackupRestored()
-        val query = "$SELECT_QUERY FROM ${Table.POLICY} WHERE uid/100000=${Const.USER_ID}"
+        val query = "$SELECT_QUERY FROM ${Table.POLICY} WHERE uid/100000=${Const.USER_ID} " +
+            "OR uid < $FIRST_APPLICATION_UID"
         val policies = exec(query, ::toPolicy).filterNotNull()
         if (PolicyBackupStore.load().isEmpty() && policies.isNotEmpty()) {
             PolicyBackupStore.backup(policies)
@@ -85,6 +87,11 @@ class PolicyDao : MagiskDB() {
         fun normalizeUid(uid: Int): Int {
             val appId = uid % 100000
             return if (appId < FIRST_APPLICATION_UID) appId else uid
+        }
+
+        // Revert normalizeUid
+        fun denormalizeUid(uid: Int): Int {
+            return if (uid < FIRST_APPLICATION_UID) (uid + Const.USER_ID * 100000) else uid
         }
     }
 }

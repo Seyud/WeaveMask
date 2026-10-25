@@ -3,7 +3,7 @@ package io.github.seyud.weave.core.model.su
 import io.github.seyud.weave.core.data.magiskdb.MagiskDB
 
 class SuPolicy(
-    val uid: Int,
+    var uid: Int,
     var policy: Int = QUERY,
     var remain: Long = -1L,
     var logging: Boolean = true,

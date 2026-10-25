@@ -394,7 +394,7 @@ class SuperuserViewModel internal constructor(
         val policies = packageInfos.asSequence()
             .mapNotNull { info ->
                 val appInfo = info.applicationInfo ?: return@mapNotNull null
-                val policy = allDbPolicies.getOrPut(appInfo.uid) { SuPolicy(appInfo.uid) }
+                val policy = allDbPolicies.getOrPut(PolicyDao.normalizeUid(appInfo.uid)) { SuPolicy(appInfo.uid) }
                 PolicyEntry(
                     item = policy,
                     packageName = info.packageName,
