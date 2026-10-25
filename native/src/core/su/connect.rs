@@ -12,15 +12,6 @@ use std::os::unix::net::UCred;
 use std::os::unix::process::CommandExt;
 use std::process::{Command, exit};
 
-fn app_process() -> Command {
-    let mut cmd = Command::new("/system/bin/app_process");
-    // daemon thread blocks all signals, unblock it before starting app_process
-    unsafe {
-        cmd.pre_exec(|| SigSet::empty().thread_set_mask().map_err(Into::into));
-    }
-    cmd
-}
-
 fn timeout_app_process() -> Command {
     let mut cmd = Command::new("/system/bin/timeout");
     // daemon thread blocks all signals, unblock it before starting app_process
