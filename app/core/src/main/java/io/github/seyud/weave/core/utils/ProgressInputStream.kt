@@ -1,7 +1,9 @@
 package io.github.seyud.weave.core.utils
 
 import java.io.FilterInputStream
+import java.io.FilterOutputStream
 import java.io.InputStream
+import java.io.OutputStream
 
 class ProgressInputStream(
     base: InputStream,
@@ -20,7 +22,7 @@ class ProgressInputStream(
     }
 
     override fun read(): Int {
-        val b = read()
+        val b = super.read()
         if (b >= 0) {
             bytesRead++
             emitProgress()
@@ -41,8 +43,57 @@ class ProgressInputStream(
         return sz
     }
 
+    override fun skip(n: Long): Long {
+        val sz = super.skip(n)
+        if (sz > 0) {
+            bytesRead += sz
+            emitProgress()
+        }
+        return sz
+    }
+
     override fun close() {
         super.close()
         progressEmitter(bytesRead)
+    }
+}
+
+class ProgressOutputStream(
+    base: OutputStream,
+    val progressEmitter: (Long) -> Unit
+) : FilterOutputStream(base) {
+
+    private var bytesWritten = 0L
+    private var lastUpdate = 0L
+
+    private fun emitProgress() {
+        val cur = System.currentTimeMillis()
+        if (cur - lastUpdate > 1000) {
+            lastUpdate = cur
+            progressEmitter(bytesWritten)
+        }
+    }
+
+    override fun write(b: Int) {
+        out.write(b)
+        bytesWritten++
+        emitProgress()
+    }
+
+    override fun write(b: ByteArray) {
+        write(b, 0, b.size)
+    }
+
+    override fun write(b: ByteArray, off: Int, len: Int) {
+        out.write(b, off, len)
+        if (len > 0) {
+            bytesWritten += len
+            emitProgress()
+        }
+    }
+
+    override fun close() {
+        super.close()
+        progressEmitter(bytesWritten)
     }
 }

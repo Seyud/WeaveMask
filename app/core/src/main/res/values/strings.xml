@@ -395,4 +395,6 @@
     <string name="settings_banner">Module banner</string>
     <string name="settings_banner_summary">Show banner image as module card background</string>
 
+    <string name="download_googlebook_recovery_image">Download latest Googlebook recovery image</string>
+    <string name="download_pixel_factory_image">Download latest Pixel factory image</string>
 </resources>

@@ -3,6 +3,7 @@ package io.github.seyud.weave.core
 import android.app.KeyguardManager
 import android.os.Build
 import androidx.lifecycle.MutableLiveData
+import io.github.seyud.weave.core.AppContext
 import io.github.seyud.weave.core.ktx.getProperty
 import io.github.seyud.weave.core.model.UpdateInfo
 import io.github.seyud.weave.core.repository.NetworkService
@@ -67,6 +68,12 @@ object Info {
         Build.DEVICE.contains("vsoc")
             || getProperty("ro.kernel.qemu", "0") == "1"
             || getProperty("ro.boot.qemu", "0") == "1"
+
+    val isGooglebook get() =
+        AppContext.packageManager.hasSystemFeature("com.google.desktop.gms")
+
+    val isPixel get() =
+        Build.BRAND.equals("google", ignoreCase = true) && !isGooglebook && !isEmulator
 
     val isHeadlessSystemUser by lazy {
         getProperty("ro.fw.mu.headless_system_user", "false").toBoolean()

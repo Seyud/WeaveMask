@@ -14,66 +14,35 @@ import java.nio.channels.SeekableByteChannel;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
-public class DataSourceChannel implements SeekableByteChannel {
-    private static final int RANDOM_READ_CACHE_SIZE = 16 * 1024;
+public abstract class DataChannel implements SeekableByteChannel {
+    protected static final int RANDOM_READ_CACHE_SIZE = 16 * 1024;
     private static final int SEQ_READ_CACHE_SIZE = 1024 * 1024;
     private static final int SEQ_READ_THRESHOLD = 1024;
     private static final int DIRECT_READ_THRESHOLD = 512 * 1024;
 
-    private final OkHttpClient client;
-    private final String url;
-    private final FileChannel fileChannel;
-    private final boolean ownership;
-    private final long startOffset;
-    private long size;
+    protected final long startOffset;
+    protected long size;
 
     private long position = 0;
     private boolean open = true;
 
-    private byte[] cache = null;
-    private long cacheStart = -1;
+    protected byte[] cache = null;
+    protected long cacheStart = -1;
 
-    private DataSourceChannel(OkHttpClient client, String url, FileChannel fileChannel,
-                              boolean ownership, long startOffset, long size) {
-        this.client = client;
-        this.url = url;
-        this.fileChannel = fileChannel;
-        this.ownership = ownership;
+    protected DataChannel(long startOffset, long size) {
         this.startOffset = startOffset;
         this.size = size;
     }
 
-    public DataSourceChannel(FileChannel fileChannel) throws IOException {
-        this(null, null, fileChannel, true, 0, fileChannel.size());
-    }
+    public abstract DataChannel slice(long offset, long sliceSize);
 
-    public DataSourceChannel(OkHttpClient client, String url) throws IOException {
-        this(client, url, null, false, 0, 0);
-        var request = new Request.Builder()
-                .url(url)
-                .header("Range", "bytes=" + "-" + RANDOM_READ_CACHE_SIZE)
-                .build();
-        try (var response = client.newCall(request).execute()) {
-            if (response.code() != 206) {
-                throw new IOException("Unexpected response code " + response.code());
-            }
-            var contentRange = response.header("Content-Range");
-            if (contentRange == null) {
-                throw new IOException("Could not determine file size.");
-            }
-            var contentLength = contentRange.substring(contentRange.lastIndexOf('/') + 1);
-            size = Long.parseLong(contentLength);
-            cache = response.body().bytes();
-            cacheStart = size - cache.length;
-        }
-    }
+    public abstract InputStream stream(long offset, long sliceSize) throws IOException;
 
-    public DataSourceChannel slice(long offset, long sliceSize) {
-        if (offset < 0 || sliceSize <= 0 || offset + sliceSize > size) {
-            throw new IllegalArgumentException("Invalid slice parameters");
-        }
-        return new DataSourceChannel(client, url, fileChannel, false,
-                startOffset + offset, sliceSize);
+    /**
+     * Create an InputStream of the entire channel. The caller must close it.
+     */
+    public InputStream stream() throws IOException {
+        return stream(0, size);
     }
 
     @Override
@@ -161,7 +130,6 @@ public class DataSourceChannel implements SeekableByteChannel {
 
         cache = buffer.array();
         this.cacheStart = cacheStart;
-
     }
 
     private boolean isCacheHit(long pos, int bytesToRead) {
@@ -181,7 +149,7 @@ public class DataSourceChannel implements SeekableByteChannel {
     }
 
     private int readDirectly(ByteBuffer dst, long position) throws IOException {
-        try (var channel = Channels.newChannel(streamRead(position, dst.remaining()))) {
+        try (var channel = Channels.newChannel(stream(position, dst.remaining()))) {
             int totalBytesRead = 0;
             while (true) {
                 int bytesRead = channel.read(dst);
@@ -195,40 +163,13 @@ public class DataSourceChannel implements SeekableByteChannel {
         }
     }
 
-    public InputStream streamRead(long position, long length) throws IOException {
-        long endPosition = Math.min(position + length, size) + startOffset;
-        var startPosition = startOffset + position;
-        var readLength = endPosition - startPosition;
-
-        if (fileChannel != null) {
-            fileChannel.position(startPosition);
-            return BoundedInputStream.builder()
-                    .setInputStream(Channels.newInputStream(fileChannel))
-                    .setMaxCount(readLength)
-                    .setPropagateClose(false)
-                    .get();
-        }
-
-        var request = new Request.Builder()
-                .url(url)
-                .header("Range", "bytes=" + startPosition + "-" + (endPosition - 1))
-                .build();
-
-        var response = client.newCall(request).execute();
-        if (response.code() != 206) {
-            response.close();
-            throw new IOException("Unexpected response code " + response.code());
-        }
-        return response.body().byteStream();
-    }
-
     @Override
     public long position() {
         return position;
     }
 
     @Override
-    public DataSourceChannel position(long newPosition) throws IOException {
+    public DataChannel position(long newPosition) throws IOException {
         if (!open) throw new ClosedChannelException();
         if (newPosition < 0) {
             throw new IllegalArgumentException("Position out of bounds: " + newPosition);
@@ -251,9 +192,6 @@ public class DataSourceChannel implements SeekableByteChannel {
     public void close() throws IOException {
         open = false;
         cache = null;
-        if (ownership) {
-            fileChannel.close();
-        }
     }
 
     @Override
@@ -262,7 +200,114 @@ public class DataSourceChannel implements SeekableByteChannel {
     }
 
     @Override
-    public DataSourceChannel truncate(long size) {
+    public DataChannel truncate(long size) {
         throw new NonWritableChannelException();
+    }
+
+    public static class File extends DataChannel {
+        private final FileChannel fileChannel;
+        private final boolean ownership;
+
+        public File(FileChannel fileChannel) throws IOException {
+            this(fileChannel, true, 0, fileChannel.size());
+        }
+
+        private File(FileChannel fileChannel, boolean ownership, long startOffset, long size) {
+            super(startOffset, size);
+            this.fileChannel = fileChannel;
+            this.ownership = ownership;
+        }
+
+        @Override
+        public File slice(long offset, long sliceSize) {
+            if (offset < 0 || sliceSize <= 0 || offset + sliceSize > size) {
+                throw new IllegalArgumentException("Invalid slice parameters");
+            }
+            return new File(fileChannel, false, startOffset + offset, sliceSize);
+        }
+
+        @Override
+        public InputStream stream(long offset, long sliceSize) throws IOException {
+            long endPosition = Math.min(offset + sliceSize, size) + startOffset;
+            var startPosition = startOffset + offset;
+            var readLength = endPosition - startPosition;
+
+            fileChannel.position(startPosition);
+            return BoundedInputStream.builder()
+                    .setInputStream(Channels.newInputStream(fileChannel))
+                    .setMaxCount(readLength)
+                    .setPropagateClose(false)
+                    .get();
+        }
+
+        @Override
+        public void close() throws IOException {
+            super.close();
+            if (ownership) {
+                fileChannel.close();
+            }
+        }
+    }
+
+    public static class Http extends DataChannel {
+        private final OkHttpClient client;
+        private final String url;
+
+        public Http(OkHttpClient client, String url) throws IOException {
+            super(0, 0);
+            this.client = client;
+            this.url = url;
+            var request = new Request.Builder()
+                    .url(url)
+                    .header("Range", "bytes=0-" + (RANDOM_READ_CACHE_SIZE - 1))
+                    .build();
+            try (var response = client.newCall(request).execute()) {
+                if (response.code() != 206) {
+                    throw new IOException("Unexpected response code " + response.code());
+                }
+                var contentRange = response.header("Content-Range");
+                if (contentRange == null) {
+                    throw new IOException("Could not determine file size.");
+                }
+                int space = contentRange.indexOf(' ');
+                int dash = contentRange.indexOf('-');
+                int slash = contentRange.lastIndexOf('/');
+                cacheStart = Long.parseLong(contentRange.substring(space + 1, dash).trim());
+                size = Long.parseLong(contentRange.substring(slash + 1).trim());
+                cache = response.body().bytes();
+            }
+        }
+
+        private Http(OkHttpClient client, String url, long startOffset, long size) {
+            super(startOffset, size);
+            this.client = client;
+            this.url = url;
+        }
+
+        @Override
+        public Http slice(long offset, long sliceSize) {
+            if (offset < 0 || sliceSize <= 0 || offset + sliceSize > size) {
+                throw new IllegalArgumentException("Invalid slice parameters");
+            }
+            return new Http(client, url, startOffset + offset, sliceSize);
+        }
+
+        @Override
+        public InputStream stream(long offset, long sliceSize) throws IOException {
+            long endPosition = Math.min(offset + sliceSize, size) + startOffset;
+            var startPosition = startOffset + offset;
+
+            var request = new Request.Builder()
+                    .url(url)
+                    .header("Range", "bytes=" + startPosition + "-" + (endPosition - 1))
+                    .build();
+
+            var response = client.newCall(request).execute();
+            if (response.code() != 206) {
+                response.close();
+                throw new IOException("Unexpected response code " + response.code());
+            }
+            return response.body().byteStream();
+        }
     }
 }

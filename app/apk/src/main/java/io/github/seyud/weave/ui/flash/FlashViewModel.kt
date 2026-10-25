@@ -145,7 +145,7 @@ class FlashViewModel : BaseViewModel() {
                             false
                         } else {
                             showReboot = false
-                            MagiskInstaller.Patch(uri, outItems, logItems).exec()
+                            MagiskInstaller.Patch(uri, console = outItems, logs = logItems).exec()
                         }
                     }
                     Const.Value.DOWNLOAD -> {
@@ -155,7 +155,7 @@ class FlashViewModel : BaseViewModel() {
                             false
                         } else {
                             showReboot = false
-                            MagiskInstaller.Download(url, outItems, logItems).exec()
+                            MagiskInstaller.Download(url, console = outItems, logs = logItems).exec()
                         }
                     }
                     else -> {

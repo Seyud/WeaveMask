@@ -2,6 +2,7 @@ package io.github.seyud.weave.core.data
 
 import io.github.seyud.weave.core.model.ModuleJson
 import io.github.seyud.weave.core.model.Release
+import io.github.seyud.weave.core.model.GooglebookRecoveryJson
 import io.github.seyud.weave.core.model.UpdateJson
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -26,6 +27,12 @@ interface RawUrl {
 
     @GET
     suspend fun fetchUpdateJson(@Url url: String): UpdateJson
+    @GET
+    suspend fun fetchGooglebookRecoveryJson(@Url url: String): List<GooglebookRecoveryJson>
+
+    @GET
+    @Headers("Cookie: devsite_wall_acks=nexus-image-tos")
+    suspend fun fetchPixelFactoryImages(@Url url: String): String
 }
 
 interface GithubApiServices {

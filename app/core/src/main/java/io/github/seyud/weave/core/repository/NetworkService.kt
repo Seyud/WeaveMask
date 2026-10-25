@@ -2,6 +2,7 @@ package io.github.seyud.weave.core.repository
 
 import io.github.seyud.weave.core.BuildConfig
 import io.github.seyud.weave.core.Config
+import io.github.seyud.weave.core.Const
 import io.github.seyud.weave.core.Config.Value.BETA_CHANNEL
 import io.github.seyud.weave.core.Config.Value.CUSTOM_CHANNEL
 import io.github.seyud.weave.core.Config.Value.DEBUG_CHANNEL
@@ -22,6 +23,14 @@ class NetworkService(
     private val raw: RawUrl,
     private val api: GithubApiServices,
 ) {
+    suspend fun fetchGooglebookRecovery() = safe {
+        raw.fetchGooglebookRecoveryJson(Const.Url.GOOGLEBOOK_RECOVERY_URL)
+    }
+
+    suspend fun fetchPixelFactoryImages() = safe {
+        raw.fetchPixelFactoryImages(Const.Url.PIXEL_FACTORY_IMAGES_URL)
+    }
+
     suspend fun fetchUpdate() = safe {
         var info = when (Config.updateChannel) {
             DEFAULT_CHANNEL -> if (BuildConfig.DEBUG) fetchDebugUpdate() else fetchStableUpdate()
