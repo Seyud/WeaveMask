@@ -62,6 +62,9 @@ pub struct DbSettings {
     pub boot_count: i32,
     pub denylist: bool,
     pub zygisk: bool,
+    // Fork: su whitelist mode uses upstream's explicit-grant model (no
+    // interactive prompts); blacklist mode keeps the su request dialog.
+    pub su_whitelist: bool,
 }
 
 #[repr(i32)]
@@ -111,6 +114,7 @@ impl SqlTable for DbSettings {
             "denylist" => self.denylist = value != 0,
             "zygisk" => self.zygisk = value != 0,
             "bootloop" => self.boot_count = value,
+            "su_whitelist" => self.su_whitelist = value != 0,
             _ => {}
         }
     }

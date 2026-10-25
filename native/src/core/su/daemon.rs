@@ -99,10 +99,27 @@ impl MagiskD {
 
         let info = self.get_su_info(cred.uid as i32);
 
+        // Fork: blacklist mode (default) keeps the interactive su request
+        // dialog; whitelist mode follows upstream v31.1: access is granted
+        // only via explicit grants in the Superuser tab, unprompted requests
+        // are denied.
+        let mut policy = info.settings.policy;
+        if policy == SuPolicy::Query {
+            policy = if info.cfg.su_whitelist {
+                SuPolicy::Deny
+            } else {
+                let policy = self.app_request(&cred, &info, &req);
+                // The UID had no policy row, so notify_app below would drop
+                // the su log entry; report the request outcome explicitly.
+                self.notify_request_result(&cred, &info, &req, policy);
+                policy
+            };
+        }
+
         // Talk to su manager
         self.notify_app(&cred, &info, &req);
 
-        match info.settings.policy {
+        match policy {
             SuPolicy::Restrict => req.drop_cap = true,
             SuPolicy::Allow => {}
             _ => {

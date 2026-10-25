@@ -43,6 +43,9 @@ impl SqlTable for UidList {
 
 impl MagiskD {
     pub fn get_root_settings(&self, uid: i32, settings: &mut RootSettings) -> SqliteResult<()> {
+        // Fork: default to Query so UIDs without a policy row trigger the
+        // interactive prompt in blacklist mode; whitelist mode denies Query.
+        settings.policy = SuPolicy::Query;
         self.db_exec_with_rows(
             "SELECT policy, logging, notification FROM policies \
              WHERE uid=? AND (until=0 OR until>strftime('%s', 'now'))",

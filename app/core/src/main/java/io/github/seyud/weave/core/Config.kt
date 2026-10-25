@@ -31,6 +31,7 @@ object Config : PreferenceConfig, DBConfig {
         const val BOOTLOOP = "bootloop"
         const val SU_MANAGER = "requester"
         const val KEYSTORE = "keystore"
+        const val SU_WHITELIST = "su_whitelist"
 
         // prefs
         const val SU_REQUEST_TIMEOUT = "su_request_timeout"
@@ -236,7 +237,19 @@ object Config : PreferenceConfig, DBConfig {
         }
     var suReAuth by preference(Key.SU_REAUTH, false)
     var suTapjack by preference(Key.SU_TAPJACK, true)
-    var suListMode by preference(Key.SU_LIST_MODE, Value.SU_MODE_BLACKLIST)
+
+    // Mirror of [suListMode] in the magisk DB so the su daemon can switch
+    // between the interactive prompt (blacklist) and the upstream
+    // explicit-grant model (whitelist) without a root round-trip.
+    var suWhitelistMode by dbSettings(Key.SU_WHITELIST, false)
+    private var suListModePref by preference(Key.SU_LIST_MODE, Value.SU_MODE_BLACKLIST)
+    var suListMode: Int
+        get() = suListModePref
+        set(value) {
+            suListModePref = value
+            suWhitelistMode = value == Value.SU_MODE_WHITELIST
+        }
+
     var suRestrict by preference(Key.SU_RESTRICT, false)
     var suProfessionalMode by preference(Key.SU_PROFESSIONAL_MODE, false)
     var zygiskEnvInject by preference(Key.ZYGISK_ENV_INJECT, false)
@@ -314,6 +327,10 @@ object Config : PreferenceConfig, DBConfig {
                 remove("su_smart_mode")
             }
         }
+
+        // Sync the daemon-side su whitelist flag for installs configured
+        // before the su_whitelist DB key existed
+        suWhitelistMode = suListMode == Value.SU_MODE_WHITELIST
     }
 
     fun normalizeModuleRepoBaseUrl(value: String): String? {
