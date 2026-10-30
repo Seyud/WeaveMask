@@ -173,7 +173,6 @@
     <string name="settings_su_auth_summary">Demander l’authentification utilisateur lors de la requête super-utilisateur</string>
     <string name="settings_su_auth_insecure">Aucun méthode d’authentification utilisateur n’est configurée sur le périphérique</string>
     <string name="settings_customization">Personnalisation</string>
-    <string name="setting_add_shortcut_summary">Ajouter un joli raccourci dans l’écran d’accueil au cas où le nom et l’icône seraient difficiles à reconnaître après avoir masqué l’application</string>
     <string name="settings_doh_title">DNS sur HTTPS</string>
     <string name="settings_doh_description">Contournement de la censure du DNS dans certains pays</string>
     <string name="settings_random_name_title">Nom de sortie aléatoire</string>
@@ -238,8 +237,6 @@
     <string name="external_rw_permission_denied">Permettre l’accès au stockage pour activer cette fonctionnalité</string>
     <string name="post_notifications_denied">Permettre l’accès aux notifications pour activer cette fonctionnalité</string>
     <string name="install_unknown_denied">Autoriser "installation d’applications inconnues" pour activer cette fonctionnalité</string>
-    <string name="add_shortcut_title">Ajouter un raccourci à l’écran d’accueil</string>
-    <string name="add_shortcut_msg">Après avoir masqué Magisk, son nom et son icône peuvent devenir difficiles à reconnaître. Voulez‑vous ajouter un joli raccourci vers l’écran d’accueil ?</string>
     <string name="app_not_found">Aucune application n’a été trouvée pour gérer cette action</string>
     <string name="reboot_apply_change">Redémarrer pour appliquer les changements</string>
     <string name="restore_app_confirmation">Cela restaurera l’application cachée en application originale. Vous voulez vraiment faire ça ?</string>

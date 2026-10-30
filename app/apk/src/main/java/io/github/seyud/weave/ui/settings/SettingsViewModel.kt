@@ -10,7 +10,6 @@ import io.github.seyud.weave.core.integration.AppIconManager
 import io.github.seyud.weave.core.integration.AppIconVariant
 import io.github.seyud.weave.core.ktx.toast
 import io.github.seyud.weave.core.utils.RootUtils
-import io.github.seyud.weave.events.AddHomeIconEvent
 import io.github.seyud.weave.events.AuthEvent
 import io.github.seyud.weave.ui.superuser.SuperuserModeState
 import io.github.seyud.weave.ui.superuser.SuperuserModeSyncCoordinator
@@ -186,13 +185,6 @@ class SettingsViewModel internal constructor(
                 }
             }
         }
-    }
-
-    /**
-     * 添加桌面快捷方式
-     */
-    fun addShortcut() {
-        AddHomeIconEvent().publish()
     }
 
     fun updateAppIcon(context: Context, variant: AppIconVariant): Boolean {

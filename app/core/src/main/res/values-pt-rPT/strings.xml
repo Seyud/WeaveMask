@@ -174,7 +174,6 @@
     <string name="settings_su_restrict_title">Restringir recursos root</string>
     <string name="settings_su_restrict_summary">Restringirá novos apps de SuperUsuário por predefinição. Aviso: isto quebrará a maioria dos apps. Não ative se você não souber o que está a fazer.</string>
     <string name="settings_customization">Personalizações</string>
-    <string name="setting_add_shortcut_summary">Adicione um atalho no ecrã inicial, caso o nome e o ícone sejam difíceis de reconhecer logo após ocultar o app.</string>
     <string name="settings_doh_title">DNS sobre HTTPS</string>
     <string name="settings_doh_description">Solução alternativa para envenenamento de DNS em alguns países</string>
     <string name="settings_random_name_title">Randomizar nome de saída</string>
@@ -239,8 +238,6 @@
     <string name="external_rw_permission_denied">Conceda permissão de armazenamento para ativar esta funcionalidade</string>
     <string name="post_notifications_denied">Conceda permissão às notificações para ativar esta funcionalidade</string>
     <string name="install_unknown_denied">Permita a opção \"Instalar apps de fontes desconhecidas\" para ativar esta funcionalidade</string>
-    <string name="add_shortcut_title">Adicionar atalho ao ecrã inicial</string>
-    <string name="add_shortcut_msg">Após ocultar o app do Magisk, o seu nome e ícone serão difíceis de reconhecer. Deseja adicionar um atalho no ecrã inicial?</string>
     <string name="app_not_found">Nenhum app encontrado para realizar esta ação</string>
     <string name="reboot_apply_change">Reinicie para aplicar as alterações</string>
     <string name="restore_app_confirmation">Isso irá restaurar o app oculto do Magisk de volta para o app original. Deseja realmente fazer isso?</string>

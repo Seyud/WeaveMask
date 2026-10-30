@@ -172,7 +172,6 @@
     <string name="settings_su_auth_summary">Nachfrage nach Benutzerauthentifizierung bei Superuser-Anfragen</string>
     <string name="settings_su_auth_insecure">Auf dem Gerät ist keine Authentifizierungsmethode konfiguriert</string>>
     <string name="settings_customization">Personalisierung</string>
-    <string name="setting_add_shortcut_summary">Hinzufügen einer hübschen Startbildschirm-Verknüpfung, falls der Name und das Symbol nach dem Ausblenden der App schwer zu erkennen sind</string>
     <string name="settings_doh_title">DNS über HTTPS</string>
     <string name="settings_doh_description">Umgehung des DNS-Poisoning in einigen Ländern</string>
 
@@ -235,8 +234,6 @@
     <string name="external_rw_permission_denied">Speichererlaubnis erteilen, um diese Funktion zu aktivieren</string>
     <string name="install_unknown_denied">Unbekannte Apps installieren erlauben, um diese Funktion zu aktivieren</string>
     <string name="post_notifications_denied">Benachrichtigungen die Berechtigung erteilen, diese Funktion zu aktivieren</string>
-    <string name="add_shortcut_title">Verknüpfung zum Startbildschirm hinzufügen</string>
-    <string name="add_shortcut_msg">Nachdem du diese App versteckst, wird der Name und das Symbol eventuell schwer zu erkennen sein. Möchtest du zum Startbildschirm eine schöne Verknüpfung hinzufügen?</string>
     <string name="app_not_found">Keine App gefunden, die diese Aktion verarbeitet</string>
     <string name="reboot_apply_change">Neustart zum Änderungen übernehmen</string>
     <string name="restore_app_confirmation">Dadurch wird die versteckte App wieder zur ursprünglichen App. Willst du das wirklich tun?</string>

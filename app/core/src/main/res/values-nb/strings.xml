@@ -153,7 +153,6 @@
     <string name="settings_su_tapjack_title">Trykkstjelingsbeskyttelse</string>
     <string name="settings_su_tapjack_summary">Superbrukings-forespørselsdialogen vil ikke svare på inndata mens den dekkes av et annet vindu eller lag</string>
     <string name="settings_customization">Tilpasning</string>
-    <string name="setting_add_shortcut_summary">Legg til fin snarvei på hjemmeskjermen i fall navnet og ikonet er vanskelig å gjenkjenne etter skjuling av programmet</string>
     <string name="settings_doh_title">DNS over HTTPS</string>
     <string name="settings_doh_description">Unngåelse av DNS-forgiftelse i noen land</string>
 
@@ -210,8 +209,6 @@
     <string name="unsupport_nonroot_stub_msg">Programmet kan ikke fortsette å fungere i skjult tilstand siden rot-tilgang gikk tapt. Gjenopprett det tilbake til opprinnelig APK.</string>
     <string name="unsupport_nonroot_stub_title">@string/settings_restore_app_title</string>
     <string name="external_rw_permission_denied">Innvilg lagringstilgang for å skru på denne funksjonaliteten</string>
-    <string name="add_shortcut_title">Legg til snarvei på hjemmeskjermen</string>
-    <string name="add_shortcut_msg">Etter å ha skjult programmet kan det vli vanskelig å gjenkjenne navn og ikon. Legg til fin snarvei på hjemmeskjermen?</string>
     <string name="app_not_found">Ingen programmer kan håndtere denne forespørselen</string>
 
 </resources>

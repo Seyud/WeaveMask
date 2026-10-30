@@ -73,7 +73,6 @@ internal fun SettingsScreenContent(
             visibility = visibility,
             onNavigateToAppLanguage = onNavigateToAppLanguage,
             onNavigateToColorPalette = onNavigateToColorPalette,
-            onAddShortcut = viewModel::addShortcut,
         )
         AppSettingsSection(
             state = localState,

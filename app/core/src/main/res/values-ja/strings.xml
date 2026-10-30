@@ -167,7 +167,6 @@
     <string name="settings_su_auth_summary">スーパーユーザー権限の要求でユーザー認証を行ないます</string>
     <string name="settings_su_auth_insecure">端末の認証方法が設定されていません</string>
     <string name="settings_customization">カスタマイズ</string>
-    <string name="setting_add_shortcut_summary">アプリを隠した後に見つけられなくなったときは、ここでホーム画面にショートカットを追加できます</string>
     <string name="settings_doh_title">DNS over HTTPS</string>
     <string name="settings_doh_description">一部の国で DNS キャッシュポイズニングから守ります</string>
 
@@ -229,8 +228,6 @@
     <string name="external_rw_permission_denied">この機能を有効にするにはストレージ権限を許可してください</string>
     <string name="post_notifications_denied">この機能を有効化するには権限を許可してください</string>
     <string name="install_unknown_denied">この機能を有効化するには、不明なソースからのインストールを許可してください</string>
-    <string name="add_shortcut_title">ホーム画面にショートカットを追加</string>
-    <string name="add_shortcut_msg">アプリを隠すと、アプリ名やアイコンが判別しにくいことがあります。分かりやすいようホーム画面にショートカットを追加しますか？</string>
     <string name="app_not_found">このアクションを扱えるアプリがありません</string>
     <string name="reboot_apply_change">再起動して変更を適用</string>
     <string name="restore_app_confirmation">隠しアプリを元のアプリへと戻します。続行しますか?</string>

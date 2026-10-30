@@ -166,7 +166,6 @@
     <string name="settings_su_tapjack_title">Предпазване от измамно докосване</string>
     <string name="settings_su_tapjack_summary">Прозорецът за достъп до суперпотребителя няма да реагира, докато е покрит от друг прозорец или слой</string>
     <string name="settings_customization">Приспособяване</string>
-    <string name="setting_add_shortcut_summary">Добавя красив пряк път на началния екран ако името или текущата икона на скритото приложение са трудни за разпознаване</string>
     <string name="settings_doh_title">DNS през HTTPS</string>
     <string name="settings_doh_description">Заобикаля „отравянето“ на DNS в някои държави</string>
 
@@ -229,8 +228,6 @@
     <string name="external_rw_permission_denied">За да използвате нази възможност, разрешете достъп до хранилището</string>
     <string name="post_notifications_denied">За да използвате нази възможност, разрешете достъп до известията</string>
     <string name="install_unknown_denied">За да използвате тази възможност, разрешете „инсталиране на неизвестни приложения“</string>
-    <string name="add_shortcut_title">Добавяне на пряк път на началния екран</string>
-    <string name="add_shortcut_msg">След скриване на приложението името или икона може да станат трудни за разпознаване. Желаете ли да бъде добаве красив пряк път на началния екран?</string>
     <string name="app_not_found">Не е намерено приложение, което да извърши действието</string>
     <string name="reboot_apply_change">Рестартиране за прилагане на промените</string>
     <string name="restore_app_confirmation">По този начин ще възстановите скритото приложение в първоначалното му състояние. Това ли желаете да бъде направено?</string>

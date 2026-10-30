@@ -174,7 +174,6 @@
     <string name="settings_su_restrict_title">Ограничи коренске способности</string>
     <string name="settings_su_restrict_summary">Подразумевано ограничава апл. супер-корисника. Упозорење: ово ће већину апликација скршити. Не омогућавај, осим ако знаш шта радиш.</string>
     <string name="settings_customization">Прилагођавање</string>
-    <string name="setting_add_shortcut_summary">Додај лепу пречицу на почетни екран у случају да се име и иконица не препознају лако након скривања апликације</string>
     <string name="settings_doh_title">DNS преко HTTPS-а</string>
     <string name="settings_doh_description">Заобилазно решење DNS тровања у неким нацијама</string>
     <string name="settings_random_name_title">Насумично име на излазу</string>
@@ -239,8 +238,6 @@
     <string name="external_rw_permission_denied">Дозволите пермисију за складиште да бисте омогућили ову функционалност</string>
     <string name="post_notifications_denied">Дозволите пермисију за нотификације да бисте омогућили ову функционалност</string>
     <string name="install_unknown_denied">Дозволите \"инсталирање непознатих апликација\" да бисте омогућили ову функционалност</string>
-    <string name="add_shortcut_title">Додај пречицу на почетни екран</string>
-    <string name="add_shortcut_msg">Након скривања апликације, њено име и иконицу ћете тешко препознати. Желите ли додати лепу пречицу на почетни екран?</string>
     <string name="app_not_found">Није пронађена апликација за ову акцију</string>
     <string name="reboot_apply_change">Поново покрени да примениш измене</string>
     <string name="restore_app_confirmation">Ово ће вратити скривену апликацију на оригиналну. Да ли стварно то желите?</string>

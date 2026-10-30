@@ -177,7 +177,6 @@
     <string name="settings_su_restrict_title">Kufizo aftësitë e root</string>
     <string name="settings_su_restrict_summary">Do të kufizojë aplikacionet e reja të Superpërdoruesit si parazgjedhje. Paralajmërim: kjo do të prishë shumicën e aplikacioneve. Mos e aktivizoni nëse nuk e dini çfarë po bëni.</string>
     <string name="settings_customization">Personalizimi</string>
-    <string name="setting_add_shortcut_summary">Shto një shkurtore në ekranin kryesor në rast se emri dhe ikona janë të vështira për t\'u njohur pas fshehjes së aplikacionit</string>
     <string name="settings_doh_title">DNS mbi HTTPS (DoH)</string>
     <string name="settings_doh_description">Zgjidhje për helmimin e DNS në disa vende</string>
     <string name="settings_random_name_title">Emër i rastësishëm i daljes</string>
@@ -242,8 +241,6 @@
     <string name="external_rw_permission_denied">Jepni lejen e ruajtjes (storage) për të aktivizuar këtë funksion</string>
     <string name="post_notifications_denied">Jepni lejen e njoftimeve për të aktivizuar këtë funksion</string>
     <string name="install_unknown_denied">Lejoni \"Instalimin e aplikacioneve të panjohura\" për të aktivizuar këtë funksion</string>
-    <string name="add_shortcut_title">Shto shkurtore në ekranin kryesor</string>
-    <string name="add_shortcut_msg">Pas fshehjes së këtij aplikacioni, emri dhe ikona e tij mund të bëhen të vështira për t\'u njohur. Dëshironi të shtoni një shkurtore në ekranin kryesor?</string>
     <string name="app_not_found">Nuk u gjet asnjë aplikacion për të kryer këtë veprim</string>
     <string name="reboot_apply_change">Rinisni pajisjen për të aplikuar ndryshimet</string>
     <string name="restore_app_confirmation">Kjo do të rikthejë aplikacionin e fshehur në aplikacionin origjinal. Jeni të sigurt që dëshironi ta bëni këtë?</string>

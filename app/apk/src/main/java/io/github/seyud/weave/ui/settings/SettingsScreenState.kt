@@ -15,7 +15,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.core.content.pm.ShortcutManagerCompat
 import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.Const
 import io.github.seyud.weave.core.Info
@@ -24,7 +23,6 @@ import io.github.seyud.weave.ui.superuser.isWhitelistMode
 import io.github.seyud.weave.core.R as CoreR
 
 internal data class SettingsVisibility(
-    val showAddShortcut: Boolean,
     val showMagiskSection: Boolean,
     val showZygisk: Boolean,
     val isWhitelistMode: Boolean,
@@ -52,7 +50,6 @@ internal fun rememberSettingsVisibility(
         val showMagiskSection = Info.env.isActive
         val whitelistMode = isWhitelistMode(currentSuperuserListMode)
         SettingsVisibility(
-            showAddShortcut = ShortcutManagerCompat.isRequestPinShortcutSupported(context),
             showMagiskSection = showMagiskSection,
             showZygisk = showMagiskSection && Const.Version.atLeast_24_0(),
             isWhitelistMode = whitelistMode,

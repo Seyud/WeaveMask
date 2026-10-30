@@ -164,7 +164,6 @@
     <string name="settings_su_tapjack_title">टैपजैकिंग सुरक्षा</string>
     <string name="settings_su_tapjack_summary">सुपरयुसर प्रॉम्प्ट डायलॉग किसी अन्य विंडो या ओवरले द्वारा अस्पष्ट होने पर इनपुट का जवाब नहीं देगा</string>
     <string name="settings_customization">कस्टमाईजेशन</string>
-    <string name="setting_add_shortcut_summary">ऐप को छिपाने के बाद नाम और आइकन को पहचानना मुश्किल है, तो होम स्क्रीन में एक सुंदर शॉर्टकट जोड़ें</string>
     <string name="settings_doh_title">HTTPS पर DNS</string>
     <string name="settings_doh_description">कुछ राष्ट्रों में चल रही DNS विषाक्तता का समाधान</string>
 
@@ -225,8 +224,6 @@
     <string name="unsupport_nonroot_stub_title">@string/settings_restore_app_title</string>
     <string name="external_rw_permission_denied">इसका उपयोग करने के लिए स्टोरेज अनुमति प्रदान करें</string>
     <string name="install_unknown_denied">इस कार्यक्षमता को सक्षम करने के लिए "अज्ञात ऐप्स इंस्टॉल करें" की अनुमति दें</string>
-    <string name="add_shortcut_title">होम स्क्रीन पर शॉर्टकट जोड़ें</string>
-    <string name="add_shortcut_msg">इस ऐप को छिपाने के बाद इसका नाम और आइकन पहचानना मुश्किल हो सकता है। क्या आप होम स्क्रीन पर एक सुंदर शॉर्टकट जोड़ना चाहते हैं?</string>
     <string name="app_not_found">इस एक्शन को संभालने के लिए कोई एप्लिकेशन नहीं मिली</string>
     <string name="reboot_apply_change">परिवर्तन लागू करने के लिए रीबूट करें</string>
     <string name="restore_app_confirmation">यह छिपे हुए ऐप को मूल ऐप पर वापस बहाल कर देगा। क्या आप वाकई ऐसा करना चाहते हैं?</string>

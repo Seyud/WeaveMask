@@ -273,7 +273,6 @@
     <string name="settings_su_restrict_title">限制超级用户权能</string>
     <string name="settings_su_restrict_summary">默认限制新的超级用户应用。警告，这会破坏大多数应用，不建议启用。</string>
     <string name="settings_customization">个性化</string>
-    <string name="setting_add_shortcut_summary">在隐藏后难以识别名称和图标的情况下，添加快捷方式到桌面</string>
     <string name="settings_doh_title">安全 DNS（DoH）</string>
     <string name="settings_doh_description">解决某些地区的 DNS 污染问题</string>
     <string name="settings_random_name_title">随机文件名</string>
@@ -362,8 +361,6 @@
     <string name="external_rw_permission_denied">允许访问存储空间以使用此功能</string>
     <string name="post_notifications_denied">允许发送通知以使用此功能</string>
     <string name="install_unknown_denied">允许安装未知应用以使用此功能</string>
-    <string name="add_shortcut_title">添加快捷方式到桌面</string>
-    <string name="add_shortcut_msg">隐藏后应用的名字和图标可能难以识别。需要在桌面上添加具有原始名称和图标的快捷方式吗？</string>
     <string name="app_not_found">找不到可处理此操作的应用</string>
     <string name="reboot_apply_change">重启后生效</string>
     <string name="restore_app_confirmation">即将把隐藏的 Magisk 应用恢复回原始应用，是否继续？</string>

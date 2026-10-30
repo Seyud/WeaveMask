@@ -152,7 +152,6 @@
     <string name="settings_su_tapjack_title">Aktivera Tapjacking-skydd</string>
     <string name="settings_su_tapjack_summary">Superuser-dialogrutan kommer inte att lyssna på någon input om den är dold eller övertäckt utav något annat fönster.</string>
     <string name="settings_customization">Anpassning</string>
-    <string name="setting_add_shortcut_summary">Lägg till en snygg genväg på startskärmen om namnet och ikonen är svåra att känna igen efter att appen har döljts</string>
     <string name="settings_doh_title">DNS över HTTPS</string>
     <string name="settings_doh_description">Lösning för DNS-förgiftning i vissa länder</string>
 
@@ -204,7 +203,5 @@
     <string name="unsupport_magisk_title">Magisk-versionen stöds ej</string>
     <string name="unsupport_magisk_msg">Denna version utav appen stödjer inte Magisk-versioner lägre än %1$s.\n\nAppen kommer att bete sig som att Magisk inte är installerat. Vänligen uppgradera din Magisk-version så snart som möjligt.</string>
     <string name="external_rw_permission_denied">Tillåt tillgång till externt lagrinsmedia för att aktievera denna funktion</string>
-    <string name="add_shortcut_title">Lägg till genväg på hemskärmen</string>
-    <string name="add_shortcut_msg">Efter att appen dolts så kan ikonen och namnet vara svårt att känna igen. Vill du lägga till en snygg genväg till din hemskärm?</string>
     <string name="app_not_found">Ingen applikation hittades för att hantera den här åtgärden</string>
 </resources>

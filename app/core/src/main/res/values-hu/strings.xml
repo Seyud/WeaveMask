@@ -164,7 +164,6 @@
     <string name="settings_su_tapjack_title">Tapjacking védelem</string>
     <string name="settings_su_tapjack_summary">A Superuser kérés párbeszédpanel nem válaszol a bevitelre, ha más ablak vagy átfedés eltakarja</string>
     <string name="settings_customization">Testreszabás</string>
-    <string name="setting_add_shortcut_summary">Adjon hozzá egy szép parancsikont a kezdőképernyőhöz arra az esetre, ha a nevet és az ikont nehéz felismerni az alkalmazás elrejtése után</string>
     <string name="settings_doh_title">DNS HTTPS-en keresztül</string>
     <string name="settings_doh_description">Megoldás DNS-mérgezés esetén egyes országokban</string>
 
@@ -225,8 +224,6 @@
     <string name="unsupport_nonroot_stub_title">@string/settings_restore_app_title</string>
     <string name="external_rw_permission_denied">Adj tárhely engedélyt a funkció használatához</string>
     <string name="install_unknown_denied">Engedélyezd az "Ismeretlen alkalmazások telepítése" lehetőséget a funkció használatához</string>
-    <string name="add_shortcut_title">Parancsikon hozzáadása a kezdőképernyőhöz</string>
-    <string name="add_shortcut_msg">Az alkalmazás elrejtése után nehéz lehet felismerni a nevét és ikonját. Szeretnél egy szép parancsikont hozzáadni a kezdőképernyőhöz?</string>
     <string name="app_not_found">Nem található alkalmazás ennek a műveletnek a kezelésére</string>
     <string name="reboot_apply_change">A változtatások alkalmazásához indítsd újra</string>
     <string name="restore_app_confirmation">Ezzel visszaállítod a rejtett alkalmazást az eredeti alkalmazásra. Tényleg ezt akarod csinálni?</string>

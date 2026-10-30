@@ -162,7 +162,6 @@
     <string name="settings_su_tapjack_title">Nupu varjamise kaitse</string>
     <string name="settings_su_tapjack_summary">Superkasutaja taotluse hüpik ei reageeri vajutusele, kui seda katab mõni teine aken või ülekate</string>
     <string name="settings_customization">Kohandamine</string>
-    <string name="setting_add_shortcut_summary">Lisa avakuvale ilus otsetee juhuks, kui nime ja ikooni on pärast rakenduse peitmist raske tuvastada</string>
     <string name="settings_doh_title">DNS üle HTTPSi</string>
     <string name="settings_doh_description">Väldi mõnes riigis DNSi mürgitamist</string>
 
@@ -219,8 +218,6 @@
     <string name="unsupport_nonroot_stub_msg">Peidetud Magiski rakendus ei saa enam töötada, kuna juurkasutaja on kadunud. Palun taasta originaalne APK.</string>
     <string name="unsupport_nonroot_stub_title">@string/settings_restore_app_title</string>
     <string name="external_rw_permission_denied">Selle funktsionaalsuse lubamiseks anna mäluruumi haldamise luba</string>
-    <string name="add_shortcut_title">Lisa avakuvale otsetee</string>
-    <string name="add_shortcut_msg">Pärast selle rakenduse peitmist võib selle nimi ja ikoon olla raskesti tuvastatav. Kas soovid avakuvale lisada ilusa otsetee?</string>
     <string name="app_not_found">Selle tegevuse teostamiseks ei leitud ühtegi rakendust</string>
     <string name="reboot_apply_change">Muudatuste rakendamiseks taaskäivita</string>
     <string name="restore_app_confirmation">See taastab peidetud rakenduse uuesti originaalseks rakenduseks. Kas soovid tõesti seda teha?</string>

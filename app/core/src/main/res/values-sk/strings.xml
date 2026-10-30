@@ -173,7 +173,6 @@
     <string name="settings_su_auth_summary">Žiadosť o overenie používateľa počas požiadaviek Superužívateľa</string>
     <string name="settings_su_auth_insecure">V zariadení nie je nakonfigurovaná žiadna metóda overovania</string>
     <string name="settings_customization">Prispôsobenie</string>
-    <string name="setting_add_shortcut_summary">V prípade, že sa po skrytí apky názov a ikona ťažko rozpoznávajú, pridať na domovskú obrazovku odkaz</string>
     <string name="settings_doh_title">DNS over HTTPS</string>
     <string name="settings_doh_description">Riešenie otravy DNS v niektorých krajinách</string>
     <string name="settings_random_name_title">Náhodný názov výstupu</string>
@@ -238,8 +237,6 @@
     <string name="external_rw_permission_denied">Udeľte povolenie na zapnutie tejto funkcie</string>
     <string name="post_notifications_denied">Udeľte upozorneniam povolenie na zapnutie tejto funkcie</string>
     <string name="install_unknown_denied">Povoľte "inštaláciu neznámych aplikácii" na povolenie tejto funkcie</string>
-    <string name="add_shortcut_title">Pridať odkaz na domovskú obrazovku</string>
-    <string name="add_shortcut_msg">Po skrytí tejto aplikácie sa jej názov a ikona môžu stať ťažko rozoznateľnými. Chcete pridať krajší odkaz na domovskú obrazovku?</string>
     <string name="app_not_found">Nenašla sa žiadna aplikácia, ktorá dokáže spracovať túto akciu</string>
     <string name="reboot_apply_change">Reštartovať počítač, aby sa použili zmeny</string>
     <string name="restore_app_confirmation">Týmto obnovíte skrytú aplikáciu späť na pôvodnú aplikáciu. Naozaj to chcete urobiť?</string>

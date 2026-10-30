@@ -153,7 +153,6 @@
     <string name="settings_su_tapjack_title">Tapjacking-სგან თავის დაცვა</string> <!-- TODO: tapjacking has no direct translation; must make something up later -->
     <string name="settings_su_tapjack_summary">superuser-ის დიალოგის ღილაკებზე დაჭერა არ იქნება შესაძლებელი თუ სხვა აპი არის მასზე გადახურული</string>
     <string name="settings_customization">პერსონალიზაცია</string>
-    <string name="setting_add_shortcut_summary">ლამაზი ხატულის დამატება საწყისს ეკრანზე, იმ შემთხვევაში თუ აპის ამოცნობა არის რთული დამალვის შემდეგ</string>
     <string name="settings_doh_title">DNS HTTPS-ზე</string>
     <string name="settings_doh_description">DNS-ის ლიმიტების მოხსნა კონკრეტულ სახელმწიფოებში</string>
 
@@ -203,8 +202,6 @@
     <string name="unsupport_magisk_title">შეუთავსებელი Magisk-ის ვერსია</string>
     <string name="unsupport_magisk_msg">ეს აპის ვერსია შეუთავსებსლია Magisk-ის %1$s-ზე ნაკლებ ვერსიებთან.\n\nაპს ეგონება, რომ Magisk-ი არაა დაყენებული, გთხოვთ გაანხალოთ Magisk-ი დროულად.</string>
     <string name="external_rw_permission_denied">დართეთ მეხსიერებასთან წვდომის ნებართვა ამ ფუნქციის გამოსაყნებლად</string>
-    <string name="add_shortcut_title">ხატულის დამატება საწყისს ეკრანზე</string>
-    <string name="add_shortcut_msg">აპის დამალვის შემდეგ, მისი ნახატი და სახელი შეიძლება ამოუცნობი გახდეს. გნებავთ ხატულის დამატება ასწყისს ეკრანზე?</string>
     <string name="app_not_found">ამ ფუნქციის შესასრულებლად აპი ვერ მოიძებნა</string>
 
 </resources>

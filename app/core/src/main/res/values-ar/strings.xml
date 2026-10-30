@@ -261,7 +261,6 @@
     <string name="settings_su_restrict_title">تقييد صلاحيات الروت</string>
     <string name="settings_su_restrict_summary">سيتم تقييد التطبيقات الجديدة التي تطلب الروت افتراضيًا. تحذير: قد يُعطل معظم التطبيقات. لا تفعّل هذا الخيار إلا إذا كنت تعرف ما تفعله.</string>
     <string name="settings_customization">تخصيص</string>
-    <string name="setting_add_shortcut_summary">إضافة اختصار واضح على الشاشة الرئيسية في حال أصبح اسم التطبيق وأيقونته صعبَي التمييز بعد الإخفاء</string>
     <string name="settings_doh_title">DNS عبر HTTPS</string>
     <string name="settings_doh_description">حل بديل لتسمم DNS في بعض الدول</string>
     <string name="settings_random_name_title">جعل اسم الملف الناتج عشوائي</string>
@@ -355,8 +354,6 @@
     <string name="external_rw_permission_denied">امنح إذن التخزين لتفعيل هذه الميزة</string>
     <string name="post_notifications_denied">امنح إذن الإشعارات لتفعيل هذه الميزة</string>
     <string name="install_unknown_denied">اسمح بـ«تثبيت تطبيقات غير معروفة» لتفعيل هذه الميزة</string>
-    <string name="add_shortcut_title">إضافة اختصار إلى الشاشة الرئيسية</string>
-    <string name="add_shortcut_msg">بعد إخفاء التطبيق، قد يصبح اسمه وأيقونته صعبَي التمييز. هل تريد إضافة اختصار واضح إلى الشاشة الرئيسية؟</string>
     <string name="app_not_found">لا يوجد تطبيق للتعامل مع هذا الإجراء</string>
     <string name="reboot_apply_change">أعد التشغيل لتطبيق التغييرات</string>
     <string name="restore_app_confirmation">سيتم استعادة التطبيق المخفي إلى حالته الأصلية. هل أنت متأكد؟</string>

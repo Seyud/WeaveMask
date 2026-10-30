@@ -174,7 +174,6 @@
     <string name="settings_su_restrict_title">Root access ko limit karo</string>
     <string name="settings_su_restrict_summary">Nayeapps ko ROOT access maangne se block karega. Warning: Isse zyada tarr apps kaam karna band kar denge. Sirf tab enable karo jab aapko pata ho aap kya kar rahe ho.</string>
     <string name="settings_customization">Customization</string>
-    <string name="setting_add_shortcut_summary">Agar app hide karne ke baad uska naam ya icon samajhne mein dikkat ho rahi ho, toh home screen pe ek shortcut add kar lo</string>
     <string name="settings_doh_title">DNS over HTTPS</string>
     <string name="settings_doh_description">DNS poisoning se bachne ke liye (kuch countries mein zaroori padti hai)</string>
     <string name="settings_random_name_title">Output file ka naam random karo</string>
@@ -239,8 +238,6 @@
     <string name="external_rw_permission_denied">Iss feature ko enable karne ke liye storage permission allow karo</string>
     <string name="post_notifications_denied">Is feature ke liye notifications permission allow karo</string>
     <string name="install_unknown_denied">\"Install unknown apps\" ki permission allow karo taaki ye feature kaam kar sakey</string>
-    <string name="add_shortcut_title">Shortcut home screen pe add karo</string>
-    <string name="add_shortcut_msg">App ko hide karne ke baad agar uska icon ya naam pehchanna mushkil ho, toh ek shortcut home screen pe add kar lein?</string>
     <string name="app_not_found">Is action ko handle karne ke liye koi app nahi mila</string>
     <string name="reboot_apply_change">Changes apply karne ke liye reboot krna zaroori hai</string>
     <string name="restore_app_confirmation">Ye action hidden app ko original version mein wapas laayega. Kya aap sach mein ye karna chahte ho?</string>

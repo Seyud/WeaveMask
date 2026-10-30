@@ -173,7 +173,6 @@
     <string name="settings_su_auth_summary">Superuser құқығына сұраным келгенде қолданушының құпиясөзін не биометриялық дерегін сұрау</string>
     <string name="settings_su_auth_insecure">Бұл құрылғыда аутентификация әдісі орнатылмаған</string>
     <string name="settings_customization">Сыртқы көрініс</string>
-    <string name="setting_add_shortcut_summary">Жасырылған қолданбаны табу қиын болса, бастапқы экранға ыңғайлы таңбаша қосуға болады</string>
     <string name="settings_doh_title">HTTPS арқылы DNS</string>
     <string name="settings_doh_description">Кейбір елдерде қолданылатын жалған DNS-тен қорғау</string>
 
@@ -236,8 +235,6 @@
     <string name="external_rw_permission_denied">Мүмкіндікті қолдану үшін құрылғы жадына рұқсат беріңіз</string>
     <string name="post_notifications_denied">Мүмкіндікті қолдану үшін мәлімдеме жіберуге рұқсат беріңіз</string>
     <string name="install_unknown_denied">Мүмкіндікті қолдану үшін "белгісіз қолданбаларды орнатуға" рұқсат беріңіз</string>
-    <string name="add_shortcut_title">Бастапқы экранға таңбаша қосу</string>
-    <string name="add_shortcut_msg">Қолданба жасырылғаннан кейін, оның атауы мен таңбашасын тану қиын болуы мүмкін. Бастапқы экранға ыңғайлы таңбаша қосу керек пе?</string>
     <string name="app_not_found">Бұл әрекетті орындай алатын қолданба табылмады</string>
     <string name="reboot_apply_change">Өзгерістерді қолдану үшін құрылғыны қайта қосыңыз</string>
     <string name="restore_app_confirmation">Сөйтсеңіз, жасырын қолданба түпнұсқа қолданбаға айналады. Мұны істеу керек екеніне сенімдісіз бе?</string>

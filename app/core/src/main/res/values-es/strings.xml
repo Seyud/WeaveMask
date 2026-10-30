@@ -170,7 +170,6 @@
     <string name="settings_su_auth_summary">Preguntar por la autenticación de usuario durante las peticiones de Superusuario</string>
     <string name="settings_su_auth_insecure">No hay método de autenticación configurado en el dispositivo</string>
     <string name="settings_customization">Personalización</string>
-    <string name="setting_add_shortcut_summary">Añade un atajo a la app con el ícono de Magisk a la pantalla de inicio en caso de que te resulte difícil reconocerla tras haberle cambiado el nombre y el ícono</string>
     <string name="settings_doh_title">DNS sobre HTTPS</string>
     <string name="settings_doh_description">Proporciona una solución alternativa (workaround) contra el envenenamiento de DNS en algunos países</string>
     <string name="multiuser_mode">Modo multiusuario</string>
@@ -231,8 +230,6 @@
     <string name="external_rw_permission_denied">Permite el acceso al almacenamiento para activar esta funcionalidad</string>
     <string name="post_notifications_denied">Permite mostrar notificaciones para activar esta funcionalidad</string>
     <string name="install_unknown_denied">Permite la instalación de apps desconocidas para activar esta funcionalidad</string>
-    <string name="add_shortcut_title">Añadir un atajo a la pantalla de inicio</string>
-    <string name="add_shortcut_msg">Añade un atajo a la app con el ícono de Magisk a la pantalla de inicio en caso de que te resulte difícil reconocerla tras haberle cambiado el nombre y el ícono</string>
     <string name="app_not_found">No se encontró ninguna app que pueda realizar esta acción</string>
     <string name="reboot_apply_change">Reinicia para aplicar los cambios</string>
     <string name="restore_app_confirmation">Se restaurará la app oculta de vuelta a la original. ¿Quieres continuar?</string>

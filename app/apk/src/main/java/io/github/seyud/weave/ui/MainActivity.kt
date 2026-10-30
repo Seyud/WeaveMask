@@ -151,7 +151,6 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
     /** 设置 ViewModel */
     private val settingsViewModel: SettingsViewModel by viewModels { VMFactory }
 
-    private var showAddShortcutDialog by mutableStateOf(false)
     private val activeDialogs = mutableStateListOf<WeaveDialog>()
 
     /** Intent 状态流，用于触发 LaunchedEffect 重新执行 */
@@ -344,19 +343,6 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
                             modifier = Modifier.fillMaxSize()
                         )
                     }
-
-                    MiuixConfirmDialog(
-                        show = showAddShortcutDialog,
-                        title = getString(CoreR.string.add_shortcut_title),
-                        summary = getString(CoreR.string.add_shortcut_msg),
-                        confirmText = getString(android.R.string.ok),
-                        dismissText = getString(android.R.string.cancel),
-                        onDismissRequest = { showAddShortcutDialog = false },
-                        onConfirm = {
-                            showAddShortcutDialog = false
-                            AppShortcuts.addHomeIcon(this@MainActivity)
-                        },
-                    )
 
                     WeaveDialogHostContent(
                         dialog = activeDialogs.firstOrNull()

@@ -173,7 +173,6 @@
     <string name="settings_su_auth_summary">Cere autentificarea utilizatorului în timpul cererilor de superutilizator</string>
     <string name="settings_su_auth_insecure">Nu este configurată nicio metodă de autentificare pe dispozitiv</string>
     <string name="settings_customization">Personalizare</string>
-    <string name="setting_add_shortcut_summary">Adaugă o comandă rapidă frumoasă în ecranul de pornire în cazul în care numele și pictograma sunt dificil de recunoscut după ascunderea aplicației</string>
     <string name="settings_doh_title">DNS prin HTTPS</string>
     <string name="settings_doh_description">Soluție ocolitoare pentru poisoningul DNS în anumite țări</string>
     <string name="settings_random_name_title">Randomizează numele ieșirii</string>
@@ -238,8 +237,6 @@
     <string name="external_rw_permission_denied">Acordă permisiunea de stocare pentru a activa această funcționalitate</string>
     <string name="post_notifications_denied">Acordă permisiunea de notificări pentru a activa această funcționalitate</string>
     <string name="install_unknown_denied">Permite „instalarea de aplicații necunoscute” pentru a activa această funcționalitate</string>
-    <string name="add_shortcut_title">Adaugă comandă rapidă pe ecranul de pornire</string>
-    <string name="add_shortcut_msg">După ascunderea acestei aplicații, numele și pictograma acesteia ar putea deveni dificil de recunoscut. Vrei să adaugi o comandă rapidă frumoasă pe ecranul de pornire?</string>
     <string name="app_not_found">Nu s-a găsit nicio aplicație care să gestioneze această acțiune</string>
     <string name="reboot_apply_change">Repornește pentru a aplica modificările</string>
     <string name="restore_app_confirmation">Acest lucru va restaura aplicația ascunsă în aplicația originală. Sigur vrei să faci asta?</string>

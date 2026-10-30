@@ -32,16 +32,6 @@ object AppShortcuts {
         }
     }
 
-    fun addHomeIcon(context: Context) {
-        val intent = createLaunchIntent(context) ?: return
-        val info = ShortcutInfoCompat.Builder(context, Const.Nav.HOME)
-            .setShortLabel(context.getString(R.string.magisk))
-            .setIntent(intent)
-            .setIcon(context.getIconCompat(AppIconManager.currentShortcutIconResId(context)))
-            .build()
-        ShortcutManagerCompat.requestPinShortcut(context, info, null)
-    }
-
     private fun Context.getIcon(id: Int): Icon {
         return Icon.createWithResource(this, id)
     }

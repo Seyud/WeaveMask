@@ -178,7 +178,6 @@
     <string name="settings_su_restrict_title">Batasi kemampuan root</string>
     <string name="settings_su_restrict_summary">Secara bawaan akan membatasi aplikasi superuser baru. Peringatan: dapat menyebabkan sebagian besar aplikasi tidak berfungsi. Jangan aktifkan kecuali Anda memahami risikonya.</string>
     <string name="settings_customization">Personalisasi</string>
-    <string name="setting_add_shortcut_summary">Tambahkan pintasan yang menarik ke layar utama jika nama dan ikon sulit dikenali setelah menyembunyikan aplikasi</string>
     <string name="settings_doh_title">DNS melalui HTTPS</string>
     <string name="settings_doh_description">Solusi mengatasi masalah DNS di beberapa negara</string>
     <string name="settings_random_name_title">Acak nama output</string>
@@ -243,8 +242,6 @@
     <string name="external_rw_permission_denied">Berikan izin penyimpanan untuk mengaktifkan fungsi ini</string>
     <string name="post_notifications_denied">Berikan izin notifikasi untuk mengaktifkan fungsi ini</string>
     <string name="install_unknown_denied">Izinkan \"Instal aplikasi tidak dikenal\" untuk mengaktifkan fungsi ini</string>
-    <string name="add_shortcut_title">Tambahkan pintasan ke layar utama</string>
-    <string name="add_shortcut_msg">Setelah menyembunyikan aplikasi ini, nama dan ikonnya mungkin sulit dikenali. Apakah Anda ingin menambahkan pintasan ke layar utama?</string>
     <string name="app_not_found">Tidak ditemukan aplikasi untuk menangani tindakan ini</string>
     <string name="reboot_apply_change">Mulai ulang untuk menerapkan perubahan</string>
     <string name="restore_app_confirmation">Ini akan mengembalikan aplikasi tersembunyi ke aslinya. Apakah Anda benar-benar ingin melakukan ini?</string>

@@ -173,7 +173,6 @@
     <string name="settings_su_auth_summary">داواکاری بکە بۆ دڵنیاکردنەوەی کەسی لەکاتی داواکاری سوپەریوسەر</string>
     <string name="settings_su_auth_insecure">هیچ دڵنیاکردنەوەیەک نییە</string>
     <string name="settings_customization">دەستکاریکردن</string>
-    <string name="setting_add_shortcut_summary">یەک ئایکۆنی جوان زیادبکە بۆ سەر شاشەکە ئەگەر قورس بوو ئەوەی خۆی بدۆزیتەوە</string>
     <string name="settings_doh_title">DNS بەسەر HTTPS</string>
     <string name="settings_doh_description">Workaround DNS خراپە لە هەندێک شوێن</string>
     <string name="settings_random_name_title">ناوێک لەخۆیەوە</string>
@@ -240,8 +239,6 @@
     <string name="external_rw_permission_denied">ڕەزامەندی بیرگە بدە تاوەکوو ئەمە کار بکات</string>
     <string name="post_notifications_denied">ڕەزامەندی ئاگاداری بکە تاوەکوو ئەمە کار بکات</string>
     <string name="install_unknown_denied">ڕەزامەندی "install unknown apps" تاوەکوو کار بکات</string>
-    <string name="add_shortcut_title">زیادی بکە بۆ سەر شاشە</string>
-    <string name="add_shortcut_msg">دوای شاردنەوەی ئەم ئەپە، ئەتەوێت یەک ئایکۆنی جوان زیادبکەیت بۆ سەر شاشەکە ئەگەر قورس بوو ئەوەی خۆی بدۆزیتەوە؟</string>
     <string name="app_not_found">هیچ ئەپێک نەدۆزرایەوە تاوەکوو ئەم کارەی پێ بکرێت</string>
     <string name="reboot_apply_change">ڕێستارت بکە تاوەکوو کاریگەریەکان کار بکەن</string>
     <string name="restore_app_confirmation">ئەمە ئەپە ڕەسەنەکە ئەهێنێتەوە، دڵنیایت لە کردنی؟</string>

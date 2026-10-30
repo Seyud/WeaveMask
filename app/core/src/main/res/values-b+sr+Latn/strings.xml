@@ -174,7 +174,6 @@
     <string name="settings_su_restrict_title">Ograniči korenske sposobnosti</string>
     <string name="settings_su_restrict_summary">Podrazumevano ograničava apl. super-korisnika. Upozorenje: ovo će većinu aplikacija skršiti. Ne omogućavaj, osim ako znaš šta radiš.</string>
     <string name="settings_customization">Prilagođavanje</string>
-    <string name="setting_add_shortcut_summary">Dodaj lepu prečicu na početni ekran u slučaju da se ime i ikonica ne prepoznaju lako nakon skrivanja aplikacije</string>
     <string name="settings_doh_title">DNS preko HTTPS-a</string>
     <string name="settings_doh_description">Zaobilazno rešenje DNS trovanja u nekim nacijama</string>
     <string name="settings_random_name_title">Nasumično ime na izlazu</string>
@@ -239,8 +238,6 @@
     <string name="external_rw_permission_denied">Dozvolite permisiju za skladište da biste omogućili ovu funkcionalnost</string>
     <string name="post_notifications_denied">Dozvolite permisiju za notifikacije da biste omogućili ovu funkcionalnost</string>
     <string name="install_unknown_denied">Dozvolite \"instaliranje nepoznatih aplikacija\" da biste omogućili ovu funkcionalnost</string>
-    <string name="add_shortcut_title">Dodaj prečicu na početni ekran</string>
-    <string name="add_shortcut_msg">Nakon skrivanja aplikacije, njeno ime i ikonicu ćete teško prepoznati. Želite li dodati lepu prečicu na početni ekran?</string>
     <string name="app_not_found">Nije pronađena aplikacija za ovu akciju</string>
     <string name="reboot_apply_change">Ponovo pokreni da primeniš izmene</string>
     <string name="restore_app_confirmation">Ovo će vratiti skrivenu aplikaciju na originalnu. Da li stvarno to želite?</string>

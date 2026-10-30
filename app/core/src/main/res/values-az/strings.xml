@@ -168,7 +168,6 @@
     <string name="settings_su_tapjack_title">Saxta Ekran (Tapjacking) Qoruması</string>
     <string name="settings_su_tapjack_summary">Super İstifadəçi icazə pəncərəsi digər pəncərələr tərəfindən əngəlləndikdə heçbir girişə cavab verməyəcək</string>
     <string name="settings_customization">Özəlləşdirmə</string>
-    <string name="setting_add_shortcut_summary">Tətbiqi gizlətdikdən sonra tapmaq çətin olmasın deyə ana ekrana qısayol əlavə et</string>
     <string name="settings_doh_title">HTTPS üzərindən DNS</string>
     <string name="settings_doh_description">Bəzi ölkələrdə DNS problemlərini həll edir</string>
 
@@ -230,8 +229,6 @@
     <string name="external_rw_permission_denied">Bu funksiyanı işə salmaq üçün yaddaş icazəsi verin</string>
     <string name="post_notifications_denied">Bu funksiyanı işə salmaq üçün bildiriş icazəsi verin</string>
     <string name="install_unknown_denied">"bilinməyən tətbiqləri quraşdır"\ı açsanız bu funksiya işə düşəcək</string>
-    <string name="add_shortcut_title">Ana ekranda qısayol yarat</string>
-    <string name="add_shortcut_msg">Tətbiqi gizlətdikdən sonra tapmaq çətin olmasın deyə ana ekranda qısayol yaradılsın?</string>
     <string name="app_not_found">Bu işi görəcək heçbir tətbiq yoxdur</string>
     <string name="reboot_apply_change">Dəyişikliklər təkrar başladıqdan sonra olacaq</string>
     <string name="restore_app_confirmation">Gizli tətbiq əvvəlki halına qayıdacaq. Davam edilsin?</string>

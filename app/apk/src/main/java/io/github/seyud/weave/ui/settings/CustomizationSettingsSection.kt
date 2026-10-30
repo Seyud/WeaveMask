@@ -35,7 +35,6 @@ internal fun CustomizationSettingsSection(
     visibility: SettingsVisibility,
     onNavigateToAppLanguage: () -> Unit,
     onNavigateToColorPalette: () -> Unit,
-    onAddShortcut: () -> Unit,
 ) {
     val context = LocalContext.current
     val res = context.resources
@@ -128,22 +127,6 @@ internal fun CustomizationSettingsSection(
                         appIconIndex = index
                     }
                 },
-            )
-        }
-
-        if (visibility.showAddShortcut) {
-            ArrowPreference(
-                title = stringResource(CoreR.string.add_shortcut_title),
-                summary = stringResource(CoreR.string.setting_add_shortcut_summary),
-                startAction = {
-                    Icon(
-                        Icons.AutoMirrored.Rounded.AddToHomeScreen,
-                        modifier = Modifier.padding(end = 6.dp),
-                        contentDescription = null,
-                        tint = colorScheme.onBackground,
-                    )
-                },
-                onClick = onAddShortcut,
             )
         }
     }

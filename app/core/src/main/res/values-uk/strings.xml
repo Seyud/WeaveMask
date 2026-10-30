@@ -178,7 +178,6 @@
     <string name="settings_su_restrict_title">Обмежити можливості root</string>
     <string name="settings_su_restrict_summary">Типово обмежуватиме нові застосунки з правами суперкористувача. Попередження: це порушить роботу більшості застосунків. Не вмикайте це, якщо не знаєте, що робите.</string>
     <string name="settings_customization">Оформлення</string>
-    <string name="setting_add_shortcut_summary">Додати ярлик на домашній екран для зручного сприйняття застосунку після його приховування</string>
     <string name="settings_doh_title">DNS поверх HTTPS</string>
     <string name="settings_doh_description">Відключити DoH (при нестабільному підключенні)</string>
     <string name="settings_random_name_title">Робити випадковим ім\’я вихідного файлу</string>
@@ -243,8 +242,6 @@
     <string name="external_rw_permission_denied">Надайте доступ до сховища, щоб увімкнути цей функціонал</string>
     <string name="post_notifications_denied">Надайте дозвіл на сповіщення, щоб увімкнути цей функціонал</string>
     <string name="install_unknown_denied">Дозвольте \"Встановлення невідомих застосунків\", щоб увімкнути цей функціонал</string>
-    <string name="add_shortcut_title">Ярлик на домашньому екрані</string>
-    <string name="add_shortcut_msg">Після приховування цього застосунку, його значок та ім\’я будуть іншими, тому застосунок буде важко впізнати. Хочете додати ярлик на домашній екран?</string>
     <string name="app_not_found">Не знайдено застосунок, який повинен опрацювати цю дію</string>
     <string name="reboot_apply_change">Перезавантажити, щоб застосувати зміни</string>
     <string name="restore_app_confirmation">Це відновить прихований застосунок до оригінального. Ви справді бажаєте це зробити?</string>

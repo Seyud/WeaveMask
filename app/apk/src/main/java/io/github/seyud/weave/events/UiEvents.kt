@@ -8,7 +8,6 @@ import io.github.seyud.weave.arch.UiEvent
 import io.github.seyud.weave.core.base.ContentResultCallback
 import io.github.seyud.weave.core.base.IActivityExtension
 import io.github.seyud.weave.core.base.relaunch
-import io.github.seyud.weave.core.integration.AppShortcuts
 import io.github.seyud.weave.ui.dialog.WeaveDialog
 
 class PermissionEvent(
@@ -53,12 +52,6 @@ class GetContentEvent(
 ) : UiEvent(), ActivityExecutor {
     override fun invoke(activity: ComponentActivity) {
         (activity as? IActivityExtension)?.getContent(type, callback)
-    }
-}
-
-class AddHomeIconEvent : UiEvent(), ContextExecutor {
-    override fun invoke(context: Context) {
-        AppShortcuts.addHomeIcon(context)
     }
 }
 
