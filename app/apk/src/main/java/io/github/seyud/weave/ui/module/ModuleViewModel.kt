@@ -221,6 +221,13 @@ class ModuleViewModel(
         updateInfoJob?.cancel()
         val previousModules = currentModuleSnapshot()
 
+        // 冷启动时模块 VM 可能先于模块页 UI 被触发(如网络切换回调),
+        // 那时排序偏好与隐藏列表尚未读入,首次发布会按默认偏好排序;
+        // 等用户切到模块页 initializePreferences() 读入真实偏好后再次
+        // 发布,列表就会当场重排——即"进模块页才突然排序"。这里先
+        // 初始化,保证任何路径的首次发布都带正确偏好。
+        initializePreferences()
+
         if (isInitialLoad) {
             loading = true
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
