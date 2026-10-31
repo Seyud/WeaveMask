@@ -75,6 +75,7 @@ test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version =
 libsu-core = { module = "com.github.topjohnwu.libsu:core", version.ref = "libsu" }
 libsu-service = { module = "com.github.topjohnwu.libsu:service", version.ref = "libsu" }
 libsu-nio = { module = "com.github.topjohnwu.libsu:nio", version.ref = "libsu" }
+libsu-io = { module = "com.github.topjohnwu.libsu:io", version.ref = "libsu" }
 wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wire" }
 
 # Miuix

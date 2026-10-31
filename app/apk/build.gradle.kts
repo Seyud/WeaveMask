@@ -31,6 +31,9 @@ dependencies {
     implementation(project(":core"))
     coreLibraryDesugaring(libs.jdk.libs)
 
+    // SuFile / SuFileInputStream / SuRandomAccessFile back the module WebUI `ksu.io()` API
+    implementation(libs.libsu.io)
+
     implementation(libs.core.splashscreen)
     implementation(libs.appcompat)
     implementation(libs.material)

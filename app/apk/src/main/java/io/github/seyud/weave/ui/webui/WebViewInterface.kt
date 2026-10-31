@@ -13,14 +13,26 @@ import com.topjohnwu.superuser.CallbackList
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ShellUtils
 import com.topjohnwu.superuser.internal.UiThreadHandler
+import io.github.seyud.weave.core.model.module.LocalModule
+import io.github.seyud.weave.ui.webui.file.KsuIO
+import io.github.seyud.weave.ui.webui.pm.KsuPm
+import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.CompletableFuture
 
+/**
+ * `ksu` JS bridge for module WebUIs.
+ *
+ * The API surface follows KernelSU manager (`exec` / `spawn` / `moduleInfo` / `io` / `pm` /
+ * `exit`), which is the reference implementation for module WebUIs.
+ */
 class WebViewInterface(private val state: WebUIState) {
     private val webView get() = state.webView
     private val modDir get() = state.modDir
+
+    private var ksuPm: KsuPm? = null
 
     private fun newRootShell(): Shell {
         return Shell.Builder.create()
@@ -52,12 +64,12 @@ class WebViewInterface(private val state: WebUIState) {
 
         val cwd = opts.optString("cwd")
         if (!TextUtils.isEmpty(cwd)) {
-            sb.append("cd ${cwd};")
+            sb.append("cd ").append(cwd).append(";")
         }
 
         opts.optJSONObject("env")?.let { env ->
             env.keys().forEach { key ->
-                sb.append("export ${key}=${env.getString(key)};")
+                sb.append("export ").append(key).append("=").append(env.getString(key)).append(";")
             }
         }
     }
@@ -80,10 +92,9 @@ class WebViewInterface(private val state: WebUIState) {
         val stdout = result.out.joinToString(separator = "\n")
         val stderr = result.err.joinToString(separator = "\n")
 
-        val jsCode =
-            "(function() { try { ${callbackFunc}(${result.code}, ${
-                JSONObject.quote(stdout)
-            }, ${JSONObject.quote(stderr)}); } catch(e) { console.error(e); } })();"
+        val jsCode = "(function() { try { " + callbackFunc + "(" + result.code + ", " +
+            JSONObject.quote(stdout) + ", " + JSONObject.quote(stderr) +
+            "); } catch(e) { console.error(e); } })();"
         postJavascript(jsCode)
     }
 
@@ -107,10 +118,8 @@ class WebViewInterface(private val state: WebUIState) {
         val shell = newRootShell()
 
         val emitData = fun(name: String, data: String) {
-            val jsCode =
-                "(function() { try { ${callbackFunc}.${name}.emit('data', ${
-                    JSONObject.quote(data)
-                }); } catch(e) { console.error('emitData', e); } })();"
+            val jsCode = "(function() { try { " + callbackFunc + "." + name + ".emit('data', " +
+                JSONObject.quote(data) + "); } catch(e) { console.error('emitData', e); } })();"
             postJavascript(jsCode)
         }
 
@@ -130,15 +139,15 @@ class WebViewInterface(private val state: WebUIState) {
         val completableFuture = CompletableFuture.supplyAsync { future.get() }
 
         completableFuture.thenAccept { result ->
-            val emitExitCode =
-                "(function() { try { ${callbackFunc}.emit('exit', ${result.code}); } catch(e) { console.error(`emitExit error: \${e}`); } })();"
+            val emitExitCode = "(function() { try { " + callbackFunc + ".emit('exit', " +
+                result.code + "); } catch(e) { console.error('emitExit error', e); } })();"
             postJavascript(emitExitCode)
 
             if (result.code != 0) {
-                val emitErrCode =
-                    "(function() { try { var err = new Error(); err.exitCode = ${result.code}; err.message = ${
-                        JSONObject.quote(result.err.joinToString("\n"))
-                    };${callbackFunc}.emit('error', err); } catch(e) { console.error('emitErr', e); } })();"
+                val emitErrCode = "(function() { try { var err = new Error(); err.exitCode = " +
+                    result.code + "; err.message = " +
+                    JSONObject.quote(result.err.joinToString("\n")) + ";" + callbackFunc +
+                    ".emit('error', err); } catch(e) { console.error('emitErr', e); } })();"
                 postJavascript(emitErrCode)
             }
         }.whenComplete { _, _ ->
@@ -180,16 +189,30 @@ class WebViewInterface(private val state: WebUIState) {
     fun moduleInfo(): String {
         val currentModuleInfo = JSONObject()
         currentModuleInfo.put("moduleDir", modDir)
-        currentModuleInfo.put("id", File(modDir).name)
+        val moduleId = File(modDir).name
+        currentModuleInfo.put("id", moduleId)
+
+        val module = runCatching {
+            runBlocking { LocalModule.installed().firstOrNull { it.id == moduleId } }
+        }.getOrNull() ?: return currentModuleInfo.toString()
+
+        currentModuleInfo.put("name", module.name)
+        currentModuleInfo.put("version", module.version)
+        currentModuleInfo.put("versionCode", module.versionCode)
+        currentModuleInfo.put("author", module.author)
+        currentModuleInfo.put("description", module.description)
+        currentModuleInfo.put("enabled", module.enable)
         return currentModuleInfo.toString()
     }
 
+    @Deprecated("Use ksu.pm().listPackages() instead")
     @JavascriptInterface
     fun listPackages(type: String): String {
         val context = webView?.context ?: return JSONArray().toString()
         return WebUiPackageRegistry.listPackages(context, type)
     }
 
+    @Deprecated("Use ksu.pm().getPackagesInfo() instead")
     @JavascriptInterface
     fun getPackagesInfo(packageNamesJson: String): String {
         val context = webView?.context ?: return JSONArray().toString()
@@ -199,6 +222,23 @@ class WebViewInterface(private val state: WebUIState) {
     @JavascriptInterface
     fun exit() {
         state.requestExit()
+    }
+
+    /** Root file API: `ksu.io().File(path)`, `ksu.io().FileInputStream()`, ... */
+    @JavascriptInterface
+    fun io() = KsuIO
+
+    /** Package manager API (multi-user aware): `ksu.pm().listPackages("")`. */
+    @JavascriptInterface
+    fun pm(): KsuPm? {
+        ksuPm?.let { return it }
+        val context = webView?.context ?: return null
+        return KsuPm(context).also { ksuPm = it }
+    }
+
+    fun destroy() {
+        ksuPm = null
+        runCatching { KsuIO.destroy() }
     }
 }
 

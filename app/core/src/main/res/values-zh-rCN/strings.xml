@@ -387,4 +387,14 @@
     <string name="settings_banner">模块横幅</string>
     <string name="settings_banner_summary">在模块卡片背景显示横幅图片</string>
 
+    <!-- WebUI 调试 -->
+    <string name="settings_developer_title">开发者</string>
+    <string name="settings_webui_debug_title">WebUI 调试</string>
+    <string name="settings_webui_debug_summary">为模块 WebUI 开启 WebView 远程调试（通过 USB 使用 chrome://inspect），仅在需要时开启</string>
+    <string name="settings_webui_console_title">端上 WebUI 控制台</string>
+    <string name="settings_webui_console_summary">向模块 WebUI 注入开发者工具面板（eruda），无需连接电脑即可在手机上调试</string>
+
+    <!-- WebUI 下载 -->
+    <string name="webui_download_complete">已保存 %1$s</string>
+    <string name="webui_download_failed">保存 %1$s 失败：%2$s</string>
 </resources>

@@ -52,6 +52,7 @@ internal object WebUiPackageRegistry {
                 }
             }
             .map { it.packageName }
+            .distinct()
             .sortedWith(packageNameComparator())
             .toList()
 
@@ -61,19 +62,26 @@ internal object WebUiPackageRegistry {
     fun getPackagesInfo(context: Context, packageNamesJson: String): String {
         val packageNames = JSONArray(packageNamesJson)
         val jsonArray = JSONArray()
-        val appMap = loadApps(context).associateBy { it.packageName }
+        // A package can be installed for several users; report one entry per uid,
+        // matching KernelSU's `ksu.pm().getPackagesInfo()` contract.
+        val appsByPackage = loadApps(context).groupBy { it.packageName }
 
         for (i in 0 until packageNames.length()) {
             val packageName = packageNames.getString(i)
-            val appInfo = appMap[packageName]
-            val jsonObject = JSONObject()
+            val matches = appsByPackage[packageName]
 
-            if (appInfo == null) {
+            if (matches.isNullOrEmpty()) {
+                val jsonObject = JSONObject()
                 jsonObject.put("packageName", packageName)
                 jsonObject.put("error", "Package not found or inaccessible")
-            } else {
+                jsonArray.put(jsonObject)
+                continue
+            }
+
+            for (appInfo in matches.sortedBy { it.packageInfo.applicationInfo?.uid ?: -1 }) {
                 val packageInfo = appInfo.packageInfo
                 val applicationInfo = packageInfo.applicationInfo
+                val jsonObject = JSONObject()
                 jsonObject.put("packageName", packageInfo.packageName)
                 jsonObject.put("versionName", packageInfo.versionName ?: "")
                 jsonObject.put("versionCode", PackageInfoCompat.getLongVersionCode(packageInfo))
@@ -87,9 +95,12 @@ internal object WebUiPackageRegistry {
                     }
                 )
                 jsonObject.put("uid", applicationInfo?.uid ?: JSONObject.NULL)
+                jsonObject.put(
+                    "userId",
+                    applicationInfo?.let { it.uid / 100000 } ?: JSONObject.NULL
+                )
+                jsonArray.put(jsonObject)
             }
-
-            jsonArray.put(jsonObject)
         }
 
         return jsonArray.toString()

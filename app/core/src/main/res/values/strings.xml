@@ -394,4 +394,15 @@
 
     <string name="download_googlebook_recovery_image">Download latest Googlebook recovery image</string>
     <string name="download_pixel_factory_image">Download latest Pixel factory image</string>
+
+    <!-- WebUI debugging -->
+    <string name="settings_developer_title">Developer</string>
+    <string name="settings_webui_debug_title">WebUI debugging</string>
+    <string name="settings_webui_debug_summary">Enable WebView remote debugging for module WebUIs (chrome://inspect over USB). Enable only when needed.</string>
+    <string name="settings_webui_console_title">On-device WebUI console</string>
+    <string name="settings_webui_console_summary">Inject a devtools panel (eruda) into module WebUIs so they can be debugged on the phone itself</string>
+
+    <!-- WebUI downloads -->
+    <string name="webui_download_complete">Saved %1$s</string>
+    <string name="webui_download_failed">Failed to save %1$s: %2$s</string>
 </resources>

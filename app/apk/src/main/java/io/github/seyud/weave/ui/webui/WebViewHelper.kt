@@ -3,6 +3,7 @@ package io.github.seyud.weave.ui.webui
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
 import android.webkit.JsPromptResult
@@ -17,14 +18,21 @@ import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewFeature
 import com.topjohnwu.superuser.nio.FileSystemManager
+import io.github.seyud.weave.core.Config
 import io.github.seyud.weave.core.Const
+import io.github.seyud.weave.core.model.module.LocalModule
 import io.github.seyud.weave.core.utils.RootUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 private const val WEBUI_DOMAIN = "mui.kernelsu.org"
 private const val WEBUI_HOME_PAGE = "https://$WEBUI_DOMAIN/index.html"
+private const val KSU_SCHEME = "ksu"
+private const val ICON_HOST = "icon"
+private const val INTERNAL_BLOB_DOWNLOAD_HOST = "blob-download.kernelsu.internal"
 
 private sealed interface WebViewPreparationResult {
     data class Ready(
@@ -75,6 +83,20 @@ private suspend fun prepareWebViewEnvironment(
         return@withContext WebViewPreparationResult.Failed("WebUI assets not found for module $moduleId")
     }
 
+    // Same availability rules as KernelSU manager: no WebUI for missing, disabled or
+    // pending-update / pending-removal modules.
+    val module = runCatching { LocalModule.installed().firstOrNull { it.id == moduleId } }.getOrNull()
+    when {
+        module == null ->
+            return@withContext WebViewPreparationResult.Failed("No such module: $moduleId")
+
+        !module.hasWebUi ->
+            return@withContext WebViewPreparationResult.Failed("Module has no WebUI: ${module.name}")
+
+        !module.enable || module.updated || module.remove ->
+            return@withContext WebViewPreparationResult.Failed("Module unavailable: ${module.name}")
+    }
+
     WebViewPreparationResult.Ready(
         moduleDir = moduleDir,
         moduleName = moduleName,
@@ -92,6 +114,9 @@ private fun initWebView(
 ) {
     webUIState.modDir = moduleDir
     webUIState.moduleName = moduleName
+
+    // Remote DevTools (chrome://inspect) for module WebUIs, same switch as KernelSU.
+    WebView.setWebContentsDebuggingEnabled(Config.enableWebUiDebugging)
 
     val webView = WebView(activity)
     webView.setBackgroundColor(Color.TRANSPARENT)
@@ -128,20 +153,35 @@ private fun initWebView(
             view: WebView,
             request: WebResourceRequest
         ): WebResourceResponse? {
+            BlobDownloadHandler.shouldInterceptRequest(request)?.let { return it }
+
             val url = request.url
-            if (url.scheme.equals("ksu", ignoreCase = true) && url.host.equals("icon", ignoreCase = true)) {
+            if (url.scheme.equals(KSU_SCHEME, ignoreCase = true) &&
+                url.host.equals(ICON_HOST, ignoreCase = true)
+            ) {
                 val packageName = url.path?.removePrefix("/")
                 if (!packageName.isNullOrEmpty()) {
                     val icon = WebUiPackageRegistry.loadAppIcon(activity, packageName, 512)
                     if (icon != null) {
-                        val stream = java.io.ByteArrayOutputStream()
-                        icon.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
+                        val stream = ByteArrayOutputStream()
+                        icon.compress(Bitmap.CompressFormat.PNG, 100, stream)
                         return WebResourceResponse(
                             "image/png",
                             null,
-                            java.io.ByteArrayInputStream(stream.toByteArray())
+                            200,
+                            "OK",
+                            mapOf("Access-Control-Allow-Origin" to "*"),
+                            ByteArrayInputStream(stream.toByteArray())
                         )
                     }
+                    return WebResourceResponse(
+                        "text/plain",
+                        "utf-8",
+                        404,
+                        "Not Found",
+                        mapOf("Access-Control-Allow-Origin" to "*"),
+                        ByteArrayInputStream("No such package".toByteArray(Charsets.UTF_8))
+                    )
                 }
             }
             return webViewAssetLoader.shouldInterceptRequest(url)
@@ -158,6 +198,14 @@ private fun initWebView(
                     webUIState.currentInsets.js,
                     null
                 )
+            }
+            view?.let { currentView ->
+                // The shim is lost on every navigation; re-inject it, and the on-device
+                // console as well when debugging is enabled.
+                WebUiDebug.injectDownloadShim(activity, currentView)
+                if (Config.enableWebUiConsole) {
+                    WebUiDebug.injectConsole(activity, currentView)
+                }
             }
             super.doUpdateVisitedHistory(view, url, isReload)
         }
@@ -215,9 +263,28 @@ private fun initWebView(
         }
     }
 
-    val webviewInterface = WebViewInterface(webUIState)
     webUIState.webView = webView
+
+    val webviewInterface = WebViewInterface(webUIState)
+    val downloadInterface = WebUIDownloadInterface(webUIState)
+    webUIState.webViewInterface = webviewInterface
+    webUIState.downloadInterface = downloadInterface
     webView.addJavascriptInterface(webviewInterface, "ksu")
+    webView.addJavascriptInterface(downloadInterface, "ksu_download")
+
+    webView.setDownloadListener { url, _, _, _, _ ->
+        // Chunked blob downloads are already handed to Downloads by
+        // `ksu_download.completeChunkedDownload`, so only real links go out to the browser.
+        if (Uri.parse(url).host != INTERNAL_BLOB_DOWNLOAD_HOST) {
+            downloadInterface.openExternal(url)
+        }
+    }
+
+    WebUiDebug.injectDownloadShim(activity, webView)
+    if (Config.enableWebUiConsole) {
+        WebUiDebug.injectConsole(activity, webView)
+    }
+
     webView.loadUrl(WEBUI_HOME_PAGE)
     webUIState.uiEvent = WebUIEvent.WebViewReady
 }

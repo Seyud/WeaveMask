@@ -89,6 +89,8 @@ internal fun SettingsScreenContent(
             isActive = isActive,
         )
 
+        DeveloperSettingsSection()
+
         Spacer(Modifier.height(contentBottomPadding))
     }
 }

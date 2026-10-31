@@ -69,6 +69,8 @@ object Config : PreferenceConfig, DBConfig {
         const val ENABLE_FLOATING_BOTTOM_BAR_BLUR = "enable_floating_bottom_bar_blur"
         const val ENABLE_PREDICTIVE_BACK = "enable_predictive_back"
         const val PAGE_SCALE = "page_scale"
+        const val ENABLE_WEBUI_DEBUGGING = "enable_webui_debugging"
+        const val ENABLE_WEBUI_CONSOLE = "enable_webui_console"
         const val HOME_LAYOUT_MODE = "home_layout_mode"
         const val APP_ICON_VARIANT = "app_icon_variant"
         const val USE_BANNER = "use_banner"
@@ -86,6 +88,8 @@ object Config : PreferenceConfig, DBConfig {
             SU_LIST_MODE_DENYLIST_PENDING_FALLBACK_MODE,
             SU_LIST_MODE_DENYLIST_PENDING_SERIAL,
             SU_LIST_MODE_DENYLIST_PENDING_VALID,
+            ENABLE_WEBUI_DEBUGGING,
+            ENABLE_WEBUI_CONSOLE,
         )
     }
 
@@ -158,6 +162,10 @@ object Config : PreferenceConfig, DBConfig {
     private var enableFloatingBottomBarBlurPrefs by preference(Key.ENABLE_FLOATING_BOTTOM_BAR_BLUR, false)
     var enablePredictiveBack by preference(Key.ENABLE_PREDICTIVE_BACK, false)
     var pageScale by preference(Key.PAGE_SCALE, 1.0f)
+    /** WebView DevTools remote debugging (chrome://inspect over USB) */
+    var enableWebUiDebugging by preference(Key.ENABLE_WEBUI_DEBUGGING, false)
+    /** Inject the bundled eruda devtools panel into module WebUIs (on-device console) */
+    var enableWebUiConsole by preference(Key.ENABLE_WEBUI_CONSOLE, false)
     var homeLayoutMode by preference(Key.HOME_LAYOUT_MODE, Value.HOME_LAYOUT_CLASSIC)
     var appIconVariant by preference(Key.APP_ICON_VARIANT, "current")
     var useBanner by preference(Key.USE_BANNER, false)

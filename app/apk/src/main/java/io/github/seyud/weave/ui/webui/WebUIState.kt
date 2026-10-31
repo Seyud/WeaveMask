@@ -22,6 +22,8 @@ sealed class WebUIEvent {
 
 class WebUIState {
     var webView: WebView? = null
+    var webViewInterface: WebViewInterface? = null
+    var downloadInterface: WebUIDownloadInterface? = null
     lateinit var modDir: String
     var moduleName: String = ""
 
@@ -29,6 +31,7 @@ class WebUIState {
     var currentInsets: Insets = Insets(0, 0, 0, 0)
     var isInsetsEnabled by mutableStateOf(false)
     var webCanGoBack by mutableStateOf(false)
+
     var filePathCallback: android.webkit.ValueCallback<Array<Uri>>? = null
 
     fun onAlertResult() {
@@ -66,10 +69,16 @@ class WebUIState {
     }
 
     fun dispose() {
+        downloadInterface?.destroy()
+        downloadInterface = null
+        webViewInterface?.destroy()
+        webViewInterface = null
         webView?.let { view ->
             (view.parent as? android.view.ViewGroup)?.removeView(view)
             view.destroy()
         }
         webView = null
+        filePathCallback?.onReceiveValue(null)
+        filePathCallback = null
     }
 }

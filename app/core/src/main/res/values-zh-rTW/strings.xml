@@ -262,4 +262,14 @@
     <string name="refreshing">刷新中…</string>
     <string name="refreshed_successfully">刷新成功</string>
 
+    <!-- WebUI 偵錯 -->
+    <string name="settings_developer_title">開發人員</string>
+    <string name="settings_webui_debug_title">WebUI 偵錯</string>
+    <string name="settings_webui_debug_summary">為模組 WebUI 開啟 WebView 遠端偵錯（透過 USB 使用 chrome://inspect），僅在需要時開啟</string>
+    <string name="settings_webui_console_title">端上 WebUI 主控台</string>
+    <string name="settings_webui_console_summary">向模組 WebUI 注入開發人員工具面板（eruda），無需連接電腦即可在手機上偵錯</string>
+
+    <!-- WebUI 下載 -->
+    <string name="webui_download_complete">已儲存 %1$s</string>
+    <string name="webui_download_failed">儲存 %1$s 失敗：%2$s</string>
 </resources>
