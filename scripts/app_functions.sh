@@ -70,6 +70,10 @@ direct_install() {
       echo "! $2 is read only"
       return 2
       ;;
+    3)
+      echo "! Write to $2 did not persist"
+      return 3
+      ;;
   esac
 
   rm -f $1/new-boot.img

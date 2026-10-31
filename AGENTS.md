@@ -141,6 +141,7 @@ Adapted from upstream Magisk's AGENTS.md (commit cfd195b5):
 3. **Pre-build Native Code:** Before editing code in `native/`, run `./build.py native` at least once to generate FFI bindings (`flags.h`, `flags.rs`) and headers.
 4. **Subproject Context:** Refer to [`app/AGENTS.md`](app/AGENTS.md) when working inside `app/` and [`native/AGENTS.md`](native/AGENTS.md) when working inside `native/`.
 5. **Verification Loop:** After changes, verify compilation and run lint/clippy for affected modules before concluding.
+6. **Private Local Notes:** [`docs/private/AGENTS.md`](docs/private/AGENTS.md) — local-only agent notes (device constraints, debugging findings, commit-message conventions for upstream syncs). The directory is gitignored via `.git/info/exclude` and may not exist on other clones; read it before device work or upstream syncs, and never commit files from it.
 
 ## Windows Quirks
 

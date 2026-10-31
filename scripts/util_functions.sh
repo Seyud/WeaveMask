@@ -415,15 +415,46 @@ flash_image() {
     blockdev --setrw "$2"
     local blk_ro=$(blockdev --getro "$2")
     [ "$blk_ro" -eq 1 ] && return 2
+    # Fork: verify the write actually persisted. Some vendor kernels silently
+    # drop block device writes to protected partitions (observed on HyperOS:
+    # dd/cat to boot reports success but the content never changes). The write
+    # pipeline's own exit status is useless here: the /dev/zero filler always
+    # ends with ENOSPC once the partition is full, and a dropped write is not
+    # reported at all, so only a readback hash comparison can detect it.
+    local wlen wsha
+    case "$1" in
+      *.gz)
+        wlen=$(eval "$CMD1" | wc -c)
+        wsha=$(eval "$CMD1" | sha1sum)
+        ;;
+      *)
+        wlen=$img_sz
+        wsha=$(sha1sum < "$1")
+        ;;
+    esac
     eval "$CMD1" | cat - /dev/zero > "$2" 2>/dev/null
+    sync
+    local rsha
+    rsha=$(dd if="$2" bs=1048576 2>/dev/null | head -c "$wlen" | sha1sum)
+    [ "$wsha" != "$rsha" ] && return 3
   elif [ -c "$2" ]; then
     flash_eraseall "$2" >&2
     eval "$CMD1" | nandwrite -p "$2" - >&2
   else
     ui_print "- Not block or char device, storing image"
-    eval "$CMD1" > "$2" 2>/dev/null
+    eval "$CMD1" > "$2" 2>/dev/null || return 3
   fi
   return 0
+}
+
+# Fork: flash_image, aborting with the precise failure reason on error
+flash_image_or_abort() {
+  flash_image "$@"
+  case $? in
+    1) abort "! Insufficient partition size ($2)";;
+    2) abort "! $2 is read only";;
+    3) abort "! Write to $2 did not persist";;
+  esac
 }
 
 # Common installation script for flash_script.sh and addon.d.sh
@@ -435,15 +466,7 @@ install_magisk() {
   . ./boot_patch.sh "$BOOTIMAGE"
 
   ui_print "- Flashing new boot image"
-  flash_image new-boot.img "$BOOTIMAGE"
-  case $? in
-    1)
-      abort "! Insufficient partition size"
-      ;;
-    2)
-      abort "! $BOOTIMAGE is read only"
-      ;;
-  esac
+  flash_image_or_abort new-boot.img "$BOOTIMAGE"
 
   ./magiskboot cleanup
   rm -f new-boot.img

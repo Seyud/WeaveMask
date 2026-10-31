@@ -104,13 +104,13 @@ case $((STATUS & 3)) in
     BACKUPDIR=/data/magisk_backup_$SHA1
     if [ -d $BACKUPDIR ]; then
       ui_print "- Restoring stock boot image"
-      flash_image $BACKUPDIR/boot.img.gz $BOOTIMAGE
+      flash_image_or_abort $BACKUPDIR/boot.img.gz $BOOTIMAGE
       for name in dtb dtbo dtbs; do
         [ -f $BACKUPDIR/${name}.img.gz ] || continue
         IMAGE=$(find_block $name$SLOT)
         [ -z $IMAGE ] && continue
         ui_print "- Restoring stock $name image"
-        flash_image $BACKUPDIR/${name}.img.gz $IMAGE
+        flash_image_or_abort $BACKUPDIR/${name}.img.gz $IMAGE
       done
     else
       ui_print "! Boot image backup unavailable"
@@ -122,7 +122,7 @@ case $((STATUS & 3)) in
       fi
       ./magiskboot repack $BOOTIMAGE
       ui_print "- Flashing restored boot image"
-      flash_image new-boot.img $BOOTIMAGE || abort "! Insufficient partition size"
+      flash_image_or_abort new-boot.img $BOOTIMAGE
     fi
     ;;
   2 )  # Unsupported
