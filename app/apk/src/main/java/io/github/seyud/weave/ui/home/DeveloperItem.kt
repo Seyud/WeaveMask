@@ -110,7 +110,7 @@ sealed class IconLink {
     abstract class Twitter : IconLink(), Dev {
         override val icon get() = CoreR.drawable.ic_twitter
         override val title get() = CoreR.string.twitter
-        override val link get() = "https://twitter.com/$name"
+        override val link get() = "https://x.com/$name"
     }
 
     abstract class Github : IconLink() {
