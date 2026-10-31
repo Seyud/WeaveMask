@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
@@ -38,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Observer
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -59,6 +61,7 @@ import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
 import io.github.seyud.weave.arch.BaseViewModel.BaseEvent
+import io.github.seyud.weave.ui.component.AutoScrollToBottom
 import io.github.seyud.weave.ui.component.ObserveAsEvents
 import io.github.seyud.weave.ui.component.showSnackbarEvent
 import top.yukonga.miuix.kmp.icon.extended.Refresh
@@ -72,14 +75,16 @@ fun FlashScreen(
     viewModel: FlashViewModel,
     action: String,
     additionalData: List<Uri>,
-    onNavigateBack: () -> Unit = {},
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
+    onNavigateBack: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var state by remember { mutableStateOf(viewModel.state.value ?: FlashViewModel.State.FLASHING) }
     val lines by viewModel.consoleLines.collectAsStateWithLifecycle()
+    val consoleListState = rememberLazyListState()
     val isFlashing = state == FlashViewModel.State.FLASHING
     val moduleInstallBannerLines = remember { FlashViewModel.moduleInstallBannerLines }
 
@@ -100,12 +105,15 @@ fun FlashScreen(
         viewModel.startFlashing()
     }
 
+    // 控制台输出自动跟随到底部，新的日志行（以及需要回应的提示）始终可见
+    AutoScrollToBottom(listState = consoleListState, itemCount = lines.size)
+
     val scope = rememberCoroutineScope()
     ObserveAsEvents(viewModel.baseEvent) { event ->
         when (event) {
             is BaseEvent.ShowSnackbar -> scope.launch {
                 snackbarHostState.showSnackbarEvent(
-                    message = event.message.getText(context.resources),
+                    message = event.message.getText(resources),
                     duration = event.duration,
                 )
             }
@@ -165,6 +173,7 @@ fun FlashScreen(
                             .horizontalScroll(rememberScrollState())
                     ) {
                         LazyColumn(
+                            state = consoleListState,
                             modifier = Modifier.fillMaxSize(),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {

@@ -10,6 +10,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.AddToHomeScreen
@@ -37,7 +38,7 @@ internal fun CustomizationSettingsSection(
     onNavigateToColorPalette: () -> Unit,
 ) {
     val context = LocalContext.current
-    val res = context.resources
+    val res = LocalResources.current
     var homeLayoutMode by rememberSaveable { mutableIntStateOf(Config.homeLayoutMode) }
     val homeLayoutClassic = stringResource(CoreR.string.settings_home_layout_classic)
     val homeLayoutWeavsk = stringResource(CoreR.string.settings_home_layout_weavsk)

@@ -232,10 +232,20 @@ class SuperuserViewModel internal constructor(
         publishFilteredPolicies()
     }
 
-    fun refresh(force: Boolean = false) {
+    /**
+     * 刷新超级用户列表。
+     *
+     * @param force 是否丢弃缓存的应用列表（下拉刷新时用，保证拿到最新的应用信息）
+     * @param showProgress 是否让刷新过程体现在下拉刷新指示器上。
+     *
+     * 切页、回前台这类非手势触发的刷新必须传 `false`：Miuix 的 PullToRefresh 在
+     * `isRefreshing` 变真时会把内容整体下移一个阈值再弹回。切页刷新的数据来自缓存、
+     * 毫秒级完成，指示器只会"抖一下"——表现为每次打开超级用户页列表轻微回弹。
+     */
+    fun refresh(force: Boolean = false, showProgress: Boolean = true) {
         viewModelScope.launch {
             if (force) cachedPackageList = null
-            loadPolicies(isInitialLoad = false)
+            loadPolicies(isInitialLoad = false, showProgress = showProgress)
         }
     }
 

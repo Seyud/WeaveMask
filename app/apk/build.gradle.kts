@@ -37,17 +37,17 @@ dependencies {
 
     // Compose BOM
     implementation(platform(libs.compose.bom))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.compose.runtime:runtime")
-    implementation("androidx.compose.runtime:runtime-livedata")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.graphics)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
+    implementation(libs.compose.runtime)
+    implementation(libs.compose.runtime.livedata)
+    implementation(libs.lifecycle.runtime.compose)
 
     // Navigation Compose
-    implementation("androidx.navigation:navigation-compose:2.9.7")
+    implementation(libs.navigation.compose)
 
     // Navigation 3 + Miuix NavDisplay
     implementation(libs.navigation3.runtime)
@@ -62,5 +62,5 @@ dependencies {
     implementation(libs.miuix.blur)
 
     // WebKit (WebViewAssetLoader)
-    implementation("androidx.webkit:webkit:1.13.0")
+    implementation(libs.webkit)
 }

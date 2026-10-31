@@ -40,6 +40,7 @@ import io.github.seyud.weave.core.ktx.timeFormatStandard
 import io.github.seyud.weave.core.ktx.toTime
 import io.github.seyud.weave.core.utils.MediaStoreUtils
 import io.github.seyud.weave.core.utils.MediaStoreUtils.outputStream
+import io.github.seyud.weave.ui.component.AutoScrollToBottom
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -126,12 +127,8 @@ fun ActionScreen(
         }
     }
 
-    // 自动滚动到底部
-    LaunchedEffect(consoleLines.size) {
-        if (consoleLines.isNotEmpty()) {
-            listState.animateScrollToItem(consoleLines.size - 1)
-        }
-    }
+    // 自动滚动到底部（新的输出行始终可见；用户上滑回看历史时暂停跟随）
+    AutoScrollToBottom(listState = listState, itemCount = consoleLines.size)
 
     // 处理返回键
     BackHandler(enabled = actionState == ActionState.RUNNING) {

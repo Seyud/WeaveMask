@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.res.Resources
-import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -275,11 +274,6 @@ private fun chineseSortRank(tag: String): Int = when (tag) {
 }
 
 private fun getSystemLocale(): Locale {
-    val configuration = Resources.getSystem().configuration
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        configuration.locales[0]
-    } else {
-        @Suppress("DEPRECATION")
-        configuration.locale
-    }
+    // minSdk 24：Configuration#getLocales 一定可用，无需再判断 SDK_INT
+    return Resources.getSystem().configuration.locales[0]
 }

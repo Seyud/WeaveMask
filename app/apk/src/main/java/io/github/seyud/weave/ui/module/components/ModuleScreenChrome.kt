@@ -1,11 +1,15 @@
 package io.github.seyud.weave.ui.module.components
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Storefront
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,6 +33,7 @@ import io.github.seyud.weave.ui.module.RebootListPopup
 import io.github.seyud.weave.ui.util.barBlurContainerColor
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
 import top.yukonga.miuix.kmp.basic.DropdownImpl
+import top.yukonga.miuix.kmp.basic.FloatingActionButton
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.ListPopupColumn
@@ -211,4 +216,30 @@ private fun ModuleTopBarActions(
     RebootListPopup(
         alignment = PopupPositionProvider.Align.TopEnd,
     )
+}
+
+/**
+ * 模块页的「从存储安装」悬浮按钮。
+ *
+ * 样式与位置对齐 KernelSU manager（`ModuleMiuix`）：圆形图标 FAB、无阴影、极细描边，
+ * 常驻于列表右下角，滚到列表任意位置都能直接安装模块，不必回滚到顶部。
+ */
+@Composable
+internal fun InstallModuleFab(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colorScheme = MiuixTheme.colorScheme
+    FloatingActionButton(
+        onClick = onClick,
+        modifier = modifier.border(0.05.dp, colorScheme.outline.copy(alpha = 0.5f), CircleShape),
+        shadowElevation = 0.dp,
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Add,
+            contentDescription = stringResource(CoreR.string.module_action_install_external),
+            tint = colorScheme.onPrimary,
+            modifier = Modifier.size(40.dp),
+        )
+    }
 }

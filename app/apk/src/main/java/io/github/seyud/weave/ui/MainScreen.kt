@@ -292,14 +292,14 @@ fun MainScreen(
     logViewModel: LogViewModel,
     installViewModel: InstallViewModel,
     settingsViewModel: SettingsViewModel,
+    snackbarHostState: SnackbarHostState,
+    modifier: Modifier = Modifier,
     initialMainTab: Int = 0,
     intentVersion: Int = 0,
     pendingFlashRequest: FlashRequest? = null,
     onPendingFlashRequestConsumed: () -> Unit = {},
     externalZipUris: List<ModuleInstallTarget>? = null,
     onExternalZipHandled: () -> Unit = {},
-    snackbarHostState: SnackbarHostState,
-    modifier: Modifier = Modifier
 ) {
     val navigator = rememberNavigator(Route.Main)
     var snackbarBottomPadding by remember { mutableStateOf(0.dp) }
@@ -415,7 +415,8 @@ fun MainScreen(
                             DisposableEffect(key.action) {
                                 onDispose {
                                     if (key.action == Const.Value.FLASH_ZIP) {
-                                        moduleViewModel.refresh()
+                                        // 安装返回模块页：静默刷新，避免下拉刷新指示器把列表顶下去再弹回
+                                        moduleViewModel.refresh(showProgress = false)
                                     }
                                 }
                             }
@@ -848,7 +849,7 @@ private fun MainTabScreen(
                             navigator.push(Route.Deny)
                         },
                         onSuperuserModeChanged = {
-                            moduleViewModel.refresh()
+                            moduleViewModel.refresh(showProgress = false)
                         },
                         onNavigateToColorPalette = {
                             navigator.push(Route.ColorPalette)

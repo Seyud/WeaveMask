@@ -3,6 +3,7 @@ package io.github.seyud.weave.ui.settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import android.annotation.SuppressLint
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import android.Manifest
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.material.icons.Icons
@@ -40,7 +42,7 @@ internal fun AppSettingsSection(
 ) {
     val context = LocalContext.current
     val settingsLabel = stringResource(CoreR.string.settings)
-    val res = context.resources
+    val res = LocalResources.current
     var dohEnabled by rememberSaveable { mutableStateOf(Config.doh) }
     var checkUpdateEnabled by rememberSaveable { mutableStateOf(Config.checkUpdate) }
     var randNameEnabled by rememberSaveable { mutableStateOf(Config.randName) }
@@ -101,7 +103,11 @@ internal fun AppSettingsSection(
             onCheckedChange = { enabled ->
                 if (enabled) {
                     val extActivity = context.unwrap() as? IActivityExtension
-                    extActivity?.withPermission(Manifest.permission.POST_NOTIFICATIONS) { granted ->
+                    // InlinedApi：POST_NOTIFICATIONS 是编译期内联的字符串常量，低版本系统上
+                    // withPermission 会走运行时权限检查，不存在兼容问题
+                    @SuppressLint("InlinedApi")
+                    val permission = Manifest.permission.POST_NOTIFICATIONS
+                    extActivity?.withPermission(permission) { granted ->
                         Config.checkUpdate = granted
                         checkUpdateEnabled = granted
                     }

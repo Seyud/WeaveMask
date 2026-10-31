@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!--
+      bcpkix（第三方依赖 jar）内部自带一个空实现的 X509TrustManager，
+      并非本仓库代码，无法也不必在本仓库修复。
+    -->
+    <issue id="TrustAllX509TrustManager">
+        <ignore path="**/bcpkix-jdk18on-*.jar" />
+    </issue>
+</lint>

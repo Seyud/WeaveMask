@@ -34,7 +34,6 @@ import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 internal fun ModuleList(
     modules: List<ModuleInfo>,
     blurBackdrop: LayerBackdrop?,
-    onInstallPressed: () -> Unit,
     onToggleModule: (ModuleInfo, Boolean) -> Unit,
     onRunAction: (ModuleInfo) -> Unit,
     onOpenWebUi: (ModuleInfo) -> Unit,
@@ -61,10 +60,6 @@ internal fun ModuleList(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             overscrollEffect = null,
         ) {
-            item {
-                InstallModuleEntryButton(onClick = onInstallPressed)
-            }
-
             moduleItems(
                 modules = modules,
                 onToggleModule = onToggleModule,

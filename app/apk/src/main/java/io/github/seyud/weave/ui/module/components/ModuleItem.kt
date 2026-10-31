@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -37,6 +38,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -78,6 +80,7 @@ internal fun ModuleItem(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val density = LocalDensity.current
     val isSwitchEnabled = !module.removed &&
         !module.updated &&
@@ -101,7 +104,7 @@ internal fun ModuleItem(
     val cardAlpha = if (module.enabled && !module.removed) 1f else 0.5f
 
     // Measured box height for banner sizing
-    var boxHeightPx by remember { mutableStateOf(0) }
+    var boxHeightPx by remember { mutableIntStateOf(0) }
 
     Card(
         modifier = modifier
@@ -240,7 +243,7 @@ internal fun ModuleItem(
 
                 if (module.showNotice) {
                     Text(
-                        text = module.noticeText.getText(context.resources),
+                        text = module.noticeText.getText(resources),
                         fontSize = 14.sp,
                         modifier = Modifier.padding(top = 8.dp),
                         color = MiuixTheme.colorScheme.error,

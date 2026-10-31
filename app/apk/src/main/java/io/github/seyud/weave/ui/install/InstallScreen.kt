@@ -74,9 +74,9 @@ enum class InstallMethod {
 @Composable
 fun InstallScreen(
     viewModel: InstallViewModel,
+    modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
     onNavigateToFlash: (String, Uri?) -> Unit = { _, _ -> },
-    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

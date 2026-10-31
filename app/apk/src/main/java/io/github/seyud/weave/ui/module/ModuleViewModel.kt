@@ -204,10 +204,15 @@ class ModuleViewModel(
 
     /**
      * 刷新模块列表
+     *
+     * @param showProgress 是否让刷新过程体现在下拉刷新指示器上。下拉手势走默认值；
+     *   安装返回、设置变更等非手势触发的刷新要传 `false`——Miuix 的 PullToRefresh
+     *   在 `isRefreshing` 变真时会把内容整体下移一个阈值，被快速完成的刷新打断后
+     *   再弹回，表现为列表轻微回弹。
      */
-    fun refresh(resort: Boolean = true) {
+    fun refresh(resort: Boolean = true, showProgress: Boolean = true) {
         viewModelScope.launch {
-            loadModules(isInitialLoad = false, resort = resort)
+            loadModules(isInitialLoad = false, resort = resort, showProgress = showProgress)
         }
     }
 
@@ -217,7 +222,11 @@ class ModuleViewModel(
 
     override fun onNetworkChanged(network: Boolean) = startLoading()
 
-    private suspend fun loadModules(isInitialLoad: Boolean, resort: Boolean = true) {
+    private suspend fun loadModules(
+        isInitialLoad: Boolean,
+        resort: Boolean = true,
+        showProgress: Boolean = true,
+    ) {
         updateInfoJob?.cancel()
         val previousModules = currentModuleSnapshot()
 
@@ -231,7 +240,7 @@ class ModuleViewModel(
         if (isInitialLoad) {
             loading = true
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-        } else {
+        } else if (showProgress) {
             _uiState.value = _uiState.value.copy(isRefreshing = true, errorMessage = null)
         }
 
@@ -505,7 +514,6 @@ class ModuleViewModel(
     override fun onCleared() {
         changelogLoadJob?.cancel()
         changelogLoadJob = null
-        super.onCleared()
     }
 
     companion object {

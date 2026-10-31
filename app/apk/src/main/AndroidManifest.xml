@@ -16,6 +16,7 @@
     <application
         android:localeConfig="@xml/locale_config"
         android:networkSecurityConfig="@xml/network_security_config"
+        tools:ignore="UnusedAttribute"
         tools:remove="android:appComponentFactory">
         <activity
             android:name=".ui.MainActivity"
@@ -39,8 +40,7 @@
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
             android:roundIcon="@mipmap/ic_launcher_round"
-            android:targetActivity=".ui.MainActivity"
-            android:theme="@style/Theme.WeaveMagisk.Splash">
+            android:targetActivity=".ui.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -53,8 +53,7 @@
             android:exported="true"
             android:icon="@mipmap/ic_launcher_legacy_weave_icon"
             android:roundIcon="@mipmap/ic_launcher_legacy_weave_icon"
-            android:targetActivity=".ui.MainActivity"
-            android:theme="@style/Theme.WeaveMagisk.Splash">
+            android:targetActivity=".ui.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -67,8 +66,7 @@
             android:exported="true"
             android:icon="@mipmap/ic_launcher_legacy_mask_icon"
             android:roundIcon="@mipmap/ic_launcher_legacy_mask_icon"
-            android:targetActivity=".ui.MainActivity"
-            android:theme="@style/Theme.WeaveMagisk.Splash">
+            android:targetActivity=".ui.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -107,9 +105,12 @@
             tools:ignore="MissingClass"
             tools:node="remove" />
 
+        <!-- 只收系统广播（PACKAGE_ADDED/REPLACED 是 protected action），且 exported=false，
+             第三方无法投递，故忽略"未校验 action"的提示 -->
         <receiver
             android:name=".ui.settings.WhitelistModePackageSyncReceiver"
-            android:exported="false">
+            android:exported="false"
+            tools:ignore="UnsafeProtectedBroadcastReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.PACKAGE_ADDED" />
                 <action android:name="android.intent.action.PACKAGE_REPLACED" />

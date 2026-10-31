@@ -32,7 +32,8 @@ private data class WebUiAppInfo(
 
 internal object WebUiPackageRegistry {
     private val appIconCache = LruCache<String, Bitmap>(ICON_CACHE_SIZE)
-    private val packageNameComparator = Collator.getInstance(Locale.getDefault())
+    /** 每次排序时按当前系统语言取 Collator：静态持有会在运行期切换语言后失效 */
+    private fun packageNameComparator(): Collator = Collator.getInstance(Locale.getDefault())
 
     @Volatile
     private var cachedApps: List<WebUiAppInfo>? = null
@@ -51,7 +52,7 @@ internal object WebUiPackageRegistry {
                 }
             }
             .map { it.packageName }
-            .sortedWith(packageNameComparator)
+            .sortedWith(packageNameComparator())
             .toList()
 
         return JSONArray(packageNames).toString()
@@ -130,7 +131,7 @@ internal object WebUiPackageRegistry {
                 val appLabel = packageInfo.applicationInfo?.getLabel(packageManager) ?: packageInfo.packageName
                 WebUiAppInfo(packageInfo, appLabel)
             }
-            .sortedWith(compareBy(packageNameComparator) { it.packageName })
+            .sortedWith(compareBy(packageNameComparator()) { it.packageName })
 
         cachedApps = apps
         cachedSource = result.source

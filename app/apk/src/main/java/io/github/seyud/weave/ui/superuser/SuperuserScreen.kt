@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,6 +56,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -134,6 +136,7 @@ fun SuperuserScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val layoutDirection = LocalLayoutDirection.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val listMode by viewModel.listMode.collectAsStateWithLifecycle()
@@ -145,7 +148,7 @@ fun SuperuserScreen(
     var expandedPolicyKeys by rememberSaveable { mutableStateOf(emptyList<String>()) }
     val showTopPopup = remember { mutableStateOf(false) }
     val pullToRefreshState = rememberPullToRefreshState()
-    val refreshTick = remember { mutableStateOf(0) }
+    val refreshTick = remember { mutableIntStateOf(0) }
     val listState = rememberLazyListState()
     val scrollBehavior = MiuixScrollBehavior()
     val enableBlur = LocalEnableBlur.current
@@ -166,12 +169,13 @@ fun SuperuserScreen(
     val revokeDialogState = uiState.revokeDialogState
     var pendingRevokeKey by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // 监听生命周期，当页面从后台返回前台时刷新数据
+    // 监听生命周期，当页面从后台返回前台时刷新数据。
+    // 静默刷新：无手势触发时不应该让下拉刷新指示器把内容顶下去再弹回（列表回弹）。
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refresh()
+                viewModel.refresh(showProgress = false)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -199,7 +203,8 @@ fun SuperuserScreen(
         if (isWhitelistMode(currentMode) != isWhitelistMode(listMode)) {
             viewModel.clearPolicies()
         }
-        viewModel.refresh()
+        // 同上：切页触发的刷新要静默，否则 PullToRefresh 的指示器动画会让列表回弹
+        viewModel.refresh(showProgress = false)
     }
 
     LaunchedEffect(searchStatus.searchText) {
@@ -213,7 +218,7 @@ fun SuperuserScreen(
         when (event) {
             is SuperuserViewModel.SuperuserEvent.ShowSnackbar -> scope.launch {
                 snackbarHostState.showSnackbarEvent(
-                    message = event.message.getText(context.resources),
+                    message = event.message.getText(resources),
                     duration = event.duration,
                     actionLabel = event.actionLabel,
                     onActionPerformed = event.onActionPerformed,
@@ -225,7 +230,7 @@ fun SuperuserScreen(
         when (event) {
             is BaseEvent.ShowSnackbar -> scope.launch {
                 snackbarHostState.showSnackbarEvent(
-                    message = event.message.getText(context.resources),
+                    message = event.message.getText(resources),
                     duration = event.duration,
                     actionLabel = event.actionLabel,
                     onActionPerformed = event.onActionPerformed,
@@ -383,7 +388,7 @@ fun SuperuserScreen(
                         onRefresh = {
                             if (!uiState.isRefreshing) {
                                 viewModel.refresh(force = true)
-                                refreshTick.value++
+                                refreshTick.intValue++
                             }
                         }
                     ) {
@@ -414,7 +419,7 @@ fun SuperuserScreen(
                                 ScrollToTopOnChange(
                                     listState,
                                     uiState.showSystemApps,
-                                    refreshTick.value,
+                                    refreshTick.intValue,
                                     isBusy = { latestRefreshing.value },
                                 ) { latestPolicies.value }
                                 PolicyList(
@@ -851,10 +856,10 @@ private fun policyTagText(uid: Int, isSystemApp: Boolean): String {
 private fun TextButtonWithIcon(
     icon: ImageVector,
     text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     isSelected: Boolean = false,
     isError: Boolean = false,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
 ) {
     val contentColor = when {
         isError -> MiuixTheme.colorScheme.error

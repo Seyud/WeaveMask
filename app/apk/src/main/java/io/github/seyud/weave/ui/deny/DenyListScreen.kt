@@ -103,9 +103,9 @@ import java.util.Locale
 
 @Composable
 fun DenyListScreen(
-    viewModel: DenyListViewModel = viewModel(),
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: DenyListViewModel = viewModel(),
 ) {
     val items by viewModel.items.collectAsStateWithLifecycle()
     val loading by viewModel.loading.collectAsStateWithLifecycle()

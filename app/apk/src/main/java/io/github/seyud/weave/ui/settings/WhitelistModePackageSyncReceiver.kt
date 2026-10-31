@@ -18,7 +18,10 @@ internal class WhitelistModePackageSyncReceiver(
 ) : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
-        val packageName = intent?.let(::resolveAutoSyncPackageName) ?: return
+        // 显式比对 action：只有系统才会投递这两个 protected 广播（exported=false 亦挡住外部投递）
+        val action = intent?.action
+        if (action != Intent.ACTION_PACKAGE_ADDED && action != Intent.ACTION_PACKAGE_REPLACED) return
+        val packageName = intent.let(::resolveAutoSyncPackageName) ?: return
         val pendingResult = goAsync()
         receiverScope.launch {
             try {

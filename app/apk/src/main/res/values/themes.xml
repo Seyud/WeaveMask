@@ -1,20 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="Base.V23.Theme.Foundation.Light" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <item name="android:windowBackground">?colorSurface</item>
-        <item name="android:windowContentOverlay">@null</item>
-        <item name="dialogTheme">@style/ThemeOverlay.Foundation.Dialog</item>
-        <item name="android:windowLightStatusBar">true</item>
-    </style>
-
     <style name="Base.V23.Theme.Foundation" parent="Theme.MaterialComponents.NoActionBar">
         <item name="android:windowBackground">?colorSurface</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="dialogTheme">@style/ThemeOverlay.Foundation.Dialog</item>
     </style>
-
-    <style name="Theme.Foundation.Light" parent="Base.V23.Theme.Foundation.Light" />
 
     <style name="Theme.Foundation" parent="Base.V23.Theme.Foundation" />
 

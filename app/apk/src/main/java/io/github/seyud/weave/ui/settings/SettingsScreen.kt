@@ -13,6 +13,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,6 +48,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val scrollBehavior = MiuixScrollBehavior()
     val enableBlur = LocalEnableBlur.current
     val surfaceColor = colorScheme.surface
@@ -71,7 +73,7 @@ fun SettingsScreen(
         when (event) {
             is SettingsViewModel.SettingsEvent.ShowSnackbar -> scope.launch {
                 snackbarHostState.showSnackbarEvent(
-                    message = event.message.getText(context.resources),
+                    message = event.message.getText(resources),
                     duration = event.duration,
                 )
             }
@@ -81,7 +83,7 @@ fun SettingsScreen(
         when (event) {
             is BaseEvent.ShowSnackbar -> scope.launch {
                 snackbarHostState.showSnackbarEvent(
-                    message = event.message.getText(context.resources),
+                    message = event.message.getText(resources),
                     duration = event.duration,
                 )
             }

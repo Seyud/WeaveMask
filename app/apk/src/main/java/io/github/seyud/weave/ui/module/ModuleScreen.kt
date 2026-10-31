@@ -12,11 +12,15 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import io.github.seyud.weave.core.R as CoreR
 import io.github.seyud.weave.ui.MainActivity
 import io.github.seyud.weave.ui.component.SearchStatus
+import io.github.seyud.weave.ui.module.components.InstallModuleFab
 import io.github.seyud.weave.ui.module.components.ModuleScreenContent
 import io.github.seyud.weave.ui.module.components.ModuleScreenTopBar
 import io.github.seyud.weave.ui.module.components.ModuleSearchResultsHost
@@ -29,6 +33,7 @@ import io.github.seyud.weave.ui.util.rememberBarBlurBackdrop
 import io.github.seyud.weave.arch.BaseViewModel.BaseEvent
 import io.github.seyud.weave.ui.component.ObserveAsEvents
 import io.github.seyud.weave.ui.component.showSnackbarEvent
+import top.yukonga.miuix.kmp.basic.FloatingActionButtonDefaults
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.SnackbarHostState
@@ -49,6 +54,7 @@ fun ModuleScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val uiActivity = context as? MainActivity
     val uiState = viewModel.uiState
     val searchModulesLabel = stringResource(CoreR.string.search_modules_label)
@@ -60,6 +66,10 @@ fun ModuleScreen(
     val launchShortcutIconPicker = rememberShortcutIconPicker(
         onIconPicked = shortcutState::updateIconUri,
     )
+    // 悬浮安装按钮占据的竖直空间（对齐 KernelSU manager 的列表预留算法）：
+    // FAB 高度 + 底部 20.dp 外边距 + 12.dp 呼吸位
+    val fabClearance = FloatingActionButtonDefaults.MinHeight + 20.dp + 12.dp
+    val listBottomPadding = contentBottomPadding + fabClearance
     val enableBlur = LocalEnableBlur.current
     val blurBackdrop = rememberBarBlurBackdrop(enableBlur, MiuixTheme.colorScheme.surface)
     val scrollBehavior = MiuixScrollBehavior()
@@ -120,7 +130,7 @@ fun ModuleScreen(
         when (event) {
             is ModuleViewModel.ModuleEvent.ShowSnackbar -> scope.launch {
                 snackbarHostState.showSnackbarEvent(
-                    message = event.message.getText(context.resources),
+                    message = event.message.getText(resources),
                     duration = event.duration,
                 )
             }
@@ -130,7 +140,7 @@ fun ModuleScreen(
         when (event) {
             is BaseEvent.ShowSnackbar -> scope.launch {
                 snackbarHostState.showSnackbarEvent(
-                    message = event.message.getText(context.resources),
+                    message = event.message.getText(resources),
                     duration = event.duration,
                 )
             }
@@ -179,6 +189,12 @@ fun ModuleScreen(
             contentWindowInsets = WindowInsets.systemBars
                 .add(WindowInsets.displayCutout)
                 .only(WindowInsetsSides.Horizontal),
+            floatingActionButton = {
+                InstallModuleFab(
+                    onClick = launchLocalModulePicker,
+                    modifier = Modifier.padding(end = 20.dp, bottom = contentBottomPadding + 20.dp),
+                )
+            },
             topBar = {
                 ModuleScreenTopBar(
                     uiSearchStatus = uiSearchStatus,
@@ -199,12 +215,11 @@ fun ModuleScreen(
                     innerPadding = innerPadding,
                     uiState = uiState,
                     uiSearchStatus = uiSearchStatus,
-                    contentBottomPadding = contentBottomPadding,
+                    contentBottomPadding = listBottomPadding,
                     blurBackdrop = blurBackdrop,
                     scrollBehavior = scrollBehavior,
                     onSearchStatusChange = { localState.searchStatus = it },
                     onRefresh = viewModel::refresh,
-                    onInstallPressed = launchLocalModulePicker,
                     onToggleModule = { module, enabled -> viewModel.toggleModule(module.id, enabled) },
                     onRunAction = { module -> viewModel.runAction(module.dirName, module.name) },
                     onOpenWebUi = { module -> onOpenWebUi(module.id, module.name) },

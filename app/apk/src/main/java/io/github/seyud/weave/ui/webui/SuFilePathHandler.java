@@ -1,7 +1,6 @@
 package io.github.seyud.weave.ui.webui;
 
 import android.content.Context;
-import android.util.Log;
 import android.webkit.WebResourceResponse;
 
 import androidx.annotation.NonNull;
@@ -20,10 +19,11 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPInputStream;
 
+import timber.log.Timber;
+
 public final class SuFilePathHandler implements WebViewAssetLoader.PathHandler {
 
     public static final String DEFAULT_MIME_TYPE = "text/plain";
-    private static final String TAG = "SuFilePathHandler";
 
     @NonNull
     private final File mDirectory;
@@ -118,12 +118,11 @@ public final class SuFilePathHandler implements WebViewAssetLoader.PathHandler {
                 String mimeType = guessMimeType(path);
                 return new WebResourceResponse(mimeType, null, is_);
             } else {
-                Log.e(TAG, String.format(
-                        "The requested file: %s is outside the mounted directory: %s", path,
-                        mDirectory));
+                Timber.e("The requested file: %s is outside the mounted directory: %s", path,
+                        mDirectory);
             }
         } catch (IOException e) {
-            Log.e(TAG, "Error opening the requested path: " + path, e);
+            Timber.e(e, "Error opening the requested path: %s", path);
         }
         return new WebResourceResponse(null, null, null);
     }

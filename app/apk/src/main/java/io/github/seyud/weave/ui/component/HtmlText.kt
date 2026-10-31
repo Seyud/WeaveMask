@@ -19,8 +19,8 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 @Composable
 fun HtmlText(
     content: String,
-    baseUrl: String? = null,
     modifier: Modifier = Modifier,
+    baseUrl: String? = null,
     onLoadingChange: (Boolean) -> Unit = {},
 ) {
     val textColor = "#%06X".format(0xFFFFFF and MiuixTheme.colorScheme.onBackground.toArgb())

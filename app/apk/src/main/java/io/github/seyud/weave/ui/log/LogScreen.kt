@@ -46,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -94,11 +95,12 @@ import io.github.seyud.weave.core.R as CoreR
 @Composable
 fun LogScreen(
     viewModel: LogViewModel,
-    onNavigateBack: () -> Unit = {},
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
+    onNavigateBack: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val scrollBehavior = MiuixScrollBehavior()
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
@@ -131,7 +133,7 @@ fun LogScreen(
         when (event) {
             is LogViewModel.LogEvent.ShowSnackbar -> coroutineScope.launch {
                 snackbarHostState.showSnackbarEvent(
-                    message = event.message.getText(context.resources),
+                    message = event.message.getText(resources),
                     duration = event.duration,
                 )
             }
@@ -141,7 +143,7 @@ fun LogScreen(
         when (event) {
             is BaseEvent.ShowSnackbar -> coroutineScope.launch {
                 snackbarHostState.showSnackbarEvent(
-                    message = event.message.getText(context.resources),
+                    message = event.message.getText(resources),
                     duration = event.duration,
                 )
             }

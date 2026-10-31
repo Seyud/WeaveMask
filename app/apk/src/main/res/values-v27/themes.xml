@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Base.V27.Theme.Foundation.Light" parent="Base.V23.Theme.Foundation.Light">
-        <item name="android:windowLightNavigationBar">true</item>
-    </style>
-
     <style name="Base.V27.Theme.Foundation" parent="Base.V23.Theme.Foundation" />
-
-    <style name="Theme.Foundation.Light" parent="Base.V27.Theme.Foundation.Light" />
 
     <style name="Theme.Foundation" parent="Base.V27.Theme.Foundation" />
 

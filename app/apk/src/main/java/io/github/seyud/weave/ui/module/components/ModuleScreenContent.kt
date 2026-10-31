@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -22,8 +23,6 @@ import io.github.seyud.weave.ui.module.ModuleInfo
 import io.github.seyud.weave.ui.module.ModuleUiState
 import io.github.seyud.weave.ui.util.attachBarBlurBackdrop
 import top.yukonga.miuix.kmp.blur.LayerBackdrop
-import top.yukonga.miuix.kmp.basic.Button
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.PullToRefresh
@@ -44,7 +43,6 @@ internal fun ModuleScreenContent(
     scrollBehavior: ScrollBehavior,
     onSearchStatusChange: (SearchStatus) -> Unit,
     onRefresh: () -> Unit,
-    onInstallPressed: () -> Unit,
     onToggleModule: (ModuleInfo, Boolean) -> Unit,
     onRunAction: (ModuleInfo) -> Unit,
     onOpenWebUi: (ModuleInfo) -> Unit,
@@ -57,7 +55,7 @@ internal fun ModuleScreenContent(
     val layoutDirection = LocalLayoutDirection.current
     val pullToRefreshState = rememberPullToRefreshState()
     val listState = rememberLazyListState()
-    val refreshTick = remember { mutableStateOf(0) }
+    val refreshTick = remember { mutableIntStateOf(0) }
 
     uiSearchStatus.SearchBox(
         onSearchStatusChange = onSearchStatusChange,
@@ -88,7 +86,7 @@ internal fun ModuleScreenContent(
             onRefresh = {
                 if (!uiState.isRefreshing) {
                     onRefresh()
-                    refreshTick.value++
+                    refreshTick.intValue++
                 }
             },
         ) {
@@ -106,7 +104,6 @@ internal fun ModuleScreenContent(
 
                 uiState.modules.isEmpty() -> {
                     EmptyContent(
-                        onInstallPressed = onInstallPressed,
                         modifier = Modifier.padding(
                             top = innerPadding.calculateTopPadding() + boxHeight + 6.dp,
                             start = innerPadding.calculateStartPadding(layoutDirection),
@@ -124,13 +121,12 @@ internal fun ModuleScreenContent(
                         uiState.sortEnabledFirst,
                         uiState.sortUpdateFirst,
                         uiState.sortExecutableFirst,
-                        refreshTick.value,
+                        refreshTick.intValue,
                         isBusy = { latestRefreshing.value },
                     ) { latestModules.value }
                     ModuleList(
                         modules = uiState.modules,
                         blurBackdrop = blurBackdrop,
-                        onInstallPressed = onInstallPressed,
                         onToggleModule = onToggleModule,
                         onRunAction = onRunAction,
                         onOpenWebUi = onOpenWebUi,
@@ -174,7 +170,6 @@ internal fun LoadingContent(
 
 @Composable
 internal fun EmptyContent(
-    onInstallPressed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -184,31 +179,10 @@ internal fun EmptyContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        InstallModuleEntryButton(onClick = onInstallPressed)
-        Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = stringResource(CoreR.string.module_empty),
             style = MiuixTheme.textStyles.title3,
             fontWeight = FontWeight.Bold,
         )
-    }
-}
-
-@Composable
-internal fun InstallModuleEntryButton(
-    onClick: () -> Unit,
-) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(),
-    ) {
-        Icon(
-            imageVector = MiuixIcons.Download,
-            contentDescription = null,
-            modifier = Modifier.size(18.dp),
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(text = stringResource(CoreR.string.module_action_install_external))
     }
 }

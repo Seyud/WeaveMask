@@ -35,15 +35,26 @@ xz = { module = "org.tukaani:xz", version = "1.12" }
 activity = { module = "androidx.activity:activity", version = "1.13.0" }
 appcompat = { module = "androidx.appcompat:appcompat", version = "1.8.0" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+
+# Compose（版本由 compose-bom 统一管理）
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
+compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
+compose-runtime = { module = "androidx.compose.runtime:runtime" }
+compose-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata" }
 core-ktx = { module = "androidx.core:core-ktx", version = "1.19.0" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version = "1.2.0" }
 constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version = "2.2.2" }
 fragment-ktx = { module = "androidx.fragment:fragment-ktx", version = "1.9.0" }
 navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigation" }
+navigation-compose = { module = "androidx.navigation:navigation-compose", version = "2.9.7" }
 navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigation" }
 navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
 navigationevent-compose = { module = "androidx.navigationevent:navigationevent-compose", version.ref = "navigationevent" }
 lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version = "2.11.0" }
+lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version = "2.10.0" }
 profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version = "1.4.1" }
 recyclerview = { module = "androidx.recyclerview:recyclerview", version = "1.4.0" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
@@ -53,6 +64,7 @@ swiperefreshlayout = { module = "androidx.swiperefreshlayout:swiperefreshlayout"
 transition = { module = "androidx.transition:transition", version = "1.7.0" }
 collection-ktx = { module = "androidx.collection:collection-ktx", version = "1.6.0" }
 material = { module = "com.google.android.material:material", version = "1.14.0" }
+webkit = { module = "androidx.webkit:webkit", version = "1.13.0" }
 jdk-libs = { module = "com.android.tools:desugar_jdk_libs_nio", version = "2.1.5" }
 test-runner = { module = "androidx.test:runner", version = "1.7.0" }
 test-rules = { module = "androidx.test:rules", version = "1.7.0" }

@@ -1,6 +1,7 @@
 package io.github.seyud.weave.ui.webui;
 
 import java.net.URLConnection;
+import java.util.Locale;
 
 class MimeUtil {
 
@@ -23,7 +24,7 @@ class MimeUtil {
             return null;
         }
 
-        final String extension = fileName.substring(finalFullStop + 1).toLowerCase();
+        final String extension = fileName.substring(finalFullStop + 1).toLowerCase(Locale.ROOT);
 
         switch (extension) {
             case "webm": return "video/webm";

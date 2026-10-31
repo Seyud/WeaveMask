@@ -1,5 +1,6 @@
 package io.github.seyud.weave.ui.surequest
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.drawable.Drawable
@@ -121,6 +122,9 @@ class SuRequestViewModel(
      * 点击劫持防护触摸监听器
      * 检测窗口是否被其他应用覆盖
      */
+    // 该监听器只做点击劫持检测、不消费点击（返回 false 让真实控件继续处理），
+    // 因此不能在这里 performClick（会触发重复点击）
+    @SuppressLint("ClickableViewAccessibility")
     val grantTouchListener = View.OnTouchListener { _: View, event: MotionEvent ->
         // 过滤被覆盖的触摸事件
         if (event.flags and MotionEvent.FLAG_WINDOW_IS_OBSCURED != 0

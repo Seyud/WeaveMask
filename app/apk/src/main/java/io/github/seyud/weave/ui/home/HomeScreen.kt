@@ -31,6 +31,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -69,6 +70,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val configuration = LocalConfiguration.current
     val homeLayoutMode = LocalHomeLayoutMode.current
     val isWeavskHome = homeLayoutMode == Config.Value.HOME_LAYOUT_WEAVSK
@@ -116,7 +118,7 @@ fun HomeScreen(
         when (event) {
             is HomeViewModel.HomeEvent.ShowSnackbar -> scope.launch {
                 snackbarHostState.showSnackbarEvent(
-                    message = event.message.getText(context.resources),
+                    message = event.message.getText(resources),
                     duration = event.duration,
                 )
             }
@@ -126,7 +128,7 @@ fun HomeScreen(
         when (event) {
             is BaseEvent.ShowSnackbar -> scope.launch {
                 snackbarHostState.showSnackbarEvent(
-                    message = event.message.getText(context.resources),
+                    message = event.message.getText(resources),
                     duration = event.duration,
                 )
             }
@@ -190,7 +192,7 @@ fun HomeScreen(
                 if (isWeavskHome) {
                     weavskHomeContent(
                         viewModel = viewModel,
-                        magiskInstalledVersion = viewModel.magiskInstalledVersion.getText(context.resources),
+                        magiskInstalledVersion = viewModel.magiskInstalledVersion.getText(resources),
                         isMagiskCardExpanded = isMagiskCardExpanded,
                         onMagiskExpandedChange = { isMagiskCardExpanded = it },
                         isSupportCardExpanded = isSupportCardExpanded,
@@ -203,8 +205,8 @@ fun HomeScreen(
                 } else {
                     classicHomeContent(
                         viewModel = viewModel,
-                        magiskInstalledVersion = viewModel.magiskInstalledVersion.getText(context.resources),
-                        managerRemoteVersion = viewModel.managerRemoteVersion.getText(context.resources),
+                        magiskInstalledVersion = viewModel.magiskInstalledVersion.getText(resources),
+                        managerRemoteVersion = viewModel.managerRemoteVersion.getText(resources),
                         isMagiskCardExpanded = isMagiskCardExpanded,
                         onMagiskExpandedChange = { isMagiskCardExpanded = it },
                         isManagerCardExpanded = isManagerCardExpanded,

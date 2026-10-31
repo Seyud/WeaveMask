@@ -50,6 +50,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -143,7 +145,7 @@ fun ModuleRepoScreen(viewModel: ModuleRepoViewModel, onNavigateBack: () -> Unit,
     }
     var showSortPopup by remember { mutableStateOf(false) }
     var showSourcePopup by remember { mutableStateOf(false) }
-    val refreshTick = remember { mutableStateOf(0) }
+    val refreshTick = remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit, Config.moduleRepoBaseUrl) { viewModel.ensureLoaded() }
     val modules = remember(state.modules, state.sortByName, locale) {
         val collator = Collator.getInstance(locale)
@@ -234,7 +236,7 @@ fun ModuleRepoScreen(viewModel: ModuleRepoViewModel, onNavigateBack: () -> Unit,
             refreshTexts = listOf(stringResource(CoreR.string.pull_down_to_refresh), stringResource(CoreR.string.release_to_refresh), stringResource(CoreR.string.refreshing), stringResource(CoreR.string.refreshed_successfully)),
             onRefresh = {
                 viewModel.refresh(forceLoading = state.modules.isEmpty())
-                refreshTick.value++
+                refreshTick.intValue++
             },
         ) {
             if (state.isLoading && state.modules.isEmpty()) {
@@ -247,7 +249,7 @@ fun ModuleRepoScreen(viewModel: ModuleRepoViewModel, onNavigateBack: () -> Unit,
                     listState,
                     state.sortByName,
                     state.query,
-                    refreshTick.value,
+                    refreshTick.intValue,
                     isBusy = { latestRefreshing.value },
                 ) { latestModules.value }
                 LazyColumn(
@@ -330,7 +332,7 @@ fun ModuleRepoDetailScreen(moduleId: String, onNavigateBack: () -> Unit, modifie
     val dynamicTopPadding = remember(scrollBehavior) {
         { 12.dp * (1f - scrollBehavior.state.collapsedFraction) }
     }
-    var refreshKey by remember(moduleId, baseUrl) { mutableStateOf(0) }
+    var refreshKey by remember(moduleId, baseUrl) { mutableIntStateOf(0) }
     var showDownloadConfirm by remember { mutableStateOf(false) }
     var downloadConfirmMessage by remember { mutableStateOf("") }
     var pendingDownloadAction by remember { mutableStateOf<(() -> Unit)?>(null) }
@@ -632,7 +634,7 @@ private fun ReleaseAssetRow(
         OnlineModuleInstallDialog.Module(onlineModule, false)
     }
     var isDownloading by remember(downloadSubject.notifyId) { mutableStateOf(false) }
-    var progress by remember(downloadSubject.notifyId) { mutableStateOf(0f) }
+    var progress by remember(downloadSubject.notifyId) { mutableFloatStateOf(0f) }
     var downloadedUri by remember(downloadSubject.notifyId) { mutableStateOf<Uri?>(null) }
 
     LaunchedEffect(lifecycleOwner, downloadSubject.notifyId) {

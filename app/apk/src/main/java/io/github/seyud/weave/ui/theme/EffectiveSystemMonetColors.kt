@@ -1,5 +1,6 @@
 package io.github.seyud.weave.ui.theme
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import androidx.compose.runtime.Composable
@@ -82,6 +83,8 @@ private fun resolveEffectiveSystemMonetColors(context: Context, dark: Boolean): 
     return mapFrameworkRolesToMiuixColors(roles, dark)
 }
 
+// android.R.color.system_accent1_* 等框架动态色没有编译期 id，只能按名称反射查询
+@SuppressLint("DiscouragedApi")
 private fun Context.frameworkColor(name: String): Color? {
     val resId = resources.getIdentifier(name, "color", "android")
     if (resId == 0) {
