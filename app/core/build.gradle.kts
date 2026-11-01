@@ -2,6 +2,7 @@ plugins {
     id("com.android.library")
     kotlin("plugin.parcelize")
     alias(libs.plugins.moshi)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.wire)
 }
@@ -67,6 +68,7 @@ dependencies {
     implementation(libs.retrofit.moshi)
     implementation(libs.retrofit.scalars)
 
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
     implementation(libs.okhttp.dnsoverhttps)
@@ -83,6 +85,8 @@ dependencies {
     // We also implement all our tests in this module.
     // However, we don't want to bundle test dependencies.
     // That's why we make it compileOnly.
+    testImplementation(libs.junit)
+
     compileOnly(libs.test.junit)
     compileOnly(libs.test.uiautomator)
 }

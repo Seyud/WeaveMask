@@ -2,6 +2,7 @@ package io.github.seyud.weave.core.model.module
 
 import io.github.seyud.weave.core.Const
 import io.github.seyud.weave.core.di.ServiceLocator
+import io.github.seyud.weave.core.registry.UpdateVerification
 import io.github.seyud.weave.core.utils.RootUtils
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.nio.ExtendedFile
@@ -128,9 +129,25 @@ data class LocalModule(
 
         try {
             val json = svc.fetchModuleJson(updateUrl)
-            updateInfo = OnlineModule(this, json)
-            outdated = json.versionCode > versionCode
-            return true
+            // An update that is served by the module store must match a registry release; its
+            // ZIP is then downloaded with the recorded size and SHA-256 attached.
+            val update = OnlineModule(this, json)
+            updateInfo = when (val verification = ServiceLocator.moduleRepoRepository
+                .resolveUpdate(id, updateUrl, json.zipUrl, json.versionCode)) {
+                is UpdateVerification.Registry -> update.copy(
+                    zipSize = verification.expected.size,
+                    zipSha256 = verification.expected.sha256,
+                )
+
+                is UpdateVerification.Rejected -> {
+                    Timber.w("Rejected module update for %s: %s", id, verification.reason)
+                    null
+                }
+
+                UpdateVerification.Legacy -> update
+            }
+            outdated = updateInfo != null && json.versionCode > versionCode
+            return updateInfo != null
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

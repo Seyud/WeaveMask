@@ -119,6 +119,7 @@ import io.github.seyud.weave.ui.module.ModuleInstallTarget
 import io.github.seyud.weave.ui.module.ModuleShortcutContract
 import io.github.seyud.weave.ui.module.ModuleScreen
 import io.github.seyud.weave.ui.module.ModuleViewModel
+import io.github.seyud.weave.ui.scriptrun.ScriptRunScreen
 import io.github.seyud.weave.ui.settings.AppLanguageScreen
 import io.github.seyud.weave.ui.settings.SettingsScreen
 import io.github.seyud.weave.ui.settings.SettingsViewModel
@@ -439,6 +440,7 @@ fun MainScreen(
                         entry<Route.ModuleRepoList> {
                             ModuleRepoScreen(
                                 viewModel = moduleRepoViewModel,
+                                moduleViewModel = moduleViewModel,
                                 onNavigateBack = { navigator.pop() },
                                 onOpenModuleDetail = { moduleId ->
                                     navigator.push(Route.ModuleRepoDetail(moduleId))
@@ -448,6 +450,30 @@ fun MainScreen(
                         entry<Route.ModuleRepoDetail> { key ->
                             ModuleRepoDetailScreen(
                                 moduleId = key.moduleId,
+                                moduleViewModel = moduleViewModel,
+                                onNavigateBack = { navigator.pop() },
+                                onRunScript = { zipFile, registryId, displayName, expected ->
+                                    navigator.push(
+                                        Route.ScriptRun(
+                                            zipUri = zipFile.toString(),
+                                            registryId = registryId,
+                                            displayName = displayName,
+                                            expectedSize = expected?.size ?: 0L,
+                                            expectedSha256 = expected?.sha256.orEmpty(),
+                                        )
+                                    )
+                                }
+                            )
+                        }
+                        entry<Route.ScriptRun> { key ->
+                            // The ViewModel owns the extraction of the prepared script and releases it
+                            // in onCleared, so it must be scoped to this navigation entry.
+                            ScriptRunScreen(
+                                zipUri = key.zipUri.toUri(),
+                                registryId = key.registryId,
+                                displayName = key.displayName,
+                                expectedSize = key.expectedSize,
+                                expectedSha256 = key.expectedSha256.takeIf { it.isNotEmpty() },
                                 onNavigateBack = { navigator.pop() }
                             )
                         }

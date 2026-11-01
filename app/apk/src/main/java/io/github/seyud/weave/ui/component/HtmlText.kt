@@ -2,6 +2,8 @@ package io.github.seyud.weave.ui.component
 
 import android.annotation.SuppressLint
 import android.graphics.Color
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -13,14 +15,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
+import io.github.seyud.weave.core.registry.RegistryUrls
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import java.io.ByteArrayInputStream
 
+/**
+ * Renders a trusted HTML fragment in a locked-down WebView.
+ *
+ * @param restrictOrigin when non-null, sub-resources may only be loaded from this origin and
+ *   links never navigate inside the WebView: in-page anchors scroll, every other link is handed
+ *   to [onOpenExternal] (or dropped), so registry content can never pull in remote content or
+ *   steer the WebView somewhere else.
+ */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun HtmlText(
     content: String,
     modifier: Modifier = Modifier,
     baseUrl: String? = null,
+    restrictOrigin: String? = null,
+    onOpenExternal: ((String) -> Unit)? = null,
     onLoadingChange: (Boolean) -> Unit = {},
 ) {
     val textColor = "#%06X".format(0xFFFFFF and MiuixTheme.colorScheme.onBackground.toArgb())
@@ -59,7 +73,7 @@ fun HtmlText(
         <body>$content</body>
         </html>
     """.trimIndent()
-    val loadKey = "${baseUrl.orEmpty()}\u0000$html"
+    val loadKey = "${baseUrl.orEmpty()}\u0000$restrictOrigin\u0000$html"
 
     AndroidView(
         modifier = modifier
@@ -70,7 +84,11 @@ fun HtmlText(
             val frameLayout = FrameLayout(context)
             val webView = WebView(context).apply {
                 settings.javaScriptEnabled = false
-                settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
+                settings.cacheMode = if (restrictOrigin != null) {
+                    WebSettings.LOAD_NO_CACHE
+                } else {
+                    WebSettings.LOAD_CACHE_ELSE_NETWORK
+                }
                 settings.domStorageEnabled = true
                 settings.offscreenPreRaster = true
                 isVerticalScrollBarEnabled = false
@@ -91,6 +109,7 @@ fun HtmlText(
             if (webView.tag != loadKey) {
                 webView.tag = loadKey
                 onLoadingChange(true)
+                val documentUrl = baseUrl.orEmpty()
                 webView.webViewClient = object : WebViewClient() {
                     override fun onPageCommitVisible(view: WebView?, url: String?) {
                         onLoadingChange(false)
@@ -98,6 +117,28 @@ fun HtmlText(
 
                     override fun onPageFinished(view: WebView?, url: String?) {
                         onLoadingChange(false)
+                    }
+
+                    override fun shouldInterceptRequest(
+                        view: WebView?,
+                        request: WebResourceRequest?,
+                    ): WebResourceResponse? {
+                        val origin = restrictOrigin ?: return null
+                        val url = request?.url?.toString() ?: return null
+                        if (isSelfContained(url) || RegistryUrls.isAllowedRestrictedResource(url, origin)) return null
+                        // Block anything else without a network round trip.
+                        return WebResourceResponse("text/plain", "utf-8", 403, "Blocked", emptyMap(), ByteArrayInputStream(ByteArray(0)))
+                    }
+
+                    override fun shouldOverrideUrlLoading(
+                        view: WebView?,
+                        request: WebResourceRequest?,
+                    ): Boolean {
+                        val url = request?.url?.toString() ?: return false
+                        if (restrictOrigin == null) return false
+                        if (RegistryUrls.isInPageAnchor(url, documentUrl)) return false
+                        if (RegistryUrls.isWebUrl(url)) onOpenExternal?.invoke(url)
+                        return true
                     }
                 }
                 webView.loadDataWithBaseURL(baseUrl, html, "text/html", "utf-8", null)
@@ -113,3 +154,7 @@ fun HtmlText(
         },
     )
 }
+
+/** Documents the WebView itself creates; they never hit the network. */
+private fun isSelfContained(url: String): Boolean =
+    url.startsWith("data:") || url.startsWith("about:") || url.startsWith("blob:")

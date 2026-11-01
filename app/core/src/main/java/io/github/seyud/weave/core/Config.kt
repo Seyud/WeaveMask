@@ -4,13 +4,14 @@ import android.os.Bundle
 import androidx.core.content.edit
 import io.github.seyud.weave.core.BuildConfig
 import io.github.seyud.weave.core.di.ServiceLocator
+import io.github.seyud.weave.core.model.module.RepoSort
+import io.github.seyud.weave.core.registry.RegistryUrls
 import io.github.seyud.weave.core.repository.DBConfig
 import io.github.seyud.weave.core.repository.PreferenceConfig
 import io.github.seyud.weave.core.utils.LocaleSetting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 object Config : PreferenceConfig, DBConfig {
 
@@ -53,6 +54,9 @@ object Config : PreferenceConfig, DBConfig {
         const val RELEASE_CHANNEL = "release_channel"
         const val CUSTOM_CHANNEL = "custom_channel"
         const val MODULE_REPO_BASE_URL = "module_repo_base_url"
+        const val MODULE_REPO_SORT_ORDER = "module_repo_sort_order"
+
+        /** Replaced by [MODULE_REPO_SORT_ORDER]; kept only so the value can be migrated. */
         const val MODULE_REPO_SORT_BY_NAME = "module_repo_sort_by_name"
         const val LOCALE = "locale"
         const val DARK_THEME = "dark_theme_extended"
@@ -198,8 +202,8 @@ object Config : PreferenceConfig, DBConfig {
         else -> updateChannel
     }
     var customChannelUrl by preference(Key.CUSTOM_CHANNEL, "")
-    private var moduleRepoBaseUrlPrefs by preference(Key.MODULE_REPO_BASE_URL, Const.Url.KERNELSU_MODULE_REPO_URL)
-    var moduleRepoSortByName by preference(Key.MODULE_REPO_SORT_BY_NAME, false)
+    private var moduleRepoUrlPrefs by preference(Key.MODULE_REPO_BASE_URL, Const.Url.MODULE_REPO_URL)
+    private var moduleRepoSortOrderPrefs by preference(Key.MODULE_REPO_SORT_ORDER, RepoSort.UPDATED.name)
     var downloadDir by preference(Key.DOWNLOAD_DIR, "")
     var randName by preference(Key.RAND_NAME, true)
     var checkUpdate
@@ -216,11 +220,39 @@ object Config : PreferenceConfig, DBConfig {
             localePrefs = value
             LocaleSetting.instance.setLocale(value)
         }
-    var moduleRepoBaseUrl
-        get() = normalizeModuleRepoBaseUrl(moduleRepoBaseUrlPrefs) ?: Const.Url.KERNELSU_MODULE_REPO_URL
+    /** The address as the user entered it: a site root, or a full index / document URL. */
+    var moduleRepoUrl
+        get() = moduleRepoUrlPrefs
         set(value) {
-            moduleRepoBaseUrlPrefs = normalizeModuleRepoBaseUrl(value) ?: Const.Url.KERNELSU_MODULE_REPO_URL
+            moduleRepoUrlPrefs = normalizeModuleRepoUrl(value) ?: Const.Url.MODULE_REPO_URL
         }
+
+    /** Site root the registry resolves its relative API paths against. */
+    val moduleRepoBaseUrl: String get() = moduleRepoEndpoint.baseUrl
+
+    /** The index document that has to be read first. */
+    val moduleRepoIndexUrl: String get() = moduleRepoEndpoint.indexUrl
+
+    /** Parsed repository endpoint; always valid because the stored value is normalized. */
+    val moduleRepoEndpoint: RegistryUrls.Endpoint
+        get() = RegistryUrls.parseEndpoint(moduleRepoUrlPrefs)
+            ?: requireNotNull(RegistryUrls.parseEndpoint(Const.Url.MODULE_REPO_URL))
+
+    /** Sort order of the module store list. */
+    var moduleRepoSortOrder
+        get() = RepoSort.fromStored(moduleRepoSortOrderPrefs)
+        set(value) {
+            moduleRepoSortOrderPrefs = value.name
+        }
+
+    /**
+     * Canonical form of a user entered repository address, or null when it is not a usable
+     * https URL. A document URL ('.json') is kept, everything else becomes a site root.
+     */
+    fun normalizeModuleRepoUrl(value: String): String? {
+        val endpoint = RegistryUrls.parseEndpoint(value) ?: return null
+        return if (value.trim().endsWith(".json", ignoreCase = true)) endpoint.indexUrl else endpoint.baseUrl
+    }
 
     var zygisk by dbSettings(Key.ZYGISK, Info.isEmulator)
     var suManager by dbStrings(Key.SU_MANAGER, "", true)
@@ -328,6 +360,15 @@ object Config : PreferenceConfig, DBConfig {
                 putBoolean(Key.SU_PROFESSIONAL_MODE, prefs.getBoolean("su_smart_mode", false))
                 remove("su_smart_mode")
             }
+
+            // Migrate the module store sort toggle → sort order
+            if (prefs.contains(Key.MODULE_REPO_SORT_BY_NAME)) {
+                putString(
+                    Key.MODULE_REPO_SORT_ORDER,
+                    RepoSort.fromStored(null, prefs.getBoolean(Key.MODULE_REPO_SORT_BY_NAME, false)).name
+                )
+                remove(Key.MODULE_REPO_SORT_BY_NAME)
+            }
         }
 
         // Sync the daemon-side su whitelist flag for installs configured
@@ -335,19 +376,4 @@ object Config : PreferenceConfig, DBConfig {
         suWhitelistMode = suListMode == Value.SU_MODE_WHITELIST
     }
 
-    fun normalizeModuleRepoBaseUrl(value: String): String? {
-        val trimmed = value.trim()
-        if (trimmed.isEmpty()) {
-            return null
-        }
-        val normalized = trimmed.toHttpUrlOrNull() ?: return null
-        if (normalized.scheme != "http" && normalized.scheme != "https") {
-            return null
-        }
-        return normalized.newBuilder().apply {
-            encodedPath("/")
-            query(null)
-            fragment(null)
-        }.build().toString().removeSuffix("/")
-    }
 }

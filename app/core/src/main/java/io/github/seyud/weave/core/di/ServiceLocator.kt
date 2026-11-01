@@ -12,6 +12,7 @@ import io.github.seyud.weave.core.data.magiskdb.SettingsDao
 import io.github.seyud.weave.core.data.magiskdb.StringDao
 import io.github.seyud.weave.core.ktx.deviceProtectedContext
 import io.github.seyud.weave.core.repository.LogRepository
+import io.github.seyud.weave.core.repository.ModuleRepoRepositoryImpl
 import io.github.seyud.weave.core.repository.NetworkService
 import io.noties.markwon.Markwon
 import io.noties.markwon.utils.NoCopySpannableFactory
@@ -42,6 +43,9 @@ object ServiceLocator {
             createApiService(retrofit, Const.Url.GITHUB_API_URL),
         )
     }
+
+    /** Module store (KernelSU Modules registry); one instance so the catalog is shared. */
+    val moduleRepoRepository by lazy { ModuleRepoRepositoryImpl() }
 }
 
 private fun createSuLogDatabase(context: Context) =

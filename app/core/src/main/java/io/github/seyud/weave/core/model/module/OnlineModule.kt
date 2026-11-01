@@ -12,6 +12,10 @@ data class OnlineModule(
     override var versionCode: Int,
     val zipUrl: String,
     val changelog: String,
+    /** Size in bytes of the release ZIP recorded by the registry; 0 when it is not known. */
+    val zipSize: Long = 0L,
+    /** SHA-256 (hex) of the release ZIP recorded by the registry; null when it is not known. */
+    val zipSha256: String? = null,
 ) : Module(), Parcelable {
     constructor(local: LocalModule, json: ModuleJson) :
         this(local.id, local.name, json.version, json.versionCode, json.zipUrl, json.changelog)

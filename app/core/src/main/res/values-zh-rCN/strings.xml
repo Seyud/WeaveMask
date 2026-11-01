@@ -320,8 +320,9 @@
     <string name="module_repo_sort_by_name">按名称排序</string>
     <string name="module_repo_search_label">搜索仓库模块</string>
     <string name="module_repo_source_title">模块仓库地址</string>
-    <string name="module_repo_source_message">输入兼容 KernelSU 的模块仓库基础 URL。</string>
-    <string name="module_repo_source_invalid">请输入有效的 http(s) URL</string>
+    <string name="module_repo_source_message">KernelSU 模块仓库站点地址，或索引文件的完整地址（例如 https://modules.kernelsu.org/api/v1/index.json）</string>
+    <string name="module_repo_source_invalid">请输入有效的 https 地址（站点根地址或 .json 索引地址）</string>
+    <string name="module_repo_source_default">留空即恢复默认地址：%s</string>
     <string name="module_repo_empty">该仓库中没有模块</string>
     <string name="module_repo_readme">自述</string>
     <string name="module_repo_releases">版本</string>
@@ -397,4 +398,71 @@
     <!-- WebUI 下载 -->
     <string name="webui_download_complete">已保存 %1$s</string>
     <string name="webui_download_failed">保存 %1$s 失败：%2$s</string>
+
+    <!-- Module store (KernelSU Modules registry) -->
+    <string name="module_repos_sort_updated">更新时间</string>
+    <string name="module_repos_sort_stars">Star 数</string>
+    <string name="module_repo_update_available">可更新</string>
+    <string name="module_repo_installed">已安装</string>
+    <string name="module_repo_using_cache">无法刷新仓库，正在显示上次下载的副本</string>
+    <string name="module_repo_unsupported_schema">该模块仓库使用了更新的格式，请更新应用</string>
+    <string name="module_repo_load_failed">模块仓库加载失败</string>
+    <string name="module_repo_not_in_index">该模块当前不在仓库索引中，无法从这里安装</string>
+    <string name="module_repo_no_readme">暂无 README</string>
+    <string name="module_repo_no_integrity">该仓库未提供文件大小与 SHA-256，下载无法做完整性校验</string>
+    <string name="module_repo_legacy_format">Magisk 模块仓库（无完整性元数据）</string>
+    <string name="module_repo_health_stale">仓库近期未能同步该模块，信息可能已过期</string>
+    <string name="module_repo_immutable_release">不可变的 GitHub Release</string>
+    <string name="module_repo_source_commit">提交 %s</string>
+    <string name="module_repo_license">许可证</string>
+    <string name="module_repo_homepage">主页</string>
+    <string name="module_repo_support">支持</string>
+    <string name="module_repo_integrity">完整性</string>
+    <string name="module_repo_integrity_desc">下载仅来自不可变的 GitHub Release，安装前会校验记录的大小与 SHA-256</string>
+    <string name="module_repo_download_verify_failed">%s 未通过完整性校验（大小或 SHA-256 不匹配），已删除</string>
+    <string name="module_repo_download_url_blocked">下载被阻止：只允许 GitHub Release 下载</string>
+    <string name="module_repo_readme_failed">README 加载失败</string>
+    <string name="module_repo_tags">标签</string>
+    <string name="module_repo_stars">GitHub Star</string>
+    <string name="module_repo_attestation">构建溯源（attestation）</string>
+    <string name="module_repo_release_page">Release 页面</string>
+    <string name="module_repo_script_badge">脚本</string>
+    <string name="module_repo_version_meta">%1$s（%2$d）</string>
+    <string name="network_offline">无网络连接</string>
+
+    <!-- One-shot scripts (registry kind = script) -->
+    <string name="script_run">运行</string>
+    <string name="script_run_title">运行脚本</string>
+    <string name="script_preparing">正在校验并解压…</string>
+    <string name="script_error_title">无法运行该脚本</string>
+    <string name="script_error_unverified">该下载无法通过校验，请重新下载</string>
+    <string name="script_error_verify_failed">大小或 SHA-256 不匹配，文件已删除，请重新下载</string>
+    <string name="script_error_not_oneshot">该 ZIP 不是一次性脚本（module.prop 未声明 oneshot=true）</string>
+    <string name="script_error_id_mismatch">module.prop 中的 id 与该仓库条目不一致</string>
+    <string name="script_error_invalid_id">module.prop 缺少 id 或 id 无效</string>
+    <string name="script_error_missing_prop">缺少 module.prop</string>
+    <string name="script_error_missing_action">缺少 action.sh</string>
+    <string name="script_error_unsafe">ZIP 含有不安全条目（绝对路径、\"..\"、符号链接或特殊文件）</string>
+    <string name="script_error_too_large">ZIP 过大，无法解压（上限 64 MiB）</string>
+    <string name="script_error_corrupt">ZIP 已损坏或使用了不支持的格式</string>
+    <string name="script_error_params">params.json 无效：%s</string>
+    <string name="script_error_generic">准备脚本失败：%s</string>
+    <string name="script_notice">该脚本会以 root 权限运行一次，不会安装任何内容。运行前请先查看源码。</string>
+    <string name="script_params">参数</string>
+    <string name="script_source">action.sh 源码</string>
+    <string name="script_source_truncated">（已截断）</string>
+    <string name="script_last_run">上次运行：%1$s，退出码 %2$d</string>
+    <string name="script_last_run_version">上次运行：%1$s（versionCode %2$d），退出码 %3$d</string>
+    <string name="script_never_run">本设备尚未运行过</string>
+    <string name="script_run_confirm">现在以 root 权限运行 \"%s\"？</string>
+    <string name="script_result_success">脚本已成功完成</string>
+    <string name="script_result_not_applicable">该脚本不适用于此设备（退出码 2）</string>
+    <string name="script_result_failed">脚本运行失败，退出码 %d</string>
+    <string name="script_param_required">此项为必填</string>
+    <string name="script_param_too_long">最多 %d 个字符</string>
+    <string name="script_param_invalid_characters">不允许换行</string>
+    <string name="script_param_not_integer">请输入整数</string>
+    <string name="script_param_below_min">不能小于 %d</string>
+    <string name="script_param_above_max">不能大于 %d</string>
+    <string name="script_param_invalid">无效值</string>
 </resources>

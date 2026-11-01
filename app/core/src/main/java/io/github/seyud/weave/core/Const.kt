@@ -44,7 +44,8 @@ object Const {
 
         const val GITHUB_API_URL = "https://api.github.com/"
         const val GITHUB_PAGE_URL = "https://topjohnwu.github.io/magisk-files/"
-        const val KERNELSU_MODULE_REPO_URL = "https://modules.kernelsu.org"
+        /** Site root of the KernelSU Modules registry; the store's default source. */
+        const val MODULE_REPO_URL = "https://modules.kernelsu.org/"
         const val INVALID_URL = "https://example.com/"
         const val GOOGLEBOOK_RECOVERY_URL =
             "https://dl.google.com/dl/edgedl/device/recovery/production_recovery.json"

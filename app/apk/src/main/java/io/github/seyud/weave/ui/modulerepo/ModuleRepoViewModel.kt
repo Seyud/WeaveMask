@@ -7,21 +7,54 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.seyud.weave.core.Config
-import io.github.seyud.weave.core.model.module.RepoModuleSummary
+import io.github.seyud.weave.core.Info
+import io.github.seyud.weave.core.model.module.RepoModule
+import io.github.seyud.weave.core.model.module.RepoSort
+import io.github.seyud.weave.core.registry.UnsupportedSchemaException
 import io.github.seyud.weave.core.repository.ModuleRepoRepository
 import io.github.seyud.weave.core.repository.ModuleRepoRepositoryImpl
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+/** Why the list could not be (fully) loaded; the UI maps this to a string resource. */
+enum class RepoLoadError {
+    /** The repository speaks a newer protocol than this build understands. */
+    UNSUPPORTED_SCHEMA,
+
+    /** No network at all. */
+    OFFLINE,
+
+    /** Any other failure (HTTP, malformed documents, ...). */
+    FAILED,
+}
 
 @Immutable
 data class ModuleRepoUiState(
-    val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
+    /** A list (possibly empty) has been loaded at least once. */
+    val hasLoaded: Boolean = false,
+    val sortOrder: RepoSort = RepoSort.UPDATED,
+    val offline: Boolean = false,
+    val modules: List<RepoModule> = emptyList(),
     val query: String = "",
-    val sortByName: Boolean = false,
-    val modules: List<RepoModuleSummary> = emptyList(),
-    val errorMessage: String? = null,
+    val searchResults: List<RepoModule> = emptyList(),
+    val error: RepoLoadError? = null,
+    /** The list shown is the last good cached copy. */
+    val stale: Boolean = false,
+    /** Installed module id -> versionCode, for the installed / update badges. */
+    val installedVersions: Map<String, Int> = emptyMap(),
+    /** Site root of the repository in use, shown in the "source" popup. */
     val baseUrl: String = "",
-)
+) {
+    /** Rows to render: search hits while searching, the whole list otherwise. */
+    val visibleModules: List<RepoModule>
+        get() = if (query.isBlank()) modules else searchResults
+
+    /** Loaded, but the repository lists nothing: show the empty state instead of the list. */
+    val showEmptyState: Boolean
+        get() = hasLoaded && modules.isEmpty() && !isRefreshing && error == null
+}
 
 class ModuleRepoViewModel(
     private val repository: ModuleRepoRepository = ModuleRepoRepositoryImpl(),
@@ -29,88 +62,100 @@ class ModuleRepoViewModel(
 
     var uiState by mutableStateOf(
         ModuleRepoUiState(
-            sortByName = Config.moduleRepoSortByName,
+            sortOrder = Config.moduleRepoSortOrder,
             baseUrl = Config.moduleRepoBaseUrl,
+            offline = isOffline(),
         )
     )
         private set
 
-    private var allModules: List<RepoModuleSummary> = emptyList()
-    private var lastLoadedBaseUrl: String? = null
+    private var loadedBaseUrl: String? = null
 
     fun ensureLoaded() {
-        val currentBaseUrl = Config.moduleRepoBaseUrl
-        if (lastLoadedBaseUrl != currentBaseUrl || (allModules.isEmpty() && uiState.isLoading)) {
-            refresh(forceLoading = true)
+        val baseUrl = Config.moduleRepoUrl
+        if (loadedBaseUrl != baseUrl && !uiState.isRefreshing) {
+            loadedBaseUrl = baseUrl
+            refresh()
         }
     }
 
-    fun refresh(forceLoading: Boolean = false) {
+    fun refresh() {
         if (uiState.isRefreshing) return
-        val baseUrl = Config.moduleRepoBaseUrl
         viewModelScope.launch {
             uiState = uiState.copy(
-                isLoading = forceLoading || allModules.isEmpty(),
-                isRefreshing = !forceLoading && allModules.isNotEmpty(),
-                errorMessage = null,
-                baseUrl = baseUrl,
+                isRefreshing = true,
+                offline = isOffline(),
+                baseUrl = Config.moduleRepoBaseUrl,
             )
-
-            repository.fetchModules(baseUrl).onSuccess { modules ->
-                lastLoadedBaseUrl = baseUrl
-                allModules = modules
-                publishModules(errorMessage = null)
-            }.onFailure { throwable ->
-                uiState = uiState.copy(
-                    isLoading = false,
-                    isRefreshing = false,
-                    errorMessage = throwable.message ?: "Failed to load module repository",
-                    baseUrl = baseUrl,
-                )
+            val result = repository.fetchModules()
+            withContext(Dispatchers.Main) {
+                result.onSuccess { list ->
+                    uiState = uiState.copy(
+                        isRefreshing = false,
+                        hasLoaded = true,
+                        modules = sortWith(list.modules, uiState.sortOrder),
+                        stale = list.stale,
+                        error = list.error?.let(::classify),
+                        offline = isOffline(),
+                        baseUrl = Config.moduleRepoBaseUrl,
+                    )
+                    rebuildSearchResults()
+                }.onFailure { throwable ->
+                    uiState = uiState.copy(
+                        isRefreshing = false,
+                        error = classify(throwable),
+                        offline = isOffline(),
+                    )
+                }
             }
+        }
+    }
+
+    fun setInstalledVersions(versions: Map<String, Int>) {
+        if (uiState.installedVersions != versions) {
+            uiState = uiState.copy(installedVersions = versions)
         }
     }
 
     fun setQuery(query: String) {
+        if (uiState.query == query) return
         uiState = uiState.copy(query = query)
-        publishModules()
+        rebuildSearchResults()
     }
 
-    fun toggleSortByName() {
-        val newValue = !uiState.sortByName
-        Config.moduleRepoSortByName = newValue
-        uiState = uiState.copy(sortByName = newValue)
-        publishModules()
-    }
-
-    private fun publishModules(errorMessage: String? = uiState.errorMessage) {
-        val query = uiState.query.trim()
-        var modules = if (query.isEmpty()) {
-            allModules
-        } else {
-            allModules.filter { module ->
-                module.moduleId.contains(query, ignoreCase = true) ||
-                    module.displayName.contains(query, ignoreCase = true) ||
-                    module.authorsText.contains(query, ignoreCase = true) ||
-                    module.summary.contains(query, ignoreCase = true)
-            }
-        }
-
-        modules = if (uiState.sortByName) {
-            modules.sortedBy { it.displayName.lowercase() }
-        } else {
-            modules.sortedWith(
-                compareByDescending<RepoModuleSummary> { it.latestRelease?.time.orEmpty() }
-                    .thenBy { it.displayName.lowercase() }
-            )
-        }
-
+    fun setSortOrder(order: RepoSort) {
+        if (uiState.sortOrder == order) return
+        Config.moduleRepoSortOrder = order
         uiState = uiState.copy(
-            isLoading = false,
-            isRefreshing = false,
-            modules = modules,
-            errorMessage = errorMessage,
-            baseUrl = Config.moduleRepoBaseUrl,
+            sortOrder = order,
+            modules = sortWith(uiState.modules, order),
+            searchResults = sortWith(uiState.searchResults, order),
         )
     }
+
+    private fun rebuildSearchResults() {
+        val query = uiState.query.trim()
+        if (query.isEmpty()) {
+            uiState = uiState.copy(searchResults = emptyList())
+            return
+        }
+        val hits = uiState.modules.filter { module ->
+            module.moduleId.contains(query, ignoreCase = true) ||
+                module.displayName.contains(query, ignoreCase = true) ||
+                module.authors.contains(query, ignoreCase = true) ||
+                module.summary.contains(query, ignoreCase = true) ||
+                module.tags.any { it.contains(query, ignoreCase = true) }
+        }
+        uiState = uiState.copy(searchResults = sortWith(hits, uiState.sortOrder))
+    }
+
+    private fun sortWith(modules: List<RepoModule>, order: RepoSort): List<RepoModule> = order.sort(modules)
+
+    private fun classify(throwable: Throwable): RepoLoadError = when {
+        throwable is UnsupportedSchemaException -> RepoLoadError.UNSUPPORTED_SCHEMA
+        isOffline() -> RepoLoadError.OFFLINE
+        else -> RepoLoadError.FAILED
+    }
+
+    private fun isOffline(): Boolean = Info.isConnected.value == false
 }

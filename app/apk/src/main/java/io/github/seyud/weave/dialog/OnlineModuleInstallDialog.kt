@@ -65,7 +65,9 @@ object OnlineModuleInstallDialog {
     class Module(
         override val module: OnlineModule,
         override val autoLaunch: Boolean,
-        override val notifyId: Int = AppNotifications.nextId()
+        override val notifyId: Int = AppNotifications.nextId(),
+        /** One-shot scripts are kept byte-identical: their SHA-256 is checked again on run. */
+        override val asModuleInstaller: Boolean = true,
     ) : Subject.Module() {
         override fun pendingIntent(context: Context) = FlashRequest.install(file).toPendingIntent(context)
     }

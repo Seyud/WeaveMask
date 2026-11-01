@@ -6,6 +6,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import io.github.seyud.weave.core.Config
+import io.github.seyud.weave.core.Const
 import io.github.seyud.weave.core.Info
 import io.github.seyud.weave.core.ktx.toast
 import io.github.seyud.weave.core.utils.MediaStoreUtils
@@ -45,16 +46,23 @@ internal fun SettingsScreenDialogs(
         value = state.moduleRepoBaseUrlInput,
         onValueChange = { state.moduleRepoBaseUrlInput = it },
         label = stringResource(CoreR.string.module_repo_source_message),
-        helperText = Config.normalizeModuleRepoBaseUrl(state.moduleRepoBaseUrlInput.text)
-            ?: stringResource(CoreR.string.module_repo_source_invalid),
+        helperText = if (state.moduleRepoBaseUrlInput.text.isBlank()) {
+            // Clearing the field is the way back to the built-in repository.
+            stringResource(CoreR.string.module_repo_source_default, Const.Url.MODULE_REPO_URL)
+        } else {
+            Config.normalizeModuleRepoUrl(state.moduleRepoBaseUrlInput.text)
+                ?: stringResource(CoreR.string.module_repo_source_invalid)
+        },
         confirmText = stringResource(android.R.string.ok),
         dismissText = stringResource(android.R.string.cancel),
         onDismissRequest = { state.showModuleRepoDialog = false },
         onConfirm = {
-            Config.moduleRepoBaseUrl = state.moduleRepoBaseUrlInput.text
+            // An empty address stores the default (see Config.moduleRepoUrl's setter).
+            Config.moduleRepoUrl = state.moduleRepoBaseUrlInput.text
             state.showModuleRepoDialog = false
         },
-        confirmEnabled = Config.normalizeModuleRepoBaseUrl(state.moduleRepoBaseUrlInput.text) != null,
+        confirmEnabled = state.moduleRepoBaseUrlInput.text.isBlank() ||
+            Config.normalizeModuleRepoUrl(state.moduleRepoBaseUrlInput.text) != null,
     )
 
     MiuixTextInputDialog(

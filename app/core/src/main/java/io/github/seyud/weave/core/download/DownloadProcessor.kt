@@ -21,7 +21,13 @@ class DownloadProcessor(notifier: DownloadNotifier) : DownloadNotifier by notifi
     suspend fun handle(stream: InputStream, subject: Subject) {
         when (subject) {
             is Subject.App -> handleApp(stream, subject)
-            is Subject.Module -> handleModule(stream, subject.file)
+            is Subject.Module -> if (subject.asModuleInstaller) {
+                handleModule(stream, subject.file)
+            } else {
+                // A one-shot script is unpacked and verified against the published SHA-256, so
+                // rewriting the archive here would invalidate that hash.
+                stream.copyAndClose(subject.file.outputStream())
+            }
             else -> stream.copyAndClose(subject.file.outputStream())
         }
     }

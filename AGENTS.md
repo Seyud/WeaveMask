@@ -104,7 +104,7 @@ Version config: `app/gradle.properties` (`magisk.versionCode`) and `config.prop`
 - Floating bottom bar, page scaling, app icon switcher
 - Hidden app mode removed (v31.1 sync): no app hiding/repackaging, no stub modules; su blacklist (default) keeps the interactive prompt, whitelist mode uses upstream's explicit-grant model
 - Whitelist mode: superuser list mode synced with Zygisk Next
-- Module repository browser (KernelSU repo format), batch local install, and a download-and-patch boot-image install method
+- Module store browser over the KernelSU Modules registry API (`https://modules.kernelsu.org/api/v1`: index → list → detail, schema-versioned and validated, offline cache, size + SHA-256 verified downloads, one-shot `kind=script` entries) **and** legacy Magisk modules repositories (`modules.json` with `prop_url`/`zip_url`, metadata read per `module.prop`, no integrity metadata so those ZIPs download unchecked); the repository address accepts a site root or any index document URL, batch local install, and a download-and-patch boot-image install method
 - WebUI theme injection: module WebUIs follow the app's Monet scheme via CSS custom properties
 
 ## Config

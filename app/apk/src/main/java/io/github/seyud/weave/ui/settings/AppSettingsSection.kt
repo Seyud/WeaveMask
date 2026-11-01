@@ -128,7 +128,7 @@ internal fun AppSettingsSection(
 
         ArrowPreference(
             title = stringResource(CoreR.string.module_repo_source_title),
-            summary = Config.moduleRepoBaseUrl,
+            summary = Config.moduleRepoUrl,
             startAction = {
                 Icon(
                     Icons.Rounded.Link,
@@ -138,7 +138,7 @@ internal fun AppSettingsSection(
                 )
             },
             onClick = {
-                state.moduleRepoBaseUrlInput = TextFieldValue(Config.moduleRepoBaseUrl)
+                state.moduleRepoBaseUrlInput = TextFieldValue(Config.moduleRepoUrl)
                 state.showModuleRepoDialog = true
             },
         )

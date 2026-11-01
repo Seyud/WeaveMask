@@ -23,15 +23,21 @@ import io.github.seyud.weave.core.base.IActivityExtension
 import io.github.seyud.weave.core.cmp
 import io.github.seyud.weave.core.di.ServiceLocator
 import io.github.seyud.weave.core.intent
+import io.github.seyud.weave.core.ktx.cachedFile
 import io.github.seyud.weave.core.ktx.set
+import io.github.seyud.weave.core.registry.DownloadVerificationException
+import io.github.seyud.weave.core.registry.DownloadVerifier
+import io.github.seyud.weave.core.registry.ExpectedFile
 import io.github.seyud.weave.core.utils.ProgressInputStream
 import io.github.seyud.weave.core.integration.AppNotifications
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import okhttp3.ResponseBody
 import timber.log.Timber
+import java.io.FileOutputStream
 import java.io.InputStream
 
 /**
@@ -60,8 +66,24 @@ class DownloadEngine(session: DownloadSession) : DownloadSession by session, Dow
 
         private val progressBroadcast = MutableLiveData<Pair<Float, Subject>?>()
 
+        /**
+         * Failures carry the subject, the verification reason (null for anything else) and the
+         * throwable, because the progress channel only has the -2f "failed" marker and the UI has
+         * to tell a corrupted ZIP from a plain network error.
+         */
+        private val failureBroadcast =
+            MutableLiveData<Triple<Subject, DownloadVerificationException.Reason?, Throwable>?>()
+
         private fun broadcast(progress: Float, subject: Subject) {
             progressBroadcast.postValue(progress to subject)
+        }
+
+        private fun broadcastFailure(
+            subject: Subject,
+            reason: DownloadVerificationException.Reason?,
+            error: Throwable
+        ) {
+            failureBroadcast.postValue(Triple(subject, reason, error))
         }
 
         fun observeProgress(owner: LifecycleOwner, callback: (Float, Subject) -> Unit) {
@@ -69,6 +91,25 @@ class DownloadEngine(session: DownloadSession) : DownloadSession by session, Dow
             progressBroadcast.observe(owner) {
                 val (progress, subject) = it ?: return@observe
                 callback(progress, subject)
+            }
+        }
+
+        /**
+         * Observes failed downloads. A non-null [DownloadVerificationException.Reason] means the
+         * file was rejected by integrity verification (URL not allowed, size or SHA-256 mismatch)
+         * and deleted, so it never reached MediaStore; null means any other failure.
+         *
+         * The failure is broadcast for every download in progress, so the caller compares
+         * `subject.notifyId` with the subject it started, exactly like [observeProgress].
+         */
+        fun observeFailure(
+            owner: LifecycleOwner,
+            callback: (Subject, DownloadVerificationException.Reason?, Throwable) -> Unit
+        ) {
+            failureBroadcast.value = null
+            failureBroadcast.observe(owner) {
+                val (subject, reason, error) = it ?: return@observe
+                callback(subject, reason, error)
             }
         }
 
@@ -137,6 +178,21 @@ class DownloadEngine(session: DownloadSession) : DownloadSession by session, Dow
                 }
             }
         }
+
+        /**
+         * Starts a module ZIP download. A [Subject.Module] derives its expected size + SHA-256 from
+         * the [OnlineModule][io.github.seyud.weave.core.model.module.OnlineModule] it was built
+         * from, so a registry module is verified automatically while a module without that data
+         * keeps the legacy unchecked path.
+         */
+        fun startModule(context: Context, subject: Subject.Module) = start(context, subject)
+
+        @SuppressLint("InlinedApi")
+        fun <T> startModuleWithActivity(
+            activity: T,
+            subject: Subject.Module
+        ) where T : ComponentActivity, T : IActivityExtension =
+            startWithActivity(activity, subject)
     }
 
     private val notifications = SparseArrayCompat<Notification.Builder>()
@@ -149,8 +205,13 @@ class DownloadEngine(session: DownloadSession) : DownloadSession by session, Dow
         notifyUpdate(subject.notifyId)
         CoroutineScope(job + Dispatchers.IO).launch {
             try {
-                val stream = network.fetchFile(subject.url).toProgressStream(subject)
-                processor.handle(stream, subject)
+                val expected = subject.expected
+                if (expected != null) {
+                    downloadVerified(subject, expected)
+                } else {
+                    val stream = network.fetchFile(subject.url).toProgressStream(subject)
+                    processor.handle(stream, subject)
+                }
                 val launchIntent = subject.pendingIntent(context)
                 if (subject.autoLaunch && launchIntent != null) {
                     notifyRemove(subject.notifyId)
@@ -158,10 +219,52 @@ class DownloadEngine(session: DownloadSession) : DownloadSession by session, Dow
                 } else {
                     notifyFinish(subject)
                 }
+            } catch (e: DownloadVerificationException) {
+                Timber.e(e)
+                notifyFail(subject, e.reason, e)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e)
-                notifyFail(subject)
+                notifyFail(subject, null, e)
             }
+        }
+    }
+
+    /**
+     * Verified download path for registry modules: [the subject's URL][Subject.url] and every
+     * redirect hop are checked against the allow-list before a byte is fetched, and the body is
+     * streamed into an app-private cache file while the size and SHA-256 are verified. Only a file
+     * that passed verification is handed to [DownloadProcessor], which is also the first place
+     * that touches [Subject.file], so a rejected download never reaches MediaStore.
+     */
+    private suspend fun downloadVerified(subject: Subject, expected: ExpectedFile) {
+        val temp = context.cachedFile("verified-${subject.notifyId}.zip")
+        try {
+            val verifier = DownloadVerifier(expected)
+            VerifiedRequest.open(subject.url).use { response ->
+                // The progress emitter needs the size up front; expected.size is the only
+                // trustworthy one, the server's Content-Length is not verified yet.
+                val source = progressStream(expected.size, subject, response.body.byteStream())
+                FileOutputStream(temp).use { out ->
+                    val buffer = ByteArray(64 * 1024)
+                    while (true) {
+                        val read = source.read(buffer)
+                        if (read == -1) break
+                        // update() throws as soon as more bytes than expected arrive, so an
+                        // oversized payload is not written to disk either.
+                        verifier.update(buffer, 0, read)
+                        out.write(buffer, 0, read)
+                    }
+                    out.flush()
+                    out.fd.sync()
+                }
+            }
+            verifier.finish()
+            temp.inputStream().use { processor.handle(it, subject) }
+        } finally {
+            // Verified or rejected, the temporary file only lives for this download.
+            temp.delete()
         }
     }
 
@@ -183,11 +286,38 @@ class DownloadEngine(session: DownloadSession) : DownloadSession by session, Dow
         return newId
     }
 
-    private fun notifyFail(subject: Subject) = finalNotify(subject.notifyId) {
-        broadcast(-2f, subject)
-        it.setContentText(context.getString(R.string.download_file_error))
-            .setSmallIcon(android.R.drawable.stat_notify_error)
-            .setOngoing(false)
+    private fun notifyFail(
+        subject: Subject,
+        reason: DownloadVerificationException.Reason?,
+        error: Throwable
+    ) {
+        // Broadcast outside of the notification editor: a notification that was already removed
+        // must not swallow the failure the UI is waiting for.
+        broadcastFailure(subject, reason, error)
+        finalNotify(subject.notifyId) {
+            broadcast(-2f, subject)
+            it.setContentText(failureText(subject, reason))
+                .setSmallIcon(android.R.drawable.stat_notify_error)
+                .setOngoing(false)
+        }
+    }
+
+    /**
+     * Verification failures get their own notification text, so a ZIP that failed the integrity
+     * check is not mistaken for a network error.
+     */
+    private fun failureText(
+        subject: Subject,
+        reason: DownloadVerificationException.Reason?
+    ): CharSequence = when (reason) {
+        DownloadVerificationException.Reason.URL_NOT_ALLOWED ->
+            context.getString(R.string.module_repo_download_url_blocked)
+
+        DownloadVerificationException.Reason.SIZE_MISMATCH,
+        DownloadVerificationException.Reason.SHA256_MISMATCH ->
+            context.getString(R.string.module_repo_download_verify_failed, subject.title)
+
+        null -> context.getString(R.string.download_file_error)
     }
 
     private fun notifyFinish(subject: Subject) = finalNotify(subject.notifyId) {
@@ -241,20 +371,27 @@ class DownloadEngine(session: DownloadSession) : DownloadSession by session, Dow
         return n
     }
 
-    private fun ResponseBody.toProgressStream(subject: Subject): InputStream {
-        val max = contentLength()
+    private fun ResponseBody.toProgressStream(subject: Subject): InputStream =
+        progressStream(contentLength(), subject, byteStream())
+
+    /**
+     * Wraps [base] so every progress tick updates the notification and the progress broadcast.
+     * [max] is the total number of bytes, or a non-positive value when it is unknown; verified
+     * downloads pass their expected size, so they advance exactly like unchecked ones do.
+     */
+    private fun progressStream(max: Long, subject: Subject, base: InputStream): InputStream {
         val total = max.toFloat() / 1048576
         val id = subject.notifyId
 
         notifyUpdate(id) { it.setContentTitle(subject.title) }
 
-        return ProgressInputStream(byteStream()) {
-            val progress = it.toFloat() / 1048576
+        return ProgressInputStream(base) { bytesRead ->
+            val progress = bytesRead.toFloat() / 1048576
             notifyUpdate(id) { notification ->
                 if (max > 0) {
                     broadcast(progress / total, subject)
                     notification
-                        .setProgress(max.toInt(), it.toInt(), false)
+                        .setProgress(max.toInt(), bytesRead.toInt(), false)
                         .setContentText("%.2f / %.2f MB".format(progress, total))
                 } else {
                     broadcast(-1f, subject)

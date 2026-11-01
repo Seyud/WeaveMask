@@ -90,7 +90,7 @@ internal fun rememberSettingsScreenLocalState(): SettingsScreenLocalState {
     }
     val showModuleRepoDialogState = rememberSaveable { mutableStateOf(false) }
     val moduleRepoBaseUrlInputState = rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(Config.moduleRepoBaseUrl))
+        mutableStateOf(TextFieldValue(Config.moduleRepoUrl))
     }
     val showDownloadPathDialogState = rememberSaveable { mutableStateOf(false) }
     val downloadPathInputState = rememberSaveable(stateSaver = TextFieldValue.Saver) {

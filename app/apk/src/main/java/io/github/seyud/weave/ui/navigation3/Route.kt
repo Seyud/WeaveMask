@@ -43,6 +43,21 @@ sealed interface Route : NavKey, Parcelable {
         val moduleId: String,
     ) : Route
 
+    /** 一次性脚本运行页面（仓库 kind = script） */
+    @Parcelize
+    @Serializable
+    data class ScriptRun(
+        /** 已验证的脚本文本 ZIP（content:// URI） */
+        val zipUri: String,
+        /** 仓库条目 id，用于校验 module.prop */
+        val registryId: String,
+        val displayName: String,
+        /** 仓库 release 记录的大小，运行前再次校验（0 表示未知） */
+        val expectedSize: Long = 0L,
+        /** 仓库 release 记录的 SHA-256，运行前再次校验 */
+        val expectedSha256: String = "",
+    ) : Route
+
     /** 应用语言设置 */
     @Parcelize
     @Serializable
