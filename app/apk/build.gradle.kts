@@ -48,15 +48,15 @@ dependencies {
     implementation(libs.compose.runtime)
     implementation(libs.compose.runtime.livedata)
     implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.activity.compose)
 
     // Navigation Compose
     implementation(libs.navigation.compose)
 
-    // Navigation 3 + Miuix NavDisplay
-    implementation(libs.navigation3.runtime)
-    implementation(libs.lifecycle.viewmodel.navigation3)
+    // Miuix Navigation runtime (miuix-nav) + navigation events
     implementation(libs.navigationevent.compose)
-    implementation(libs.miuix.navigation3.ui)
+    implementation(libs.miuix.nav)
 
     // Miuix
     implementation(libs.miuix.ui)

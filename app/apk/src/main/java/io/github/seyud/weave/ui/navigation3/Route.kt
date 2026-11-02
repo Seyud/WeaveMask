@@ -2,14 +2,18 @@ package io.github.seyud.weave.ui.navigation3
 
 import android.net.Uri
 import android.os.Parcelable
-import androidx.navigation3.runtime.NavKey
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
+import top.yukonga.miuix.kmp.nav.core.NavKey
 
 /**
- * 类型安全的导航路由定义（Navigation3）
+ * 类型安全的导航路由定义（miuix-nav）
  * 每个目的地是一个 NavKey（data object/data class），可保存/恢复到 backStack
+ *
+ * 层级本身必须标记 @Serializable：rememberNavBackStack 用封闭多态序列化器
+ * 持久化整个栈，进程重建后按同一历史恢复
  */
+@Serializable
 sealed interface Route : NavKey, Parcelable {
     /** 主页面（包含底部导航栏 + HorizontalPager） */
     @Parcelize

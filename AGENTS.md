@@ -91,12 +91,12 @@ Version config: `app/gradle.properties` (`magisk.versionCode`) and `config.prop`
 #### Version catalog divergences from upstream
 
 - UI deps come from a Compose BOM (`composeBom`) + Miuix — not upstream's standalone `lifecycle`/`compose-ui`/`compose-m3` pins.
-- `moshix` plugin is renamed to `moshi`; no `navigation-safeargs` (this fork uses Navigation3).
+- `moshix` plugin is renamed to `moshi`; no `navigation-safeargs` (this fork uses `miuix-nav`).
 - `com.google.android.material:material` is still a **hard dependency**, but not for the Compose UI (that's Miuix). All Activity themes inherit `Theme.MaterialComponents.*` — the AppCompat-required shell that hosts the Compose content — and the WebUI (WebView) screens use Material widgets/styles. `MotionRevealHelper.kt` (FAB/CircularReveal) is dead code, unused.
 
 ### Navigation & UI
 
-- Navigation3 with custom type-safe `Navigator` and spring-physics transitions (replaces Fragment Navigation + SafeArgs)
+- `miuix-nav` (Miuix's navigation runtime) with a custom type-safe `Navigator` over a serializable `NavBackStack`; Miuix owns the transitions and predictive back, entry state/ViewModel scopes come from `NavDisplay` (replaces Fragment Navigation + SafeArgs)
 - Miuix component library (not standard Material3)
 - Liquid Glass effects: `CombinedBackdrop`, `InnerShadow`, `Lens`, `Vibrancy`
 - 6 theme modes + Monet key colors

@@ -6,7 +6,6 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.core.EaseInOut
-import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
@@ -32,7 +31,6 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
@@ -59,11 +57,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
-import androidx.navigation3.ui.NavDisplay
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
@@ -96,11 +90,6 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlin.math.abs
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.exp
-import kotlin.math.sin
-import kotlin.math.sqrt
 import io.github.seyud.weave.ui.flash.FlashScreen
 import io.github.seyud.weave.ui.flash.FlashRequest
 import io.github.seyud.weave.ui.flash.FlashViewModel
@@ -138,6 +127,9 @@ import top.yukonga.miuix.kmp.basic.SnackbarHostState
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.blur.layerBackdrop
 import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
+import top.yukonga.miuix.kmp.nav.core.NavDisplay
+import top.yukonga.miuix.kmp.nav.core.NavDisplayEffects
+import top.yukonga.miuix.kmp.nav.core.rememberNavSystemCornerRadius
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import io.github.seyud.weave.core.R as CoreR
 
@@ -372,149 +364,146 @@ fun MainScreen(
             ) { _ ->
                 NavDisplay(
                     backStack = navigator.backStack,
-                    entryDecorators = listOf(
-                        rememberSaveableStateHolderNavEntryDecorator(),
-                        rememberViewModelStoreNavEntryDecorator()
-                    ),
-                    onBack = { navigator.pop() },
                     modifier = Modifier.fillMaxSize(),
-                    entryProvider = entryProvider {
-                        entry<Route.Main> {
-                            MainTabScreen(
-                                navigator = navigator,
-                                homeViewModel = homeViewModel,
-                                moduleViewModel = moduleViewModel,
-                                superuserViewModel = superuserViewModel,
-                                settingsViewModel = settingsViewModel,
-                                logViewModel = logViewModel,
-                                initialMainTab = rememberedMainTab,
-                                onCurrentTabChanged = { rememberedMainTab = it },
-                                onSnackbarBottomPaddingChanged = { snackbarBottomPadding = it },
-                                snackbarHostState = snackbarHostState
-                            )
-                        }
-                        entry<Route.Install> {
-                            InstallScreen(
-                                viewModel = installViewModel,
-                                onNavigateBack = { navigator.pop() },
-                                onNavigateToFlash = { action, uri ->
-                                    navigator.pop()
-                                    navigator.push(
-                                        Route.Flash(
-                                            action,
-                                            uri?.let { listOf(it.toString()) } ?: emptyList()
-                                        )
+                    onBack = { navigator.pop() },
+                    // 转场时把进入页面裁到系统屏幕圆角，与平台观感一致
+                    effects = NavDisplayEffects(cornerClipRadius = rememberNavSystemCornerRadius()),
+                ) {
+                    entry<Route.Main> {
+                        MainTabScreen(
+                            navigator = navigator,
+                            homeViewModel = homeViewModel,
+                            moduleViewModel = moduleViewModel,
+                            superuserViewModel = superuserViewModel,
+                            settingsViewModel = settingsViewModel,
+                            logViewModel = logViewModel,
+                            initialMainTab = rememberedMainTab,
+                            onCurrentTabChanged = { rememberedMainTab = it },
+                            onSnackbarBottomPaddingChanged = { snackbarBottomPadding = it },
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
+                    entry<Route.Install> {
+                        InstallScreen(
+                            viewModel = installViewModel,
+                            onNavigateBack = { navigator.pop() },
+                            onNavigateToFlash = { action, uri ->
+                                navigator.pop()
+                                navigator.push(
+                                    Route.Flash(
+                                        action,
+                                        uri?.let { listOf(it.toString()) } ?: emptyList()
                                     )
-                                }
-                            )
-                        }
-                        entry<Route.Flash> { key ->
-                            val uriArgs = key.uriStrings
-                                .filter { it.isNotEmpty() }
-                                .map { it.toUri() }
+                                )
+                            }
+                        )
+                    }
+                    entry<Route.Flash> { key ->
+                        val uriArgs = key.uriStrings
+                            .filter { it.isNotEmpty() }
+                            .map { it.toUri() }
 
-                            DisposableEffect(key.action) {
-                                onDispose {
-                                    if (key.action == Const.Value.FLASH_ZIP) {
-                                        // 安装返回模块页：静默刷新，避免下拉刷新指示器把列表顶下去再弹回
-                                        moduleViewModel.refresh(showProgress = false)
-                                    }
+                        DisposableEffect(key.action) {
+                            onDispose {
+                                if (key.action == Const.Value.FLASH_ZIP) {
+                                    // 安装返回模块页：静默刷新，避免下拉刷新指示器把列表顶下去再弹回
+                                    moduleViewModel.refresh(showProgress = false)
                                 }
                             }
+                        }
 
-                            FlashScreen(
-                                viewModel = flashViewModel,
-                                action = key.action,
-                                additionalData = uriArgs,
-                                onNavigateBack = { navigator.pop() },
-                                snackbarHostState = snackbarHostState
-                            )
-                        }
-                        entry<Route.Log> {
-                            LogScreen(
-                                viewModel = logViewModel,
-                                onNavigateBack = { navigator.pop() },
-                                snackbarHostState = snackbarHostState
-                            )
-                        }
-                        entry<Route.ModuleRepoList> {
-                            ModuleRepoScreen(
-                                viewModel = moduleRepoViewModel,
-                                moduleViewModel = moduleViewModel,
-                                onNavigateBack = { navigator.pop() },
-                                onOpenModuleDetail = { moduleId ->
-                                    navigator.push(Route.ModuleRepoDetail(moduleId))
-                                }
-                            )
-                        }
-                        entry<Route.ModuleRepoDetail> { key ->
-                            ModuleRepoDetailScreen(
-                                moduleId = key.moduleId,
-                                moduleViewModel = moduleViewModel,
-                                onNavigateBack = { navigator.pop() },
-                                onRunScript = { zipFile, registryId, displayName, expected ->
-                                    navigator.push(
-                                        Route.ScriptRun(
-                                            zipUri = zipFile.toString(),
-                                            registryId = registryId,
-                                            displayName = displayName,
-                                            expectedSize = expected?.size ?: 0L,
-                                            expectedSha256 = expected?.sha256.orEmpty(),
-                                        )
-                                    )
-                                }
-                            )
-                        }
-                        entry<Route.ScriptRun> { key ->
-                            // The ViewModel owns the extraction of the prepared script and releases it
-                            // in onCleared, so it must be scoped to this navigation entry.
-                            ScriptRunScreen(
-                                zipUri = key.zipUri.toUri(),
-                                registryId = key.registryId,
-                                displayName = key.displayName,
-                                expectedSize = key.expectedSize,
-                                expectedSha256 = key.expectedSha256.takeIf { it.isNotEmpty() },
-                                onNavigateBack = { navigator.pop() }
-                            )
-                        }
-                        entry<Route.AppLanguage> {
-                            AppLanguageScreen(
-                                onNavigateBack = { navigator.pop() }
-                            )
-                        }
-                        entry<Route.ColorPalette> {
-                            ColorPaletteScreen(
-                                onNavigateBack = { navigator.pop() }
-                            )
-                        }
-                        entry<Route.Deny> {
-                            DenyListScreen(
-                                onNavigateBack = { navigator.pop() }
-                            )
-                        }
-                        entry<Route.About> {
-                            AboutScreen(
-                                onNavigateBack = { navigator.pop() },
-                                onLinkPressed = { link ->
-                                    // 误报抑制：SuRequestActivity 的 VIEW filter 无 <data>，
-                                    // 不可能匹配 http(s) 链接；BROWSABLE 限定只由浏览器解析
-                                    @SuppressLint("UnsafeImplicitIntentLaunch")
-                                    val intent = Intent(Intent.ACTION_VIEW, link.toUri())
-                                    intent.addCategory(Intent.CATEGORY_BROWSABLE)
-                                    context.startActivity(intent)
-                                }
-                            )
-                        }
-                        entry<Route.Action> { key ->
-                            ActionScreen(
-                                moduleId = key.moduleId,
-                                moduleName = key.moduleName,
-                                fromShortcut = key.fromShortcut,
-                                onNavigateBack = { navigator.pop() }
-                            )
-                        }
+                        FlashScreen(
+                            viewModel = flashViewModel,
+                            action = key.action,
+                            additionalData = uriArgs,
+                            onNavigateBack = { navigator.pop() },
+                            snackbarHostState = snackbarHostState
+                        )
                     }
-                )
+                    entry<Route.Log> {
+                        LogScreen(
+                            viewModel = logViewModel,
+                            onNavigateBack = { navigator.pop() },
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
+                    entry<Route.ModuleRepoList> {
+                        ModuleRepoScreen(
+                            viewModel = moduleRepoViewModel,
+                            moduleViewModel = moduleViewModel,
+                            onNavigateBack = { navigator.pop() },
+                            onOpenModuleDetail = { moduleId ->
+                                navigator.push(Route.ModuleRepoDetail(moduleId))
+                            }
+                        )
+                    }
+                    entry<Route.ModuleRepoDetail> { key ->
+                        ModuleRepoDetailScreen(
+                            moduleId = key.moduleId,
+                            moduleViewModel = moduleViewModel,
+                            onNavigateBack = { navigator.pop() },
+                            onRunScript = { zipFile, registryId, displayName, expected ->
+                                navigator.push(
+                                    Route.ScriptRun(
+                                        zipUri = zipFile.toString(),
+                                        registryId = registryId,
+                                        displayName = displayName,
+                                        expectedSize = expected?.size ?: 0L,
+                                        expectedSha256 = expected?.sha256.orEmpty(),
+                                    )
+                                )
+                            }
+                        )
+                    }
+                    entry<Route.ScriptRun> { key ->
+                        // The ViewModel owns the extraction of the prepared script and releases it
+                        // in onCleared, so it must be scoped to this navigation entry.
+                        ScriptRunScreen(
+                            zipUri = key.zipUri.toUri(),
+                            registryId = key.registryId,
+                            displayName = key.displayName,
+                            expectedSize = key.expectedSize,
+                            expectedSha256 = key.expectedSha256.takeIf { it.isNotEmpty() },
+                            onNavigateBack = { navigator.pop() }
+                        )
+                    }
+                    entry<Route.AppLanguage> {
+                        AppLanguageScreen(
+                            onNavigateBack = { navigator.pop() }
+                        )
+                    }
+                    entry<Route.ColorPalette> {
+                        ColorPaletteScreen(
+                            onNavigateBack = { navigator.pop() }
+                        )
+                    }
+                    entry<Route.Deny> {
+                        DenyListScreen(
+                            onNavigateBack = { navigator.pop() }
+                        )
+                    }
+                    entry<Route.About> {
+                        AboutScreen(
+                            onNavigateBack = { navigator.pop() },
+                            onLinkPressed = { link ->
+                                // 误报抑制：SuRequestActivity 的 VIEW filter 无 <data>，
+                                // 不可能匹配 http(s) 链接；BROWSABLE 限定只由浏览器解析
+                                @SuppressLint("UnsafeImplicitIntentLaunch")
+                                val intent = Intent(Intent.ACTION_VIEW, link.toUri())
+                                intent.addCategory(Intent.CATEGORY_BROWSABLE)
+                                context.startActivity(intent)
+                            }
+                        )
+                    }
+                    entry<Route.Action> { key ->
+                        ActionScreen(
+                            moduleId = key.moduleId,
+                            moduleName = key.moduleName,
+                            fromShortcut = key.fromShortcut,
+                            onNavigateBack = { navigator.pop() }
+                        )
+                    }
+                }
             }
 
             if (pendingFlashRequest != null) {
@@ -887,39 +876,3 @@ private fun MainTabScreen(
         }
     }
 }
-
-/**
- * Miuix 风格导航过渡缓动函数
- * 基于阻尼弹簧物理模型，与 Miuix NavDisplay 使用相同参数
- */
-@Immutable
-private class NavTransitionEasing(
-    response: Float,
-    damping: Float,
-) : Easing {
-    private val r: Float
-    private val w: Float
-    private val c2: Float
-
-    init {
-        val omega = 2.0 * PI / response
-        val k = omega * omega
-        val c = damping * 4.0 * PI / response
-
-        w = (sqrt(4.0 * k - c * c) / 2.0).toFloat()
-        r = (-c / 2.0).toFloat()
-        c2 = r / w
-    }
-
-    override fun transform(fraction: Float): Float {
-        val t = fraction.toDouble()
-        val decay = exp(r * t)
-        return (decay * (-cos(w * t) + c2 * sin(w * t)) + 1.0).toFloat()
-    }
-}
-
-/** Miuix 风格导航动画缓动实例 */
-private val NavAnimationEasing = NavTransitionEasing(0.8f, 0.95f)
-
-/** 导航过渡动画 tween 规格，500ms + Miuix 弹簧缓动 */
-private fun <T> navTween() = tween<T>(durationMillis = 500, easing = NavAnimationEasing)
