@@ -18,9 +18,14 @@
         android:networkSecurityConfig="@xml/network_security_config"
         tools:ignore="UnusedAttribute"
         tools:remove="android:appComponentFactory">
+        <!--
+            singleTop：应用已在前台时，"打开方式"/"分享"进来的 ZIP 复用同一个实例，
+            交给 onNewIntent 处理，避免在同一 task 内叠加多个 MainActivity。
+        -->
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.WeaveMagisk.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
@@ -31,6 +36,19 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:mimeType="application/zip" android:scheme="content" />
+            </intent-filter>
+            <!--
+                分享入口：从其它 App 分享 ZIP 到本应用，与"打开方式"共用同一套模块刷入流程。
+                这里不能声明 scheme：分享 Intent 的 data 通常为空、文件只在 EXTRA_STREAM / ClipData 里，
+                一旦限制 scheme=content 就匹配不到任何分享目标。
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/zip" />
+                <data android:mimeType="application/x-zip-compressed" />
+                <data android:mimeType="application/x-zip" />
             </intent-filter>
         </activity>
 

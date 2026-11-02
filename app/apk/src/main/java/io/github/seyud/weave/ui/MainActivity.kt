@@ -592,7 +592,7 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
     }
 
     /**
-     * 检查 Intent 是否为外部应用通过"打开方式"打开 ZIP 文件
+     * 检查 Intent 是否为外部应用通过"打开方式"或"分享"传入 ZIP 文件
      * 用于首次启动时检查
      *
      * 注意：必须在 Activity 中立即处理 content URI，因为临时读取权限只授予给 Activity。
@@ -612,15 +612,14 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
         }
 
         // 清除 Intent 数据防止重复处理
-        intent.data = null
-        intent.type = null
-        intent.clipData = null
+        clearExternalZipIntent(intent)
 
         // 立即将文件复制到缓存目录，因为此时 Activity 拥有临时读取权限
         return try {
             copyUriToCache(uris)
         } catch (e: Exception) {
             Timber.e(e, "Failed to copy external ZIP to cache")
+            toast(CoreR.string.failure, Toast.LENGTH_LONG)
             null
         }
     }
@@ -650,7 +649,43 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
                 clipData.getItemAt(index)?.uri?.let { orderedUris.add(it) }
             }
         }
+        // 分享入口（ACTION_SEND / ACTION_SEND_MULTIPLE）把文件放在 EXTRA_STREAM，
+        // 与"打开方式"的 data / clipData 并不重合，需要单独读取。
+        if (isShareIntent(intent)) {
+            extractSharedStreamUris(intent).forEach { orderedUris.add(it) }
+        }
         return orderedUris.filter { it.scheme == "content" }
+    }
+
+    /**
+     * 读取分享 Intent 中的文件 URI。
+     * ACTION_SEND 的 EXTRA_STREAM 是单个 Uri，ACTION_SEND_MULTIPLE 是 Uri 列表；
+     * 部分应用同时只填 ClipData，因此调用方也会合并 clipData。
+     */
+    private fun extractSharedStreamUris(intent: Intent): List<Uri> {
+        val raw = intent.extras?.get(Intent.EXTRA_STREAM) ?: return emptyList()
+        return when (raw) {
+            is Uri -> listOf(raw)
+            is List<*> -> raw.filterIsInstance<Uri>()
+            else -> emptyList()
+        }
+    }
+
+    private fun isShareIntent(intent: Intent): Boolean {
+        return intent.action == Intent.ACTION_SEND || intent.action == Intent.ACTION_SEND_MULTIPLE
+    }
+
+    /**
+     * 清除外部 ZIP Intent 上的文件引用与分享载荷，避免配置变更或后续 Intent 重复处理。
+     */
+    private fun clearExternalZipIntent(intent: Intent) {
+        intent.data = null
+        intent.type = null
+        intent.clipData = null
+        if (isShareIntent(intent)) {
+            intent.removeExtra(Intent.EXTRA_STREAM)
+            intent.action = null
+        }
     }
 
     private fun isSupportedZipMimeType(mimeType: String?): Boolean {
@@ -684,7 +719,7 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
     }
 
     /**
-     * 处理外部应用通过"打开方式"打开 ZIP 文件的 Intent
+     * 处理外部应用通过"打开方式"或"分享"传入 ZIP 文件的 Intent
      * - 验证 Intent 有效性（scheme、mimeType）
      * - 清除 Intent 数据防止重复处理
      * - 立即将文件复制到缓存目录（因为临时读取权限只授予给 Activity）
@@ -713,15 +748,14 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
             }
 
             // 清除 Intent 数据防止重复处理
-            activity.intent.data = null
-            activity.intent.type = null
-            activity.intent.clipData = null
+            clearExternalZipIntent(currentIntent)
 
             // 立即将文件复制到缓存目录，因为此时 Activity 拥有临时读取权限
             val cachedUris = try {
                 copyUriToCache(uris)
             } catch (e: Exception) {
                 Timber.e(e, "Failed to copy external ZIP to cache")
+                activity.toast(CoreR.string.failure, Toast.LENGTH_LONG)
                 emptyList()
             }
 
