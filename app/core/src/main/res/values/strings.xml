@@ -386,6 +386,13 @@
     <string name="settings_enable_glass_summary">Enable liquid glass effect for floating bottom bar</string>
     <string name="settings_enable_predictive_back">Predictive back gesture</string>
     <string name="settings_enable_predictive_back_summary">Enable predictive back gesture support</string>
+    <string name="settings_enable_swipe_dismiss">Swipe back gesture</string>
+    <string name="settings_enable_swipe_dismiss_summary">Swipe from the edge to return to the previous page</string>
+    <string name="settings_pager_gesture_mode">Pager gesture mode</string>
+    <string name="settings_pager_gesture_mode_summary">How horizontal swipes switch between main tabs</string>
+    <string name="settings_pager_gesture_native">Default</string>
+    <string name="settings_pager_gesture_cross_axis">Cross-axis</string>
+    <string name="settings_pager_gesture_ios_like">iOS-like</string>
     <string name="settings_page_scale">Page scale</string>
     <string name="settings_page_scale_summary">Adjust the global display scale</string>
 

@@ -13,6 +13,8 @@ val LocalEnableBlur = staticCompositionLocalOf { false }
 val LocalEnableFloatingBottomBar = staticCompositionLocalOf { false }
 val LocalEnableFloatingBottomBarBlur = staticCompositionLocalOf { false }
 val LocalHomeLayoutMode = staticCompositionLocalOf { 0 }
+val LocalEnableSwipeDismiss = staticCompositionLocalOf { true }
+val LocalPagerGestureMode = staticCompositionLocalOf { 1 }
 val LocalIsMonetTheme = staticCompositionLocalOf { false }
 
 /**

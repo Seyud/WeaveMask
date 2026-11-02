@@ -381,6 +381,13 @@
     <string name="settings_enable_glass_summary">启用悬浮底栏的液态玻璃效果</string>
     <string name="settings_enable_predictive_back">预测性返回手势</string>
     <string name="settings_enable_predictive_back_summary">启用对预测性返回手势的支持</string>
+    <string name="settings_enable_swipe_dismiss">横移返回手势</string>
+    <string name="settings_enable_swipe_dismiss_summary">从屏幕边缘横移返回上一页</string>
+    <string name="settings_pager_gesture_mode">页面切换手势</string>
+    <string name="settings_pager_gesture_mode_summary">主界面左右滑动切换标签页的方式</string>
+    <string name="settings_pager_gesture_native">默认</string>
+    <string name="settings_pager_gesture_cross_axis">跨轴拦截</string>
+    <string name="settings_pager_gesture_ios_like">iOS 风格</string>
     <string name="settings_page_scale">界面缩放</string>
     <string name="settings_page_scale_summary">调整全局显示比例</string>
 

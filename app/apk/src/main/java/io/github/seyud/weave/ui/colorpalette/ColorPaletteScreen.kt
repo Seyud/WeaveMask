@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.BlurOn
 import androidx.compose.material.icons.rounded.CallToAction
 import androidx.compose.material.icons.rounded.Colorize
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Swipe
 import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material.icons.rounded.ViewCarousel
 import androidx.compose.runtime.Composable
@@ -81,6 +82,8 @@ fun ColorPaletteScreen(
     var enableFloatingBottomBar by rememberSaveable { mutableStateOf(Config.enableFloatingBottomBar) }
     var enableFloatingBottomBarBlur by rememberSaveable { mutableStateOf(Config.enableFloatingBottomBarBlur) }
     var useBanner by rememberSaveable { mutableStateOf(Config.useBanner) }
+    var enableSwipeDismiss by rememberSaveable { mutableStateOf(Config.enableSwipeDismiss) }
+    var pagerGestureMode by rememberSaveable { mutableIntStateOf(Config.pagerGestureMode.coerceIn(0, 2)) }
     var sliderValue by rememberSaveable { mutableFloatStateOf(Config.pageScale) }
     val showScaleDialog = rememberSaveable { mutableStateOf(false) }
 
@@ -338,6 +341,48 @@ fun ColorPaletteScreen(
                             .padding(top = 12.dp)
                             .fillMaxWidth(),
                     ) {
+                        SwitchPreference(
+                            title = stringResource(id = CoreR.string.settings_enable_swipe_dismiss),
+                            summary = stringResource(id = CoreR.string.settings_enable_swipe_dismiss_summary),
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.Swipe,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(id = CoreR.string.settings_enable_swipe_dismiss),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            checked = enableSwipeDismiss,
+                            onCheckedChange = {
+                                Config.enableSwipeDismiss = it
+                                enableSwipeDismiss = it
+                            }
+                        )
+
+                        val pagerGestureItems = listOf(
+                            stringResource(id = CoreR.string.settings_pager_gesture_native),
+                            stringResource(id = CoreR.string.settings_pager_gesture_cross_axis),
+                            stringResource(id = CoreR.string.settings_pager_gesture_ios_like),
+                        )
+                        OverlayDropdownPreference(
+                            title = stringResource(id = CoreR.string.settings_pager_gesture_mode),
+                            summary = stringResource(id = CoreR.string.settings_pager_gesture_mode_summary),
+                            items = pagerGestureItems,
+                            startAction = {
+                                Icon(
+                                    Icons.Rounded.ViewCarousel,
+                                    modifier = Modifier.padding(end = 6.dp),
+                                    contentDescription = stringResource(id = CoreR.string.settings_pager_gesture_mode),
+                                    tint = colorScheme.onBackground
+                                )
+                            },
+                            selectedIndex = pagerGestureMode,
+                            onSelectedIndexChange = { index ->
+                                Config.pagerGestureMode = index
+                                pagerGestureMode = index
+                            }
+                        )
+
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                             val context = LocalContext.current
                             val activity = context as Activity

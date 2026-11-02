@@ -110,6 +110,8 @@ fun ScriptRunScreen(
     /** Verified size + SHA-256 of the registry release, re-checked before the script is unpacked. */
     expectedSize: Long = 0L,
     expectedSha256: String? = null,
+    /** 脚本运行期间禁止边缘横移返回，避免误滑中断并遗留 root shell */
+    onBackGestureEnabledChange: (Boolean) -> Unit = {},
 ) {
     val viewModel: ScriptRunViewModel = viewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -122,6 +124,9 @@ fun ScriptRunScreen(
     val running = state.phase == ScriptRunPhase.RUNNING
     // The script cannot be interrupted: leaving mid-run would orphan its root shell.
     BackHandler(enabled = running) { }
+    LaunchedEffect(running) {
+        onBackGestureEnabledChange(!running)
+    }
 
     var showConfirm by rememberSaveable { mutableStateOf(false) }
     MiuixConfirmDialog(

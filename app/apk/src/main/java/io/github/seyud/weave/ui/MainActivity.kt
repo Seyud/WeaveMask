@@ -79,9 +79,11 @@ import io.github.seyud.weave.ui.settings.SettingsViewModel
 import io.github.seyud.weave.ui.settings.WhitelistSuDenyListWatcher
 import io.github.seyud.weave.ui.superuser.SuperuserViewModel
 import io.github.seyud.weave.ui.theme.LocalEnableBlur
+import io.github.seyud.weave.ui.theme.LocalEnableSwipeDismiss
 import io.github.seyud.weave.ui.theme.LocalEnableFloatingBottomBar
 import io.github.seyud.weave.ui.theme.LocalEnableFloatingBottomBarBlur
 import io.github.seyud.weave.ui.theme.LocalHomeLayoutMode
+import io.github.seyud.weave.ui.theme.LocalPagerGestureMode
 import io.github.seyud.weave.ui.theme.WeaveMagiskTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -259,6 +261,8 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
             var enableFloatingBottomBarBlur by remember { mutableStateOf(Config.enableFloatingBottomBarBlur) }
             var pageScale by remember { mutableFloatStateOf(Config.pageScale) }
             var homeLayoutMode by remember { mutableIntStateOf(Config.homeLayoutMode) }
+            var enableSwipeDismiss by remember { mutableStateOf(Config.enableSwipeDismiss) }
+            var pagerGestureMode by remember { mutableIntStateOf(Config.pagerGestureMode) }
 
             val darkMode = when (colorMode) {
                 2, 5 -> true
@@ -287,6 +291,8 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
                         Config.Key.ENABLE_FLOATING_BOTTOM_BAR_BLUR -> enableFloatingBottomBarBlur = Config.enableFloatingBottomBarBlur
                         Config.Key.PAGE_SCALE -> pageScale = Config.pageScale
                         Config.Key.HOME_LAYOUT_MODE -> homeLayoutMode = Config.homeLayoutMode
+                        Config.Key.ENABLE_SWIPE_DISMISS -> enableSwipeDismiss = Config.enableSwipeDismiss
+                        Config.Key.PAGER_GESTURE_MODE -> pagerGestureMode = Config.pagerGestureMode
                     }
                 }
                 Config.prefs.registerOnSharedPreferenceChangeListener(listener)
@@ -306,6 +312,8 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
                 LocalEnableFloatingBottomBar provides enableFloatingBottomBar,
                 LocalEnableFloatingBottomBarBlur provides enableFloatingBottomBarBlur,
                 LocalHomeLayoutMode provides homeLayoutMode,
+                LocalEnableSwipeDismiss provides enableSwipeDismiss,
+                LocalPagerGestureMode provides pagerGestureMode,
             ) {
                 // 处理外部应用通过"打开方式"打开 ZIP 文件
                 var externalZipUris by remember { mutableStateOf(initialExternalZipUris) }

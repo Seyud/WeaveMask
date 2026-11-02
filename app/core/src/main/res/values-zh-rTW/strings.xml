@@ -198,6 +198,13 @@
     <string name="settings_owner_only">僅限裝置擁有者</string>
     <string name="settings_owner_manage">由裝置擁有者管理</string>
     <string name="settings_user_independent">使用者獨立管理</string>
+    <string name="settings_enable_swipe_dismiss">橫移返回手勢</string>
+    <string name="settings_enable_swipe_dismiss_summary">從螢幕邊緣橫移返回上一頁</string>
+    <string name="settings_pager_gesture_mode">頁面切換手勢</string>
+    <string name="settings_pager_gesture_mode_summary">主介面左右滑動切換標籤頁的方式</string>
+    <string name="settings_pager_gesture_native">預設</string>
+    <string name="settings_pager_gesture_cross_axis">跨軸攔截</string>
+    <string name="settings_pager_gesture_ios_like">iOS 風格</string>
     <string name="owner_only_summary">僅限裝置擁有者可使用 Root 權限</string>
     <string name="owner_manage_summary">僅限裝置擁有者可管理及接收 Root 權限的要求提示</string>
     <string name="user_independent_summary">每個使用者皆擁有獨立的 Root 權限規則</string>

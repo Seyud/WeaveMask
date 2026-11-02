@@ -82,7 +82,9 @@ fun ActionScreen(
     moduleName: String,
     fromShortcut: Boolean,
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** 操作脚本运行期间禁止边缘横移返回 */
+    onBackGestureEnabledChange: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
     val activity = context as? android.app.Activity
@@ -131,8 +133,13 @@ fun ActionScreen(
     AutoScrollToBottom(listState = listState, itemCount = consoleLines.size)
 
     // 处理返回键
-    BackHandler(enabled = actionState == ActionState.RUNNING) {
+    val isRunning = actionState == ActionState.RUNNING
+    BackHandler(enabled = isRunning) {
         // 运行中时不允许返回
+    }
+    // 边缘横移手势与返回键对齐
+    LaunchedEffect(isRunning) {
+        onBackGestureEnabledChange(!isRunning)
     }
 
     Scaffold(

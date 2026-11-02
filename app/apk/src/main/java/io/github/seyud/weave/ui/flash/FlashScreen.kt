@@ -78,6 +78,8 @@ fun FlashScreen(
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
+    /** 刷写期间禁止边缘横移返回，避免误滑中断写盘 */
+    onBackGestureEnabledChange: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -99,6 +101,10 @@ fun FlashScreen(
     }
 
     BackHandler(enabled = isFlashing) {}
+    // 返回键之外，miuix-nav 的边缘横移手势也要一起关掉
+    LaunchedEffect(isFlashing) {
+        onBackGestureEnabledChange(!isFlashing)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.prepareForCompose(action = action, uris = additionalData)

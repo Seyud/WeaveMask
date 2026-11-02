@@ -72,6 +72,8 @@ object Config : PreferenceConfig, DBConfig {
         const val ENABLE_FLOATING_BOTTOM_BAR = "enable_floating_bottom_bar"
         const val ENABLE_FLOATING_BOTTOM_BAR_BLUR = "enable_floating_bottom_bar_blur"
         const val ENABLE_PREDICTIVE_BACK = "enable_predictive_back"
+        const val ENABLE_SWIPE_DISMISS = "enable_swipe_dismiss"
+        const val PAGER_GESTURE_MODE = "pager_gesture_mode"
         const val PAGE_SCALE = "page_scale"
         const val ENABLE_WEBUI_DEBUGGING = "enable_webui_debugging"
         const val ENABLE_WEBUI_CONSOLE = "enable_webui_console"
@@ -165,6 +167,13 @@ object Config : PreferenceConfig, DBConfig {
     var enableFloatingBottomBar by preference(Key.ENABLE_FLOATING_BOTTOM_BAR, false)
     private var enableFloatingBottomBarBlurPrefs by preference(Key.ENABLE_FLOATING_BOTTOM_BAR_BLUR, false)
     var enablePredictiveBack by preference(Key.ENABLE_PREDICTIVE_BACK, false)
+    /** 边缘横移返回上一页（miuix-nav 的 entry 级 swipeDismiss） */
+    var enableSwipeDismiss by preference(Key.ENABLE_SWIPE_DISMISS, true)
+    /**
+     * 主界面 HorizontalPager 的手势模式，存 [PagerInterceptionMode] 的 ordinal：
+     * 0 = Native，1 = CrossAxisInterceptor（默认），2 = TapToHalt
+     */
+    var pagerGestureMode by preference(Key.PAGER_GESTURE_MODE, 1)
     var pageScale by preference(Key.PAGE_SCALE, 1.0f)
     /** WebView DevTools remote debugging (chrome://inspect over USB) */
     var enableWebUiDebugging by preference(Key.ENABLE_WEBUI_DEBUGGING, false)

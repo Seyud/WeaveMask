@@ -5,10 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
-import androidx.compose.animation.core.EaseInOut
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.background
@@ -21,7 +18,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -52,8 +51,10 @@ import androidx.compose.ui.input.pointer.PointerEventTimeoutCancellationExceptio
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -75,8 +76,10 @@ import io.github.seyud.weave.ui.navigation3.Navigator
 import io.github.seyud.weave.ui.navigation3.Route
 import io.github.seyud.weave.ui.navigation3.rememberNavigator
 import io.github.seyud.weave.ui.theme.LocalEnableBlur
+import io.github.seyud.weave.ui.theme.LocalEnableSwipeDismiss
 import io.github.seyud.weave.ui.theme.LocalEnableFloatingBottomBar
 import io.github.seyud.weave.ui.theme.LocalEnableFloatingBottomBarBlur
+import io.github.seyud.weave.ui.theme.LocalPagerGestureMode
 import io.github.seyud.weave.ui.util.attachBarBlurBackdrop
 import io.github.seyud.weave.ui.util.barBlurContainerColor
 import io.github.seyud.weave.ui.util.defaultBarBlur
@@ -89,7 +92,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
-import kotlin.math.abs
 import io.github.seyud.weave.ui.flash.FlashScreen
 import io.github.seyud.weave.ui.flash.FlashRequest
 import io.github.seyud.weave.ui.flash.FlashViewModel
@@ -130,6 +132,13 @@ import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.nav.core.NavDisplay
 import top.yukonga.miuix.kmp.nav.core.NavDisplayEffects
 import top.yukonga.miuix.kmp.nav.core.rememberNavSystemCornerRadius
+import top.yukonga.miuix.kmp.nav.transition.NavSwipeDirection
+import top.yukonga.miuix.kmp.utils.PagerFlingTrackerConnection
+import top.yukonga.miuix.kmp.utils.PagerGestureNestedScrollConnection
+import top.yukonga.miuix.kmp.utils.PagerInterceptionMode
+import top.yukonga.miuix.kmp.utils.PagerNavigationSpringSpec
+import top.yukonga.miuix.kmp.utils.pagerGestureOverride
+import top.yukonga.miuix.kmp.utils.springAnimateToPage
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import io.github.seyud.weave.core.R as CoreR
 
@@ -171,21 +180,12 @@ class MainPagerState(
         selectedPage = targetIndex
         isNavigating = true
 
-        val distance = abs(targetIndex - pagerState.currentPage).coerceAtLeast(2)
-        val duration = 100 * distance + 100
-
         navJob = coroutineScope.launch {
             val myJob = coroutineContext.job
-            val layoutInfo = pagerState.layoutInfo
-            val pageSize = layoutInfo.pageSize + layoutInfo.pageSpacing
-            val currentDistanceInPages =
-                targetIndex - pagerState.currentPage - pagerState.currentPageOffsetFraction
-            val scrollPixels = currentDistanceInPages * pageSize
             try {
-                pagerState.animateScrollBy(
-                    value = scrollPixels,
-                    animationSpec = tween(easing = EaseInOut, durationMillis = duration)
-                )
+                // 滚动物理交给 miuix 共享的 PagerNavigationSpringSpec，
+                // 与底部导航栏、fling 吸附使用同一条弹簧曲线
+                pagerState.springAnimateToPage(targetIndex)
             } finally {
                 if (navJob == myJob) {
                     isNavigating = false
@@ -303,6 +303,25 @@ fun MainScreen(
         derivedStateOf { navigator.current() }
     }
 
+    // miuix-nav 的边缘横移返回。NavSwipeDirection 是物理方向、不随 layoutDirection 镜像，
+    // 所以 RTL 下要换成另一侧。
+    val enableSwipeDismiss = LocalEnableSwipeDismiss.current
+    val layoutDirection = LocalLayoutDirection.current
+    val swipeDismiss = when {
+        !enableSwipeDismiss -> NavSwipeDirection.None
+        layoutDirection == LayoutDirection.Rtl -> NavSwipeDirection.RightToLeft
+        else -> NavSwipeDirection.LeftToRight
+    }
+
+    // 会写盘 / 运行 root 脚本的路由：进行中把该 entry 的横移手势和返回键一起关掉，
+    // 避免一次误滑中断刷写、卸载或遗留 root shell。默认值与各屏的初始状态一致。
+    val flashRoute = currentRoute as? Route.Flash
+    var flashBackGestureEnabled by remember(flashRoute) { mutableStateOf(false) }
+    val actionRoute = currentRoute as? Route.Action
+    var actionBackGestureEnabled by remember(actionRoute) { mutableStateOf(false) }
+    val scriptRunRoute = currentRoute as? Route.ScriptRun
+    var scriptRunBackGestureEnabled by remember(scriptRunRoute) { mutableStateOf(true) }
+
     // 处理外部应用通过"打开方式"打开的 ZIP 文件
     var pendingExternalZip by remember { mutableStateOf<List<ModuleInstallTarget>?>(null) }
     val context = LocalContext.current
@@ -369,7 +388,8 @@ fun MainScreen(
                     // 转场时把进入页面裁到系统屏幕圆角，与平台观感一致
                     effects = NavDisplayEffects(cornerClipRadius = rememberNavSystemCornerRadius()),
                 ) {
-                    entry<Route.Main> {
+                    // 栈底路由：不参与横移返回，横向拖动留给主界面的 HorizontalPager
+                    entry<Route.Main>(swipeDismiss = NavSwipeDirection.None) {
                         MainTabScreen(
                             navigator = navigator,
                             homeViewModel = homeViewModel,
@@ -383,7 +403,7 @@ fun MainScreen(
                             snackbarHostState = snackbarHostState
                         )
                     }
-                    entry<Route.Install> {
+                    entry<Route.Install>(swipeDismiss = swipeDismiss) {
                         InstallScreen(
                             viewModel = installViewModel,
                             onNavigateBack = { navigator.pop() },
@@ -398,7 +418,9 @@ fun MainScreen(
                             }
                         )
                     }
-                    entry<Route.Flash> { key ->
+                    entry<Route.Flash>(
+                        swipeDismiss = if (flashBackGestureEnabled) swipeDismiss else NavSwipeDirection.None,
+                    ) { key ->
                         val uriArgs = key.uriStrings
                             .filter { it.isNotEmpty() }
                             .map { it.toUri() }
@@ -417,17 +439,20 @@ fun MainScreen(
                             action = key.action,
                             additionalData = uriArgs,
                             onNavigateBack = { navigator.pop() },
+                            onBackGestureEnabledChange = { enabled ->
+                                if (navigator.current() == key) flashBackGestureEnabled = enabled
+                            },
                             snackbarHostState = snackbarHostState
                         )
                     }
-                    entry<Route.Log> {
+                    entry<Route.Log>(swipeDismiss = swipeDismiss) {
                         LogScreen(
                             viewModel = logViewModel,
                             onNavigateBack = { navigator.pop() },
                             snackbarHostState = snackbarHostState
                         )
                     }
-                    entry<Route.ModuleRepoList> {
+                    entry<Route.ModuleRepoList>(swipeDismiss = swipeDismiss) {
                         ModuleRepoScreen(
                             viewModel = moduleRepoViewModel,
                             moduleViewModel = moduleViewModel,
@@ -437,7 +462,7 @@ fun MainScreen(
                             }
                         )
                     }
-                    entry<Route.ModuleRepoDetail> { key ->
+                    entry<Route.ModuleRepoDetail>(swipeDismiss = swipeDismiss) { key ->
                         ModuleRepoDetailScreen(
                             moduleId = key.moduleId,
                             moduleViewModel = moduleViewModel,
@@ -455,7 +480,9 @@ fun MainScreen(
                             }
                         )
                     }
-                    entry<Route.ScriptRun> { key ->
+                    entry<Route.ScriptRun>(
+                        swipeDismiss = if (scriptRunBackGestureEnabled) swipeDismiss else NavSwipeDirection.None,
+                    ) { key ->
                         // The ViewModel owns the extraction of the prepared script and releases it
                         // in onCleared, so it must be scoped to this navigation entry.
                         ScriptRunScreen(
@@ -464,25 +491,28 @@ fun MainScreen(
                             displayName = key.displayName,
                             expectedSize = key.expectedSize,
                             expectedSha256 = key.expectedSha256.takeIf { it.isNotEmpty() },
-                            onNavigateBack = { navigator.pop() }
+                            onNavigateBack = { navigator.pop() },
+                            onBackGestureEnabledChange = { enabled ->
+                                if (navigator.current() == key) scriptRunBackGestureEnabled = enabled
+                            },
                         )
                     }
-                    entry<Route.AppLanguage> {
+                    entry<Route.AppLanguage>(swipeDismiss = swipeDismiss) {
                         AppLanguageScreen(
                             onNavigateBack = { navigator.pop() }
                         )
                     }
-                    entry<Route.ColorPalette> {
+                    entry<Route.ColorPalette>(swipeDismiss = swipeDismiss) {
                         ColorPaletteScreen(
                             onNavigateBack = { navigator.pop() }
                         )
                     }
-                    entry<Route.Deny> {
+                    entry<Route.Deny>(swipeDismiss = swipeDismiss) {
                         DenyListScreen(
                             onNavigateBack = { navigator.pop() }
                         )
                     }
-                    entry<Route.About> {
+                    entry<Route.About>(swipeDismiss = swipeDismiss) {
                         AboutScreen(
                             onNavigateBack = { navigator.pop() },
                             onLinkPressed = { link ->
@@ -495,12 +525,17 @@ fun MainScreen(
                             }
                         )
                     }
-                    entry<Route.Action> { key ->
+                    entry<Route.Action>(
+                        swipeDismiss = if (actionBackGestureEnabled) swipeDismiss else NavSwipeDirection.None,
+                    ) { key ->
                         ActionScreen(
                             moduleId = key.moduleId,
                             moduleName = key.moduleName,
                             fromShortcut = key.fromShortcut,
-                            onNavigateBack = { navigator.pop() }
+                            onNavigateBack = { navigator.pop() },
+                            onBackGestureEnabledChange = { enabled ->
+                                if (navigator.current() == key) actionBackGestureEnabled = enabled
+                            },
                         )
                     }
                 }
@@ -582,6 +617,16 @@ private fun MainTabScreen(
     val enableBlur = LocalEnableBlur.current
     val enableFloatingBottomBar = LocalEnableFloatingBottomBar.current
     val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
+
+    // 主界面 Pager 手势模式：Native / CrossAxisInterceptor（列表滚动中也能切页）/ TapToHalt
+    val pagerGestureMode = LocalPagerGestureMode.current
+    val pagerMode = remember(pagerGestureMode) {
+        PagerInterceptionMode.entries.getOrElse(pagerGestureMode) {
+            PagerInterceptionMode.Native
+        }
+    }
+    val interceptPagerGestures = pagerMode == PagerInterceptionMode.CrossAxisInterceptor
+    val pagerFlingTracker = remember { PagerFlingTrackerConnection() }
 
     val surfaceColor = MiuixTheme.colorScheme.surface
     val blurBackdrop = rememberBarBlurBackdrop(enableBlur, surfaceColor)
@@ -799,8 +844,30 @@ private fun MainTabScreen(
             HorizontalPager(
                 state = pagerState,
                 beyondViewportPageCount = if (contentReady) destinations.size - 1 else 0,
-                userScrollEnabled = true,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pagerGestureOverride(
+                        pagerState = pagerState,
+                        mode = pagerMode,
+                        enabled = true,
+                        flingTracker = pagerFlingTracker,
+                    ),
+                // CrossAxisInterceptor 自己驱动横向拖动：pager 的原生滚动必须让位，
+                // 并把纵向滚动/速度留给页面内容，否则两套手势会互相打架
+                userScrollEnabled = !interceptPagerGestures,
+                pageNestedScrollConnection = if (interceptPagerGestures) {
+                    PagerGestureNestedScrollConnection
+                } else {
+                    PagerDefaults.pageNestedScrollConnection(
+                        state = pagerState,
+                        orientation = Orientation.Horizontal,
+                    )
+                },
+                // 与标签点击共用同一条弹簧曲线，滑动/点击切页手感一致
+                flingBehavior = PagerDefaults.flingBehavior(
+                    state = pagerState,
+                    snapAnimationSpec = PagerNavigationSpringSpec,
+                ),
             ) { page ->
                 val isCurrentPage = page == settledPage
                 when (page) {

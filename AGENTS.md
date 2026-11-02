@@ -98,6 +98,7 @@ Version config: `app/gradle.properties` (`magisk.versionCode`) and `config.prop`
 
 - `miuix-nav` (Miuix's navigation runtime) with a custom type-safe `Navigator` over a serializable `NavBackStack`; Miuix owns the transitions and predictive back, entry state/ViewModel scopes come from `NavDisplay` (replaces Fragment Navigation + SafeArgs)
 - Miuix component library (not standard Material3)
+- Edge-swipe back via miuix-nav's per-entry `swipeDismiss` (RTL-aware; auto-disabled while flashing / running a module action or one-shot script), plus a main-pager gesture mode setting (Default / Cross-axis / iOS-like over `PagerGestureUtils`, tab clicks and fling snaps share `PagerNavigationSpringSpec`)
 - Liquid Glass effects: `CombinedBackdrop`, `InnerShadow`, `Lens`, `Vibrancy`
 - 6 theme modes + Monet key colors
 - Dual home layouts: Classic and Weavsk, switchable in settings
