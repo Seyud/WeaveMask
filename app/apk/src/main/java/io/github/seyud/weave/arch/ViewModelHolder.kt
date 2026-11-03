@@ -10,7 +10,6 @@ import io.github.seyud.weave.core.Info
 import io.github.seyud.weave.core.di.ServiceLocator
 import io.github.seyud.weave.ui.MainViewModel
 import io.github.seyud.weave.ui.deny.DenyListViewModel
-import io.github.seyud.weave.ui.flash.FlashViewModel
 import io.github.seyud.weave.ui.home.HomeViewModel
 import io.github.seyud.weave.ui.install.InstallViewModel
 import io.github.seyud.weave.ui.log.LogViewModel
@@ -50,7 +49,6 @@ val VMFactory: ViewModelProvider.Factory = viewModelFactory {
     initializer { InstallViewModel(ServiceLocator.networkService, ServiceLocator.markwon) }
     initializer { SuRequestViewModel(ServiceLocator.policyDB, ServiceLocator.timeoutPrefs) }
     initializer { DenyListViewModel() }
-    initializer { FlashViewModel() }
     initializer { SettingsViewModel() }
 }
 

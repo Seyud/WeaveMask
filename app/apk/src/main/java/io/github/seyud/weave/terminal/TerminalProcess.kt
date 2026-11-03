@@ -1,0 +1,93 @@
+package io.github.seyud.weave.terminal
+
+import io.github.seyud.weave.core.AppContext
+import com.topjohnwu.superuser.Shell
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.io.File
+
+private val busyboxPath: String by lazy {
+    Shell.cmd("readlink /proc/self/exe").exec().out.firstOrNull()
+        ?: "/data/adb/magisk/busybox"
+}
+
+private val terminalScope = CoroutineScope(Dispatchers.Main.immediate)
+
+fun TerminalEmulator.appendOnMain(bytes: ByteArray, len: Int) {
+    terminalScope.launch {
+        append(bytes, len)
+        onScreenUpdate?.invoke()
+    }
+}
+
+fun TerminalEmulator.appendLineOnMain(line: String) {
+    terminalScope.launch {
+        val clear = if (inPlaceNewlines > 0) {
+            "\r\u001b[${inPlaceNewlines}A\u001b[J"
+        } else {
+            "\r\u001b[2K"
+        }
+        val text = if (line.startsWith('\r')) {
+            val content = line.substring(1)
+            inPlaceNewlines = content.count { it == '\n' }
+            "$clear${content.replace("\n", "\r\n")}"
+        } else {
+            inPlaceNewlines = 0
+            "$clear$line\r\n"
+        }
+        val bytes = text.toByteArray(Charsets.UTF_8)
+        append(bytes, bytes.size)
+        onScreenUpdate?.invoke()
+    }
+}
+
+/** Quote a string as a single shell word, so it is never interpreted by the shell. */
+fun String.shellQuoted() = "'" + replace("'", "'\\''") + "'"
+
+/**
+ * Run a command as root inside a PTY (via busybox script).
+ * Reads raw bytes from the process and feeds them to the terminal emulator.
+ * Must be called from a background thread. [columns] and [rows] should be read from the
+ * emulator on the main thread, after the terminal has been sized to its viewport.
+ * Returns true if the command exits with code 0.
+ */
+fun runSuCommand(emulator: TerminalEmulator, columns: Int, rows: Int, command: String): Boolean {
+    // busybox script always exits with 0, so have the command write its exit code to a file
+    val exitFile = File.createTempFile("exit", null, AppContext.cacheDir)
+    return try {
+        // Run the command in busybox ash with standalone mode, like every other script in the
+        // context of Magisk. busybox script itself starts $SHELL, which su sets to /system/bin/sh.
+        // ASH_STANDALONE has to be set before ash starts: it is only read on startup.
+        val shellCmd = "export TERM=xterm-256color; " +
+            "stty cols $columns rows $rows 2>/dev/null; " +
+            "($command); echo \$? > ${exitFile.path.shellQuoted()}"
+        val wrappedCmd = "ASH_STANDALONE=1 $busyboxPath sh -c ${shellCmd.shellQuoted()}"
+
+        val process = ProcessBuilder(
+            "su", "-c",
+            "$busyboxPath script -q -c ${wrappedCmd.shellQuoted()} /dev/null"
+        ).redirectErrorStream(true).start()
+
+        process.outputStream.close()
+
+        val buffer = ByteArray(4096)
+        process.inputStream.use { input ->
+            while (true) {
+                val n = input.read(buffer)
+                if (n == -1) break
+                emulator.appendOnMain(buffer.copyOf(n), n)
+            }
+        }
+
+        process.waitFor()
+        exitFile.readText().trim() == "0"
+    } catch (e: Exception) {
+        Timber.e(e, "runSuCommand failed")
+        emulator.appendLineOnMain("! Error: ${e.message}")
+        false
+    } finally {
+        exitFile.delete()
+    }
+}

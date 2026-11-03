@@ -47,10 +47,10 @@ private sealed interface WebViewPreparationResult {
 @SuppressLint("SetJavaScriptEnabled")
 internal suspend fun prepareWebView(
     activity: Activity,
-    moduleId: String,
+    dirName: String,
     webUIState: WebUIState,
 ) {
-    when (val result = prepareWebViewEnvironment(activity, moduleId)) {
+    when (val result = prepareWebViewEnvironment(activity, dirName)) {
         is WebViewPreparationResult.Failed -> {
             webUIState.uiEvent = WebUIEvent.Error(result.message)
         }
@@ -69,10 +69,10 @@ internal suspend fun prepareWebView(
 
 private suspend fun prepareWebViewEnvironment(
     activity: Activity,
-    moduleId: String,
+    dirName: String,
 ): WebViewPreparationResult = withContext(Dispatchers.IO) {
-    val moduleDir = "${Const.MODULE_PATH}/$moduleId"
-    val moduleName = activity.intent.getStringExtra("name") ?: moduleId
+    val moduleDir = "${Const.MODULE_PATH}/$dirName"
+    val moduleName = activity.intent.getStringExtra(WebUIActivity.EXTRA_NAME) ?: dirName
 
     if (!RootUtils.ensureServiceConnected()) {
         return@withContext WebViewPreparationResult.Failed("Failed to connect to root file service")
@@ -80,15 +80,16 @@ private suspend fun prepareWebViewEnvironment(
 
     val fs = RootUtils.fs
     if (!fs.getFile("$moduleDir/webroot").isDirectory) {
-        return@withContext WebViewPreparationResult.Failed("WebUI assets not found for module $moduleId")
+        return@withContext WebViewPreparationResult.Failed("WebUI assets not found for module $dirName")
     }
 
     // Same availability rules as KernelSU manager: no WebUI for missing, disabled or
     // pending-update / pending-removal modules.
-    val module = runCatching { LocalModule.installed().firstOrNull { it.id == moduleId } }.getOrNull()
+    // 按目录名找模块：目录名与 module.prop 的 id 可能不同，id 还可能重复
+    val module = runCatching { LocalModule.installed().firstOrNull { it.base.name == dirName } }.getOrNull()
     when {
         module == null ->
-            return@withContext WebViewPreparationResult.Failed("No such module: $moduleId")
+            return@withContext WebViewPreparationResult.Failed("No such module: $dirName")
 
         !module.hasWebUi ->
             return@withContext WebViewPreparationResult.Failed("Module has no WebUI: ${module.name}")

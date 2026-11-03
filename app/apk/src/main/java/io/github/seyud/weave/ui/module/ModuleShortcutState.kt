@@ -23,6 +23,7 @@ enum class ShortcutType {
 @Stable
 class ModuleShortcutState internal constructor(
     moduleId: String?,
+    moduleDir: String?,
     name: String,
     iconUri: String?,
     selectedTypeName: String?,
@@ -32,6 +33,10 @@ class ModuleShortcutState internal constructor(
     defaultWebUiIconUri: String?,
 ) {
     var moduleId by mutableStateOf(moduleId)
+        private set
+
+    /** 模块目录名：action 快捷方式按它定位模块（id 可能重复/与目录名不同）。 */
+    var moduleDir by mutableStateOf(moduleDir)
         private set
 
     var name by mutableStateOf(name)
@@ -75,6 +80,7 @@ class ModuleShortcutState internal constructor(
 
     fun bindModule(module: ModuleInfo) {
         moduleId = module.id
+        moduleDir = module.dirName
         name = module.name
         iconUri = null
         selectedType = null
@@ -115,6 +121,7 @@ class ModuleShortcutState internal constructor(
         val created = createModuleShortcut(
             context = context,
             moduleId = currentModuleId,
+            moduleDir = moduleDir ?: currentModuleId,
             name = name,
             iconUri = iconUri,
             type = type,
@@ -148,6 +155,7 @@ class ModuleShortcutState internal constructor(
             save = {
                 listOf(
                     it.moduleId,
+                    it.moduleDir,
                     it.name,
                     it.iconUri,
                     it.selectedType?.name,
@@ -160,13 +168,14 @@ class ModuleShortcutState internal constructor(
             restore = {
                 ModuleShortcutState(
                     moduleId = it[0] as String?,
-                    name = it[1] as String,
-                    iconUri = it[2] as String?,
-                    selectedTypeName = it[3] as String?,
-                    supportsActionShortcut = it[4] as Boolean,
-                    supportsWebUiShortcut = it[5] as Boolean,
-                    defaultActionIconUri = it[6] as String?,
-                    defaultWebUiIconUri = it[7] as String?,
+                    moduleDir = it[1] as String?,
+                    name = it[2] as String,
+                    iconUri = it[3] as String?,
+                    selectedTypeName = it[4] as String?,
+                    supportsActionShortcut = it[5] as Boolean,
+                    supportsWebUiShortcut = it[6] as Boolean,
+                    defaultActionIconUri = it[7] as String?,
+                    defaultWebUiIconUri = it[8] as String?,
                 )
             }
         )
@@ -180,6 +189,7 @@ fun rememberModuleShortcutState(
     val state = rememberSaveable(saver = ModuleShortcutState.Saver) {
         ModuleShortcutState(
             moduleId = null,
+            moduleDir = null,
             name = "",
             iconUri = null,
             selectedTypeName = null,

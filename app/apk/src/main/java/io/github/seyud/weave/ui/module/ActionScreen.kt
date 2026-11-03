@@ -7,19 +7,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -30,23 +19,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import io.github.seyud.weave.core.ktx.toast
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.seyud.weave.core.ktx.timeFormatStandard
+import io.github.seyud.weave.core.ktx.toast
 import io.github.seyud.weave.core.ktx.toTime
 import io.github.seyud.weave.core.utils.MediaStoreUtils
 import io.github.seyud.weave.core.utils.MediaStoreUtils.outputStream
-import io.github.seyud.weave.ui.component.AutoScrollToBottom
+import io.github.seyud.weave.ui.terminal.TerminalScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import top.yukonga.miuix.kmp.basic.Button
-import top.yukonga.miuix.kmp.basic.CircularProgressIndicator
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Scaffold
@@ -55,7 +44,6 @@ import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.extended.Download
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 import io.github.seyud.weave.core.R as CoreR
 
 /**
@@ -71,7 +59,10 @@ enum class ActionState {
  * 模块操作页面（纯 Compose 实现）
  * 替代原有的 ActionFragment，完全迁移到 Compose 架构
  *
- * @param moduleId 模块 ID
+ * 输出走终端视图（[TerminalScreen]）：action.sh 跑在 PTY 里，所以 ANSI 颜色、`\r` 覆盖写、
+ * `stty` 与交互输入的表现和上游 Magisk 一致，而不是逐行文本列表。
+ *
+ * @param moduleId 模块目录名（Route.Action 里沿用的字段名）
  * @param moduleName 模块名称
  * @param onNavigateBack 返回回调
  * @param modifier Modifier
@@ -89,12 +80,12 @@ fun ActionScreen(
     val context = LocalContext.current
     val activity = context as? android.app.Activity
     val scope = rememberCoroutineScope()
-    val listState = rememberLazyListState()
 
-    // 状态管理：执行状态与输出收敛在 ActionViewModel（旋转屏幕/重进页面不丢失）
-    val viewModel: ActionViewModel = viewModel()
+    // 状态与终端收敛在 ActionViewModel（旋转屏幕/重进页面不丢失输出，脚本也不会重跑）
+    val viewModel: ActionViewModel = viewModel(
+        factory = viewModelFactory { initializer { ActionViewModel(createSavedStateHandle()) } }
+    )
     val actionState by viewModel.actionState.collectAsStateWithLifecycle()
-    val consoleLines by viewModel.console.collectAsStateWithLifecycle()
     val exitAction = remember(activity, fromShortcut, onNavigateBack) {
         {
             if (fromShortcut && activity != null) {
@@ -103,6 +94,15 @@ fun ActionScreen(
                 onNavigateBack()
             }
         }
+    }
+
+    // 进程在一次 action 执行中被杀过：脚本和输出都已经没了，绝不能再跑一遍，
+    // 直接退出这个页面（上游同样处理）。
+    if (viewModel.isInterrupted) {
+        LaunchedEffect(Unit) {
+            exitAction()
+        }
+        return
     }
 
     // 锁定屏幕方向
@@ -117,7 +117,7 @@ fun ActionScreen(
         }
     }
 
-    // 执行操作命令（幂等：同一模块运行中重复触发不会重复执行）
+    // 执行操作命令（startRunAction 幂等：同一页面生命周期内只跑一次）
     // 完成提示通过订阅状态流转发出，避免重进页面时回放上一次的成功提示
     val doneActionText = stringResource(CoreR.string.done_action, moduleName)
     LaunchedEffect(moduleId) {
@@ -128,9 +128,6 @@ fun ActionScreen(
             }
         }
     }
-
-    // 自动滚动到底部（新的输出行始终可见；用户上滑回看历史时暂停跟随）
-    AutoScrollToBottom(listState = listState, itemCount = consoleLines.size)
 
     // 处理返回键
     val isRunning = actionState == ActionState.RUNNING
@@ -150,7 +147,7 @@ fun ActionScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = exitAction,
-                        enabled = actionState != ActionState.RUNNING
+                        enabled = !isRunning
                     ) {
                         Icon(
                             imageVector = MiuixIcons.Back,
@@ -161,7 +158,7 @@ fun ActionScreen(
                 actions = {
                     // 保存日志按钮
                     AnimatedVisibility(
-                        visible = actionState != ActionState.RUNNING,
+                        visible = !isRunning,
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
@@ -208,41 +205,16 @@ fun ActionScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // 控制台输出列表
-            SelectionContainer {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    items(consoleLines) { item ->
-                        Text(
-                            text = item,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 12.sp,
-                            color = MiuixTheme.colorScheme.onSurface,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-            }
-
-            // 运行中指示器
-            if (actionState == ActionState.RUNNING) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        size = 48.dp,
-                        strokeWidth = 3.dp,
-                    )
-                }
-            }
+            // 终端视图：原始输出（含颜色 / 覆盖写），滚动与自动跟随由终端自己处理
+            TerminalScreen(
+                emulator = viewModel.emulator,
+                modifier = Modifier.fillMaxSize(),
+                onResized = viewModel::onTerminalResized,
+            )
 
             // 关闭按钮（操作完成后显示）
             AnimatedVisibility(
-                visible = actionState != ActionState.RUNNING,
+                visible = !isRunning,
                 modifier = Modifier.align(Alignment.BottomEnd),
                 enter = fadeIn(),
                 exit = fadeOut()

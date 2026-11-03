@@ -67,7 +67,6 @@ import io.github.seyud.weave.ui.dialog.WeaveDialog
 import io.github.seyud.weave.ui.dialog.WeaveDialogHost
 import io.github.seyud.weave.ui.dialog.WeaveDialogHostContent
 import io.github.seyud.weave.ui.flash.FlashRequest
-import io.github.seyud.weave.ui.flash.FlashViewModel
 import io.github.seyud.weave.ui.home.HomeViewModel
 import io.github.seyud.weave.ui.install.InstallViewModel
 import io.github.seyud.weave.ui.log.LogViewModel
@@ -145,7 +144,6 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
     private val logViewModel: LogViewModel by viewModels { VMFactory }
 
     /** 刷写 ViewModel */
-    private val flashViewModel: FlashViewModel by viewModels { VMFactory }
 
     /** 安装 ViewModel */
     private val installViewModel: InstallViewModel by viewModels { VMFactory }
@@ -332,7 +330,6 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
                     Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
                         MainScreen(
                             homeViewModel = homeViewModel,
-                            flashViewModel = flashViewModel,
                             moduleViewModel = moduleViewModel,
                             moduleRepoViewModel = moduleRepoViewModel,
                             superuserViewModel = superuserViewModel,
@@ -505,7 +502,6 @@ class MainActivity : ComponentActivity(), IActivityExtension, ViewModelHolder, W
         superuserViewModel.uiEvents.observe(this, this::onUiEventDispatched)
         logViewModel.uiEvents.observe(this, this::onUiEventDispatched)
         installViewModel.uiEvents.observe(this, this::onUiEventDispatched)
-        flashViewModel.uiEvents.observe(this, this::onUiEventDispatched)
         settingsViewModel.uiEvents.observe(this, this::onUiEventDispatched)
         Info.isConnected.observe(this) { connected ->
             viewModel.onNetworkChanged(connected)

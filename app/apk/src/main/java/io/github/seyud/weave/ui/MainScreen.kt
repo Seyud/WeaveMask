@@ -5,6 +5,10 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -278,7 +282,6 @@ private fun Modifier.detectTabLongPress(
 @Composable
 fun MainScreen(
     homeViewModel: HomeViewModel,
-    flashViewModel: FlashViewModel,
     moduleViewModel: ModuleViewModel,
     moduleRepoViewModel: ModuleRepoViewModel,
     superuserViewModel: SuperuserViewModel,
@@ -421,6 +424,21 @@ fun MainScreen(
                     entry<Route.Flash>(
                         swipeDismiss = if (flashBackGestureEnabled) swipeDismiss else NavSwipeDirection.None,
                     ) { key ->
+                        // 每次刷写都是独立的路由条目，VM 与 SavedStateHandle 都归属该条目，
+                        // 这样"进程被杀后恢复"才能和"新开一次刷写"区分开（对齐上游）。
+                        val flashViewModel: FlashViewModel = viewModel(
+                            factory = viewModelFactory {
+                                initializer { FlashViewModel(createSavedStateHandle()) }
+                            }
+                        )
+                        if (flashViewModel.isInterrupted) {
+                            // 上一次刷写随进程一起没了，重跑不安全，也没有输出可看：直接退出
+                            LaunchedEffect(key) {
+                                if (navigator.current() == key) navigator.pop()
+                            }
+                            return@entry
+                        }
+
                         val uriArgs = key.uriStrings
                             .filter { it.isNotEmpty() }
                             .map { it.toUri() }
@@ -583,15 +601,18 @@ private fun ShortcutIntentHandler(
             return@LaunchedEffect
         }
 
-        val moduleId = intent.getStringExtra(ModuleShortcutContract.EXTRA_MODULE_ID)
+        // action 按模块目录名定位；旧快捷方式没有 EXTRA_MODULE_DIR 时回退到 id
+        val moduleDir = intent.getStringExtra(ModuleShortcutContract.EXTRA_MODULE_DIR)
+            ?: intent.getStringExtra(ModuleShortcutContract.EXTRA_MODULE_ID)
             ?: return@LaunchedEffect
         val moduleName = intent.getStringExtra(ModuleShortcutContract.EXTRA_MODULE_NAME).orEmpty()
 
         intent.removeExtra(ModuleShortcutContract.EXTRA_SHORTCUT_TYPE)
         intent.removeExtra(ModuleShortcutContract.EXTRA_MODULE_ID)
+        intent.removeExtra(ModuleShortcutContract.EXTRA_MODULE_DIR)
         intent.removeExtra(ModuleShortcutContract.EXTRA_MODULE_NAME)
 
-        navigator.push(Route.Action(moduleId, moduleName, fromShortcut = true))
+        navigator.push(Route.Action(moduleDir, moduleName, fromShortcut = true))
     }
 }
 
@@ -904,14 +925,14 @@ private fun MainTabScreen(
                         onOpenRepo = {
                             navigator.push(Route.ModuleRepoList)
                         },
-                        onRunAction = { id, name ->
-                            navigator.push(Route.Action(id, name))
+                        onRunAction = { dir, name ->
+                            navigator.push(Route.Action(dir, name))
                         },
-                        onOpenWebUi = { id, name ->
+                        onOpenWebUi = { dir, name ->
                             context.startActivity(
                                 context.intent<io.github.seyud.weave.ui.webui.WebUIActivity>()
-                                    .putExtra("id", id)
-                                    .putExtra("name", name)
+                                    .putExtra(io.github.seyud.weave.ui.webui.WebUIActivity.EXTRA_DIR, dir)
+                                    .putExtra(io.github.seyud.weave.ui.webui.WebUIActivity.EXTRA_NAME, name)
                             )
                         },
                         snackbarHostState = snackbarHostState

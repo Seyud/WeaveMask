@@ -26,6 +26,15 @@ import top.yukonga.miuix.kmp.basic.InfiniteProgressIndicator
 
 @SuppressLint("SetJavaScriptEnabled")
 class WebUIActivity : ComponentActivity() {
+
+    companion object {
+        /** 模块目录名：WebUI 资源一律按目录名定位（与 action 一致，见上游 d582d8145）。 */
+        const val EXTRA_DIR = "dir"
+
+        /** 旧快捷方式/旧版本只带 id，读取时兜底用。 */
+        const val EXTRA_MODULE_ID = "id"
+        const val EXTRA_NAME = "name"
+    }
     fun enableEdgeToEdge(enable: Boolean) {
         runOnUiThread {
             if (enable) {
@@ -69,7 +78,11 @@ class WebUIActivity : ComponentActivity() {
 
 @Composable
 private fun MainContent(activity: ComponentActivity, onFinish: () -> Unit) {
-    val moduleId = remember { activity.intent.getStringExtra("id") }
+    // 目录名优先；旧的 intent 只有 "id" 时兜底（历史上两者当作同一个东西用）
+    val moduleDir = remember {
+        activity.intent.getStringExtra(WebUIActivity.EXTRA_DIR)
+            ?: activity.intent.getStringExtra(WebUIActivity.EXTRA_MODULE_ID)
+    }
     val webUIState = remember { WebUIState() }
 
     LaunchedEffect(Unit) {
@@ -79,12 +92,12 @@ private fun MainContent(activity: ComponentActivity, onFinish: () -> Unit) {
         }
     }
 
-    LaunchedEffect(moduleId) {
-        if (moduleId == null) {
+    LaunchedEffect(moduleDir) {
+        if (moduleDir == null) {
             onFinish()
             return@LaunchedEffect
         }
-        prepareWebView(activity, moduleId, webUIState)
+        prepareWebView(activity, moduleDir, webUIState)
     }
 
     DisposableEffect(Unit) {

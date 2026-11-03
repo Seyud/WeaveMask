@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import io.github.seyud.weave.arch.BaseViewModel
@@ -22,7 +23,11 @@ import io.github.seyud.weave.core.tasks.MagiskInstaller
 import io.github.seyud.weave.core.utils.MediaStoreUtils
 import io.github.seyud.weave.core.utils.MediaStoreUtils.displayName
 import io.github.seyud.weave.core.utils.MediaStoreUtils.outputStream
+import io.github.seyud.weave.terminal.TerminalEmulator
+import io.github.seyud.weave.terminal.appendLineOnMain
+import io.github.seyud.weave.terminal.runSuCommand
 import com.topjohnwu.superuser.CallbackList
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,24 +35,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class FlashViewModel : BaseViewModel() {
-
-    companion object {
-        private const val MODULE_INSTALL_BANNER = """
-            __        __                    __  __           _
-            \ \      / /__  __ ___   _____ |  \/  | __ _ ___| | __
-             \ \ /\ / / _ \/ _` \ \ / / _ \| |\/| |/ _` / __| |/ /
-              \ V  V /  __/ (_| |\ V /  __/| |  | | (_| \__ \   <
-               \_/\_/ \___|\__,_| \_/ \___||_|  |_|\__,_|___/_|\_\
-        """
-
-        internal val moduleInstallBannerLines: List<String> =
-            MODULE_INSTALL_BANNER.trimIndent().lines()
-    }
+class FlashViewModel(private val savedState: SavedStateHandle) : BaseViewModel() {
 
     enum class State {
         FLASHING, SUCCESS, FAILED
     }
+
+    /**
+     * 进程被杀之前这次刷写已经启动过：安装器和终端输出只活在内存里，已经没了，
+     * 重跑一次并不安全（可能半写完 modules_update、已 patch 过 boot），所以页面直接退出。
+     * 与上游 FlashViewModel 同一语义。
+     */
+    val isInterrupted = savedState.get<Boolean>(KEY_STARTED) == true
 
     private val _state = MutableLiveData(State.FLASHING)
     val state: LiveData<State> get() = _state
@@ -58,20 +57,37 @@ class FlashViewModel : BaseViewModel() {
         private set
 
     private lateinit var request: FlashRequest
-    private val _consoleLines = MutableStateFlow<List<String>>(emptyList())
-    val consoleLines: StateFlow<List<String>> = _consoleLines.asStateFlow()
+
+    /** 当前刷写类型；保存日志时决定是否补回字符画。 */
+    private var flashAction: String = ""
+
+    /** 终端屏幕；由 [io.github.seyud.weave.ui.terminal.TerminalScreen] 渲染。 */
+    val emulator = TerminalEmulator(
+        columns = 256,
+        rows = 40,
+        cellWidthPixels = 0,
+        cellHeightPixels = 0,
+        transcriptRows = null,
+    )
+
+    private val terminalReady = CompletableDeferred<Unit>()
+
+    /** 终端完成一次尺寸测量后回调：安装器要按真实宽高启动。 */
+    fun onTerminalResized() {
+        terminalReady.complete(Unit)
+    }
 
     private val console: MutableList<String>
         get() = logItems
 
     private val logItems = mutableListOf<String>().synchronized()
+
+    /** 走 [MagiskInstaller] 的分支没有 PTY，逐行写进终端。 */
     private val outItems = object : CallbackList<String>() {
         override fun onAddElement(e: String?) {
             e ?: return
             logItems.add(e)
-            viewModelScope.launch {
-                _consoleLines.value = _consoleLines.value + e
-            }
+            emulator.appendLineOnMain(e)
         }
     }
 
@@ -89,27 +105,24 @@ class FlashViewModel : BaseViewModel() {
 
         // 重新初始化参数和状态
         request = FlashRequest(action = action, dataUris = uris)
+        flashAction = action
         _state.value = State.FLASHING
         showReboot = Info.isRooted
         synchronized(logItems) {
             logItems.clear()
         }
-        _consoleLines.value = emptyList()
     }
 
     private fun appendVisibleConsoleLine(line: String) {
         logItems.add(line)
-        _consoleLines.value = _consoleLines.value + line
-    }
-
-    private fun appendModuleInstallBanner() {
-        moduleInstallBannerLines.forEach(::appendVisibleConsoleLine)
-        appendVisibleConsoleLine("")
+        emulator.appendLineOnMain(line)
     }
 
     fun startFlashing() {
         if (isFlashingStarted) return
         isFlashingStarted = true
+        // 先落标记再干活：进程随时可能没，恢复后靠它判断"已经跑过，别重跑"
+        savedState[KEY_STARTED] = true
         val (action, uris) = request
 
         viewModelScope.launch {
@@ -120,7 +133,7 @@ class FlashViewModel : BaseViewModel() {
                             console.add("Error: No file selected")
                             false
                         } else {
-                            appendModuleInstallBanner()
+                            appendVisibleConsoleLine("")
                             flashSelectedModules(uris)
                         }
                     }
@@ -173,12 +186,26 @@ class FlashViewModel : BaseViewModel() {
     }
 
     private suspend fun flashSelectedModules(uris: List<android.net.Uri>): Boolean {
+        // 等终端按视口尺寸 resize 过再启动，安装器才能拿到真实列宽
+        terminalReady.await()
+        val columns = emulator.mColumns
+        val rows = emulator.mRows
         uris.forEachIndexed { index, uri ->
             if (uris.size > 1) {
                 appendVisibleConsoleLine("")
                 appendVisibleConsoleLine("==== Module ${index + 1}/${uris.size}: ${uri.displayName} ====")
             }
-            if (!FlashZip(uri, outItems, logItems).exec()) {
+            // 准备阶段（拷贝 zip、准备 update-binary）产生的行先攒着，在执行安装器前
+            // 一次性回放到终端，保证顺序正确；安装器本身跑在 PTY 里（busybox script）。
+            val pending = mutableListOf<String>()
+            val ptyRunner: suspend (String) -> Boolean = { command ->
+                pending.forEach(emulator::appendLineOnMain)
+                pending.clear()
+                withContext(Dispatchers.IO) { runSuCommand(emulator, columns, rows, command) }
+            }
+            val success = FlashZip(uri, pending, logItems, ptyRunner).exec()
+            pending.forEach(emulator::appendLineOnMain)
+            if (!success) {
                 return false
             }
         }
@@ -198,12 +225,16 @@ class FlashViewModel : BaseViewModel() {
                     )
                     val file = MediaStoreUtils.getFile(name)
                     file.uri.outputStream().bufferedWriter().use { writer ->
-                        synchronized(logItems) {
-                            logItems.forEach {
+                        // 字符画现在由界面绘制（见 ModuleInstallBanner），文本日志里补回去
+                        if (flashAction == Const.Value.FLASH_ZIP && moduleInstallBannerLines.isNotEmpty()) {
+                            moduleInstallBannerLines.forEach {
                                 writer.write(it)
                                 writer.newLine()
                             }
+                            writer.newLine()
                         }
+                        // 终端 transcript 同时覆盖 PTY（安装器）与逐行（MagiskInstaller）两条路径
+                        writer.write(emulator.screen.transcriptText)
                     }
                     file.toString()
                 }
@@ -220,4 +251,9 @@ class FlashViewModel : BaseViewModel() {
     }
 
     fun restartPressed() = reboot()
+
+    private companion object {
+        /** 标记这次刷写已经启动过（SavedStateHandle 会写进该路由条目的 saved state）。 */
+        const val KEY_STARTED = "started"
+    }
 }

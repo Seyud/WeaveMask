@@ -1,80 +1,85 @@
 package io.github.seyud.weave.ui.module
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.topjohnwu.superuser.CallbackList
-import com.topjohnwu.superuser.Shell
 import io.github.seyud.weave.arch.BaseViewModel
+import io.github.seyud.weave.core.Const
 import io.github.seyud.weave.core.ktx.shellQuoted
+import io.github.seyud.weave.terminal.TerminalEmulator
+import io.github.seyud.weave.terminal.runSuCommand
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import timber.log.Timber
-import java.io.IOException
-import java.util.Collections
 
 /**
  * 模块 action 执行的持有者（对齐上游 apk-ng 的架构方向：shell 操作与执行状态收敛到 ViewModel）。
  *
- * 相比原先把状态和 shell 调用写在 Composable 里的写法，旋转屏幕 / 进程重建 / 页面重进时
- * 不会丢失正在进行的执行结果；同一模块运行中重复触发为幂等 no-op，避免脚本被重复执行。
+ * 脚本跑在 PTY 里（[runSuCommand] → busybox `script`），终端状态也挂在 ViewModel 上，
+ * 所以旋转屏幕 / 重进页面都不会丢输出，脚本也能拿到真实的 `isatty` 与终端宽高。
  */
-class ActionViewModel : BaseViewModel() {
+class ActionViewModel(private val savedState: SavedStateHandle) : BaseViewModel() {
+
+    /**
+     * 进程被杀之前 action 已经启动过：脚本与终端输出都只存在内存里，已经没了，
+     * 绝不能重跑一次（上游 ActionViewModel 同样语义），页面直接退出。
+     */
+    val isInterrupted = savedState.get<Boolean>(KEY_STARTED) == true
 
     private val _actionState = MutableStateFlow(ActionState.RUNNING)
     val actionState: StateFlow<ActionState> = _actionState.asStateFlow()
 
-    /** 控制台展示内容（仅 stdout）。 */
-    private val _console = MutableStateFlow<List<String>>(emptyList())
-    val console: StateFlow<List<String>> = _console.asStateFlow()
+    /** 终端屏幕；由 [io.github.seyud.weave.ui.terminal.TerminalScreen] 渲染。 */
+    val emulator = TerminalEmulator(
+        columns = 256,
+        rows = 40,
+        cellWidthPixels = 0,
+        cellHeightPixels = 0,
+        transcriptRows = null,
+    )
 
-    /** 导出用完整日志（stdout + stderr），与控制台显示解耦。 */
-    private val logItems = Collections.synchronizedList(mutableListOf<String>())
+    private val terminalReady = CompletableDeferred<Unit>()
 
-    private var runningModuleId: String? = null
+    /** 终端完成一次尺寸测量后回调：命令要按真实宽高启动，`stty`/折行才对。 */
+    fun onTerminalResized() {
+        terminalReady.complete(Unit)
+    }
 
     /**
-     * 启动模块 action。同一模块仍在运行时直接返回（保持既有输出流），
-     * 其余情况清空旧状态后重新执行。
+     * 启动模块 action。同一页面生命周期内只执行一次（旋转 / 重进不会重跑脚本）。
+     *
+     * 命令与上游一致：先 chdir 到模块目录，再用 `sh` 执行 `action.sh`；外层 PTY 已用
+     * `ASH_STANDALONE=1` 的 busybox ash 包好，因此脚本里的 `busybox`、颜色、`stty`、
+     * 交互式输入都是 Magisk 原生环境的行为。
+     *
+     * @param dirName 模块目录名，即 `/data/adb/modules/<dirName>`。目录名与 module.prop 的
+     *   id 可能不同（上游 d582d8145），定位一律用目录名。
      */
-    fun startRunAction(moduleDir: String) {
-        if (runningModuleId == moduleDir && _actionState.value == ActionState.RUNNING) return
-        runningModuleId = moduleDir
-        _console.value = emptyList()
-        synchronized(logItems) { logItems.clear() }
-        _actionState.value = ActionState.RUNNING
-
-        val outItems = object : CallbackList<String>() {
-            override fun onAddElement(e: String?) {
-                e ?: return
-                _console.update { it + e }
-                logItems.add(e)
-            }
-        }
-
+    fun startRunAction(dirName: String) {
+        if (savedState.get<Boolean>(KEY_STARTED) == true) return
+        savedState[KEY_STARTED] = true
+        val dir = "${Const.MODULE_PATH}/$dirName"
         viewModelScope.launch {
-            try {
-                val success = withContext(Dispatchers.IO) {
-                    // Run in BusyBox ash with standalone mode, like every other script in the
-                    // context of Magisk; the manager shell itself is /system/bin/sh.
-                    val cmd = "run_action ${moduleDir.shellQuoted()}"
-                    Shell.cmd(
-                        "ASH_STANDALONE=1 \$(magisk --path)/.magisk/busybox/busybox sh -c ${cmd.shellQuoted()}"
-                    )
-                        .to(outItems, logItems)
-                        .exec().isSuccess
-                }
-                _actionState.value = if (success) ActionState.SUCCESS else ActionState.FAILED
-            } catch (e: IOException) {
-                Timber.e(e)
-                _actionState.value = ActionState.FAILED
+            // 等终端按视口尺寸 resize 过再启动，否则列宽/高度还是默认值
+            terminalReady.await()
+            val columns = emulator.mColumns
+            val rows = emulator.mRows
+            val success = withContext(Dispatchers.IO) {
+                // 与上游逐字一致：PTY 外层已是 ASH_STANDALONE=1 的 busybox ash，
+                // standalone shell 会把 sh / 各 applet 直接拦截成 busybox，无需改 PATH。
+                runSuCommand(emulator, columns, rows, "cd ${dir.shellQuoted()} && sh ./action.sh")
             }
+            _actionState.value = if (success) ActionState.SUCCESS else ActionState.FAILED
         }
     }
 
-    /** 返回导出用完整日志快照。 */
-    fun copyLog(): List<String> = synchronized(logItems) { logItems.toList() }
+    /** 导出用日志：终端 transcript 全文（stdout + stderr 合并）。 */
+    fun copyLog(): List<String> = emulator.screen.transcriptText.lines()
+
+    companion object {
+        private const val KEY_STARTED = "started"
+    }
 }

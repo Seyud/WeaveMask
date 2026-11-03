@@ -189,12 +189,17 @@ class WebViewInterface(private val state: WebUIState) {
     fun moduleInfo(): String {
         val currentModuleInfo = JSONObject()
         currentModuleInfo.put("moduleDir", modDir)
-        val moduleId = File(modDir).name
-        currentModuleInfo.put("id", moduleId)
+        val dirName = File(modDir).name
 
         val module = runCatching {
-            runBlocking { LocalModule.installed().firstOrNull { it.id == moduleId } }
-        }.getOrNull() ?: return currentModuleInfo.toString()
+            runBlocking { LocalModule.installed().firstOrNull { it.base.name == dirName } }
+        }.getOrNull() ?: run {
+            currentModuleInfo.put("id", dirName)
+            return currentModuleInfo.toString()
+        }
+
+        // id 用 module.prop 里的值（目录名与它可能不同）
+        currentModuleInfo.put("id", module.id)
 
         currentModuleInfo.put("name", module.name)
         currentModuleInfo.put("version", module.version)

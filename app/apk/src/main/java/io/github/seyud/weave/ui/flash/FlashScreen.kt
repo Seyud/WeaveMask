@@ -2,8 +2,6 @@ package io.github.seyud.weave.ui.flash
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,10 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.runtime.Composable
@@ -43,10 +37,8 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Observer
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import io.github.seyud.weave.core.Const
 import io.github.seyud.weave.core.R as CoreR
 import top.yukonga.miuix.kmp.basic.Button
@@ -61,7 +53,9 @@ import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
 import io.github.seyud.weave.arch.BaseViewModel.BaseEvent
-import io.github.seyud.weave.ui.component.AutoScrollToBottom
+import io.github.seyud.weave.arch.UiEvent
+import io.github.seyud.weave.ui.MainActivity
+import io.github.seyud.weave.ui.terminal.TerminalScreen
 import io.github.seyud.weave.ui.component.ObserveAsEvents
 import io.github.seyud.weave.ui.component.showSnackbarEvent
 import top.yukonga.miuix.kmp.icon.extended.Refresh
@@ -85,10 +79,7 @@ fun FlashScreen(
     val resources = LocalResources.current
     val lifecycleOwner = LocalLifecycleOwner.current
     var state by remember { mutableStateOf(viewModel.state.value ?: FlashViewModel.State.FLASHING) }
-    val lines by viewModel.consoleLines.collectAsStateWithLifecycle()
-    val consoleListState = rememberLazyListState()
     val isFlashing = state == FlashViewModel.State.FLASHING
-    val moduleInstallBannerLines = remember { FlashViewModel.moduleInstallBannerLines }
 
     DisposableEffect(viewModel, lifecycleOwner) {
         val observer = Observer<FlashViewModel.State> {
@@ -97,6 +88,17 @@ fun FlashScreen(
         viewModel.state.observe(lifecycleOwner, observer)
         onDispose {
             viewModel.state.removeObserver(observer)
+        }
+    }
+
+    // FlashViewModel 现在是路由条目作用域，Activity 不再统一观察它；把 uiEvents 转给
+    // Activity 的 dispatcher，权限申请等 UiEvent 仍由 Activity 执行。
+    val mainActivity = context as? MainActivity
+    DisposableEffect(viewModel, lifecycleOwner, mainActivity) {
+        val uiObserver = Observer<UiEvent> { event -> mainActivity?.onUiEventDispatched(event) }
+        viewModel.uiEvents.observe(lifecycleOwner, uiObserver)
+        onDispose {
+            viewModel.uiEvents.removeObserver(uiObserver)
         }
     }
 
@@ -110,9 +112,6 @@ fun FlashScreen(
         viewModel.prepareForCompose(action = action, uris = additionalData)
         viewModel.startFlashing()
     }
-
-    // 控制台输出自动跟随到底部，新的日志行（以及需要回应的提示）始终可见
-    AutoScrollToBottom(listState = consoleListState, itemCount = lines.size)
 
     val scope = rememberCoroutineScope()
     ObserveAsEvents(viewModel.baseEvent) { event ->
@@ -172,32 +171,19 @@ fun FlashScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     FlashStateCard(state = state)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Box(
+                    // 模块安装时先出示 WeaveMask 字符画：按屏幕宽度等比缩放，整幅都能露出来
+                    if (action == Const.Value.FLASH_ZIP) {
+                        ModuleInstallBanner()
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    // 终端视图：安装器（PTY）与 MagiskInstaller（逐行）都写进同一个终端
+                    TerminalScreen(
+                        emulator = viewModel.emulator,
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                    ) {
-                        LazyColumn(
-                            state = consoleListState,
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            itemsIndexed(lines) { index, line ->
-                                val isBannerLine = action == Const.Value.FLASH_ZIP &&
-                                    index < moduleInstallBannerLines.size &&
-                                    line == moduleInstallBannerLines[index]
-                                Text(
-                                    text = line,
-                                    style = MiuixTheme.textStyles.body2.copy(
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = if (isBannerLine) 11.sp else MiuixTheme.textStyles.body2.fontSize,
-                                        lineHeight = if (isBannerLine) 13.sp else 18.sp
-                                    )
-                                )
-                            }
-                        }
-                    }
+                            .fillMaxWidth(),
+                        onResized = viewModel::onTerminalResized,
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 

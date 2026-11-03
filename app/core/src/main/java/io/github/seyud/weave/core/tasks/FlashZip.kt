@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.core.net.toFile
 import io.github.seyud.weave.core.AppContext
 import io.github.seyud.weave.core.Const
+import io.github.seyud.weave.core.ktx.shellQuoted
 import io.github.seyud.weave.core.utils.MediaStoreUtils.displayName
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +17,15 @@ import java.io.IOException
 open class FlashZip(
     private val mUri: Uri,
     private val console: MutableList<String>,
-    private val logs: MutableList<String>
+    private val logs: MutableList<String>,
+    /**
+     * 真正执行 update-binary 的执行器。默认走普通 root shell（无 PTY）；
+     * UI 侧传 PTY 版本（[io.github.seyud.weave.terminal.runSuCommand]），安装器才能
+     * 拿到真实终端宽度、进度条与交互提示，和上游 FlashViewModel 一致。
+     */
+    private val runner: suspend (command: String) -> Boolean = { command ->
+        Shell.cmd(command).to(console, logs).exec().isSuccess
+    },
 ) {
 
     private val installDir = File(AppContext.cacheDir, "flash")
@@ -50,8 +59,8 @@ open class FlashZip(
             }
         }
 
+        val binary = File(installDir, "update-binary")
         try {
-            val binary = File(installDir, "update-binary")
             AppContext.assets.open("module_installer.sh").use { it.copyTo(binary.outputStream()) }
         } catch (e: IOException) {
             console.add("! Unzip error")
@@ -60,8 +69,8 @@ open class FlashZip(
 
         console.add("- Installing ${mUri.displayName}")
 
-        return Shell.cmd("sh $installDir/update-binary dummy 1 \'$zipFile\'")
-            .to(console, logs).exec().isSuccess
+        // 路径来自外部（URI/缓存目录），按 shell 单词引用，别让 shell 解释
+        return runner("sh ${binary.path.shellQuoted()} dummy 1 ${zipFile.path.shellQuoted()}")
     }
 
     open suspend fun exec() = withContext(Dispatchers.IO) {

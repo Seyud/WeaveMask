@@ -25,6 +25,12 @@ import io.github.seyud.weave.core.R as CoreR
 object ModuleShortcutContract {
     const val EXTRA_SHORTCUT_TYPE = "shortcut_type"
     const val EXTRA_MODULE_ID = "module_id"
+
+    /**
+     * 模块目录名。action 一律按目录名定位（目录名与 module.prop 的 id 可以不同，且 id 可能重复），
+     * 见上游 d582d8145；快捷方式里同时带上它，旧快捷方式没有该字段时回退到 [EXTRA_MODULE_ID]。
+     */
+    const val EXTRA_MODULE_DIR = "module_dir"
     const val EXTRA_MODULE_NAME = "module_name"
 
     const val TYPE_ACTION = "module_action"
@@ -44,6 +50,7 @@ internal fun buildRootIconUri(path: String): String {
 suspend fun createModuleShortcut(
     context: Context,
     moduleId: String,
+    moduleDir: String,
     name: String,
     iconUri: String?,
     type: ShortcutType,
@@ -55,6 +62,7 @@ suspend fun createModuleShortcut(
                 action = Intent.ACTION_VIEW
                 putExtra(ModuleShortcutContract.EXTRA_SHORTCUT_TYPE, ModuleShortcutContract.TYPE_ACTION)
                 putExtra(ModuleShortcutContract.EXTRA_MODULE_ID, moduleId)
+                putExtra(ModuleShortcutContract.EXTRA_MODULE_DIR, moduleDir)
                 putExtra(ModuleShortcutContract.EXTRA_MODULE_NAME, name)
                 addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             }
@@ -64,8 +72,9 @@ suspend fun createModuleShortcut(
             "module_webui_$moduleId" to Intent().apply {
                 component = WebUIActivity::class.java.cmp(context.packageName)
                 action = Intent.ACTION_VIEW
-                putExtra("id", moduleId)
-                putExtra("name", name)
+                putExtra(WebUIActivity.EXTRA_DIR, moduleDir)
+                putExtra(WebUIActivity.EXTRA_MODULE_ID, moduleId)
+                putExtra(WebUIActivity.EXTRA_NAME, name)
                 putExtra("from_webui_shortcut", true)
                 putExtra(ModuleShortcutContract.EXTRA_SHORTCUT_TYPE, ModuleShortcutContract.TYPE_WEB_UI)
                 putExtra(ModuleShortcutContract.EXTRA_MODULE_ID, moduleId)
